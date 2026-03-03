@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                        "status-active": "#00897B",
+                        "status-locked": "#D32F2F",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Quản lý người dùng</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-md mx-auto bg-white dark:bg-slate-900 shadow-xl min-h-screen flex flex-col relative">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h1 class="text-lg font-bold flex-1 text-center">Quản lý người dùng</h1>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="px-4 pb-3">
+<label class="relative flex items-center w-full">
+<span class="material-symbols-outlined absolute left-3 text-slate-400">search</span>
+<input class="w-full h-11 pl-10 pr-4 bg-slate-100 dark:bg-slate-800 border-none rounded-lg focus:ring-2 focus:ring-primary text-sm" placeholder="Tìm kiếm theo tên, email..." type="text"/>
+</label>
+</div>
+<!-- Tabs -->
+<div class="flex px-4 overflow-x-auto no-scrollbar">
+<button class="flex-none px-4 py-3 text-sm font-semibold border-b-2 border-primary text-primary">Tất cả</button>
+<button class="flex-none px-4 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 border-b-2 border-transparent hover:text-slate-700">Nhân viên y tế</button>
+<button class="flex-none px-4 py-3 text-sm font-medium text-slate-500 dark:text-slate-400 border-b-2 border-transparent hover:text-slate-700">Khách hàng</button>
+</div>
+</header>
+<!-- User List -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- User Item 1 -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+<div class="relative">
+<div class="size-14 rounded-full bg-cover bg-center border border-slate-200" data-alt="Chân dung bác sĩ nam mỉm cười" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCrs6gxEpuYDl8O3p10ccswI-zeBhGU_iPkYfM7aXLYvuU6g3PCsNjtCC-H5Mp5Opcd7XJSPBTQiDqMXjVxGiLm4RNDlu0P0WP40q-liLVbLtpDEXg6K936Xn58cCV2l8Uk48urZ_qvmPNsfkd9IWhDneHscTzAf9l40PROVG0jPXCyWJKy3zE1V9dYgEwEsXG5FXHkxgrumIOqgSucftNvXkivIoofZ_zZ-tkns0bD55jRSRroyIjoOIxITV8fvwbU7D5O-aGkYI9k");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-status-active rounded-full border-2 border-white dark:border-slate-900"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<p class="text-base font-semibold truncate">BS. Nguyễn Văn An</p>
+<p class="text-sm text-slate-500 truncate">Bác sĩ chuyên khoa • <span class="text-status-active font-medium">Hoạt động</span></p>
+</div>
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- User Item 2 -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+<div class="relative">
+<div class="size-14 rounded-full bg-cover bg-center border border-slate-200" data-alt="Chân dung nữ bác sĩ đeo kính" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAE5IxGb2YKbrFfx-ft7Npu7p7ZPhCVjUN62sCH0LKx3On4MMGnNYGbF82bUZeHgPlQb-ZalGq0YI1oZF-Y3QP73ERXwqH5LzSb2jABkEagLCibpwlKCUwxbx2nG1z_7XTdoCREbMqIHZfabwTP37ETp-k5-u0nNfdFRk15c7ZK9KVKyOMa1zRBGykX5ERxI_0Erk44vWwyJ_N9RNkavM-0hun0jMf2hvkFxlEcC_Gyk__CNqNQZKDof7vX4FtPjBsqUYxC6oFsw8w9");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-status-active rounded-full border-2 border-white dark:border-slate-900"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<p class="text-base font-semibold truncate">BS. Trần Thị Mai</p>
+<p class="text-sm text-slate-500 truncate">Điều dưỡng trưởng • <span class="text-status-active font-medium">Hoạt động</span></p>
+</div>
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- User Item 3 (Locked) -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+<div class="relative grayscale">
+<div class="size-14 rounded-full bg-cover bg-center border border-slate-200" data-alt="Chân dung khách hàng nam trung niên" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDodY6CQoL5CpwE-fW0hkJjC3K_oB5UOIhmjos2yQRCnKT5Hq3Pdc3PJSjMryCUaEE3ohSK2SzzrDUkzSOt3IsCQtFGq0cObMMWkACdVOKwW7dOedJeiNegT0zXS7jjTC4TgCsQX5umNGa9q9vy--X-s2VscxEO6rGevRFhrxEbPdTlWo9jbuoiOrdNK38U_cx_m9ltNAKo_HNN-yvQigfoZLBKpjaqjNWw8vCxvGucMYzjxfTuFaeXaKR3xOsKfj1sd9b5SHl4GUp3");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-status-locked rounded-full border-2 border-white dark:border-slate-900"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<p class="text-base font-semibold truncate text-slate-400">Lê Minh Hoàng</p>
+<p class="text-sm text-slate-500 truncate">Khách hàng VIP • <span class="text-status-locked font-medium">Đã khóa</span></p>
+</div>
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- User Item 4 -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+<div class="relative">
+<div class="size-14 rounded-full bg-cover bg-center border border-slate-200" data-alt="Chân dung khách hàng nữ trẻ tuổi" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC-4MhlVQhGT2F_1zsKR0GCOEzs5Z3-UV9lLeuJjm5k4KbCmwQdxKkLsbfsLuffOi_QLiF9jZ5ko4s3WsVw3a4azcLiMZSNkOhuhAc7BRGUodzIrKPVBzdRKS8m_SGgY4HIIP71bDBuNeQFAbSi8oxjb2KBAqLWuZDysGkygFOLJTY5KToItSo7OauF16w3xrCOjMulnzxt9k6v8rP124R8xxOB8NtL_cZ_gWwvy1UqoOQmcXCJzkEYXNOo1UKhim1ineIDv8_8q4Y_");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-status-active rounded-full border-2 border-white dark:border-slate-900"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<p class="text-base font-semibold truncate">Phạm Thanh Thủy</p>
+<p class="text-sm text-slate-500 truncate">Khách hàng • <span class="text-status-active font-medium">Hoạt động</span></p>
+</div>
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- User Item 5 -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900 px-4 py-4 border-b border-slate-50 dark:border-slate-800 hover:bg-slate-50 transition-colors">
+<div class="relative">
+<div class="size-14 rounded-full bg-cover bg-center border border-slate-200" data-alt="Chân dung bác sĩ nam trẻ tuổi" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCMd-djN1_9AVl1G62o_NIgnWWBVy_Zd4xj6FCIX0PCaV4mURi1x14xAS7P1M_NHM70VFpUBFaMwCC77XA864run2IoVcLX45ofLIjZmTZEKOR84NN26FGaPVS2i_Lf-QxWst2ynLeREObNCQbqps6tPBNwsTkyULKgZM0QHt2LW_tPPOMzy9SzVcffLI3Lwf_3NMTqLyw2l_AFAp6p2u1J6mn03V5DRurpzb67MD_O-3_0hBD2XazQTaVMcHJZTraLEWqEAYhaeEJi");'></div>
+<div class="absolute bottom-0 right-0 size-3.5 bg-status-active rounded-full border-2 border-white dark:border-slate-900"></div>
+</div>
+<div class="flex flex-col flex-1 min-w-0">
+<p class="text-base font-semibold truncate">BS. Vũ Anh Tuấn</p>
+<p class="text-sm text-slate-500 truncate">Khoa nội • <span class="text-status-active font-medium">Hoạt động</span></p>
+</div>
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-4 md:absolute size-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-3xl">person_add</span>
+</button>
+<!-- Bottom Navigation -->
+<nav class="sticky bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-2 py-2">
+<div class="flex justify-around items-center">
+<a class="flex flex-col items-center gap-1 text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium">Tổng quan</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary p-2" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">group</span>
+<span class="text-[10px] font-bold">Người dùng</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium">Lịch hẹn</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400 p-2" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Cài đặt</span>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Khách hàng &amp; Gia đình</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="relative flex min-h-screen flex-col mx-auto max-w-md bg-background-light dark:bg-background-dark shadow-xl">
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between">
+<div class="text-slate-900 dark:text-white flex size-10 shrink-0 items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h1 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-10">Khách hàng &amp; Gia đình</h1>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<div class="px-4 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<label class="flex flex-col w-full">
+<div class="flex w-full items-stretch rounded-xl h-12 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus-within:ring-2 focus-within:ring-primary/50 transition-all">
+<div class="text-slate-500 flex items-center justify-center pl-4">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="flex w-full bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder:text-slate-500 px-3 text-base" placeholder="Tra cứu bằng Mã Y Tế" value=""/>
+</div>
+</label>
+</div>
+<div class="px-4 pt-6 pb-2">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">Thành viên gia đình</h2>
+<p class="text-sm text-slate-500">Quản lý thông tin hồ sơ sức khỏe của gia đình bạn</p>
+</div>
+<div class="px-4 space-y-4 py-2">
+<div class="flex items-start gap-4 rounded-xl bg-white dark:bg-slate-900 p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="size-16 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center shrink-0 overflow-hidden" data-alt="Portrait of a middle aged Vietnamese man" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBeUui5-87ad_vp_vXMIymQ3jhH029TDGWUXMqKCS8sQ9Ar2eLr7gKdwG8tOdmGrzvYWXpWyEfQU3bZU7cNItYWHxNEbCJV9H5iIQh2DctHZJyzhblzEjFHKugpBQVY9h6sFNbbM-d0rf-3ltqJmCPQqCvJLC8Id9P_5KNRADff9fRZRmKhMqbIUpDnjRzeRprNQNgrpIvUhXG2-Kxm04yTYYmikfTsVxk3yDwL2tsP9XYa0_hRHWRfi4ifzotmu2S7NddpZFi4B0ej")'>
+</div>
+<div class="flex flex-col flex-1 gap-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-base font-bold text-slate-900 dark:text-white">Nguyễn Văn A</h3>
+<p class="text-sm font-medium text-primary">Quan hệ: Bản thân</p>
+</div>
+<span class="text-[10px] uppercase tracking-wider font-semibold text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded">ID: 102938</span>
+</div>
+<p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">history</span>
+                            Cập nhật cuối: 20/10/2023
+                        </p>
+<div class="mt-3 flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                Xem hồ sơ
+                            </button>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-4 rounded-xl bg-white dark:bg-slate-900 p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="size-16 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center shrink-0 overflow-hidden" data-alt="Portrait of a smiling Vietnamese woman" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCxgSXU2HaIy0CcFxnE8D91_uDM-wHE_tB_wDjlmBfdE0ChXc7XygBqFvS4p8Y8Ydtr9vDFITC1izWZ_CtOTvse1vM42FXdLDtFF_CdY9CzILRC0-2fqZNr7PWtKtFyUWottf96SYLJwrpO-v2eOWjCJs1EhKLWR08cJHt6KAPdzgz9fpUrLkDQvVqNkWpK5wuUFxcNItVdMFi5nU0DHiRn4HHkfk4l8vlvgLjjKjiw9tSi1c60D5-XYijX8qXw5WmDdFfCVI-bo7cV")'>
+</div>
+<div class="flex flex-col flex-1 gap-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-base font-bold text-slate-900 dark:text-white">Trần Thị B</h3>
+<p class="text-sm font-medium text-slate-600 dark:text-slate-400">Quan hệ: Vợ/Chồng</p>
+</div>
+</div>
+<p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">history</span>
+                            Cập nhật cuối: 15/10/2023
+                        </p>
+<div class="mt-3 flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                Xem hồ sơ
+                            </button>
+</div>
+</div>
+</div>
+<div class="flex items-start gap-4 rounded-xl bg-white dark:bg-slate-900 p-4 shadow-sm border border-slate-100 dark:border-slate-800">
+<div class="size-16 rounded-full bg-slate-200 dark:bg-slate-700 bg-cover bg-center shrink-0 overflow-hidden" data-alt="Portrait of a happy Vietnamese child" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDi36CNct4pFxExPkEFAlCsX5LxFA3RfxiLpHETzLgF8FmvxMNPP6h-upCo-3hMJ5pJSQGRFQHkKg8vfIq5oYqnK1oZLICTM1COsZ86zxAZohRQ4wp2YYen0uZVgdTYsZpAtITerpMwxpKfFmJvaYoCv3S_igNY9iXAEorBKLX8fJLtEBA7EHboT8Cn3w_l3aRdrqetoezlwu2thu75GNMNNj3CJ6eqbH8p6Vl8Giw4ySQjpcH0e4tyX5HHzm02KX78ei1zRA2j8yvj")'>
+</div>
+<div class="flex flex-col flex-1 gap-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-base font-bold text-slate-900 dark:text-white">Nguyễn Văn C</h3>
+<p class="text-sm font-medium text-slate-600 dark:text-slate-400">Quan hệ: Con</p>
+</div>
+</div>
+<p class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">history</span>
+                            Cập nhật cuối: 01/09/2023
+                        </p>
+<div class="mt-3 flex gap-2">
+<button class="flex-1 bg-primary text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">visibility</span>
+                                Xem hồ sơ
+                            </button>
+</div>
+</div>
+</div>
+<button class="w-full flex items-center justify-center gap-3 py-6 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-primary dark:hover:border-primary/60 hover:bg-primary/5 transition-all text-slate-500 hover:text-primary mt-2">
+<span class="material-symbols-outlined">person_add</span>
+<span class="font-semibold text-base">Thêm thành viên</span>
+</button>
+</div>
+</main>
+<nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 pb-6 pt-2">
+<div class="flex gap-2 items-center justify-around">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">home</span>
+<p class="text-[10px] font-bold uppercase tracking-tight">Trang chủ</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">description</span>
+<p class="text-[10px] font-bold uppercase tracking-tight">Hồ sơ</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<p class="text-[10px] font-bold uppercase tracking-tight">Lịch hẹn</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-slate-600 dark:text-slate-500" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-[10px] font-bold uppercase tracking-tight">Cài đặt</p>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

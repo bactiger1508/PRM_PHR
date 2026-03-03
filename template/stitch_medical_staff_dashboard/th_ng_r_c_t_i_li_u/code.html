@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                        "danger": "#D32F2F"
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header Section -->
+<header class="flex items-center bg-white dark:bg-slate-900 p-4 border-b border-slate-200 dark:border-slate-800 justify-between sticky top-0 z-10">
+<div class="flex items-center gap-3">
+<button class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight tracking-tight">Thùng rác tài liệu</h1>
+</div>
+<div class="flex items-center">
+<button class="text-primary hover:bg-primary/10 px-4 py-2 rounded-lg text-base font-bold transition-colors">
+                    Dọn sạch
+                </button>
+</div>
+</header>
+<main class="max-w-4xl mx-auto w-full p-4 space-y-4">
+<!-- Information Banner -->
+<div class="p-0 @container">
+<div class="flex flex-1 flex-col items-start justify-between gap-4 rounded-xl border border-primary/20 bg-white dark:bg-slate-900 p-5 @[480px]:flex-row @[480px]:items-center shadow-sm">
+<div class="flex items-start gap-4">
+<div class="bg-primary/10 p-2 rounded-full text-primary">
+<span class="material-symbols-outlined">info</span>
+</div>
+<div class="flex flex-col gap-1">
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">Thông báo</p>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-normal leading-normal">
+                                Tài liệu trong thùng rác sẽ tự động bị xóa vĩnh viễn sau 30 ngày.
+                            </p>
+</div>
+</div>
+<a class="text-sm font-bold leading-normal tracking-wide flex items-center gap-2 text-primary hover:underline" href="#">
+                        Tìm hiểu thêm
+                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Document List -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<!-- Item 1 -->
+<div class="flex flex-col sm:flex-row gap-4 px-4 py-5 justify-between border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-start gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">description</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-normal">Báo cáo tài chính Q4.pdf</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal">Ngày xóa: 20/10/2023</p>
+<p class="text-amber-600 dark:text-amber-500 text-sm font-medium mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span>
+                                Còn 29 ngày
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
+                            Khôi phục
+                        </button>
+<button class="flex items-center justify-center rounded-lg h-9 w-9 text-danger hover:bg-danger/10 transition-colors" title="Xóa vĩnh viễn">
+<span class="material-symbols-outlined">delete_forever</span>
+</button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex flex-col sm:flex-row gap-4 px-4 py-5 justify-between border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-start gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">article</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-normal">Hợp đồng lao động - Nguyễn Văn A.docx</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal">Ngày xóa: 15/10/2023</p>
+<p class="text-amber-600 dark:text-amber-500 text-sm font-medium mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span>
+                                Còn 24 ngày
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
+                            Khôi phục
+                        </button>
+<button class="flex items-center justify-center rounded-lg h-9 w-9 text-danger hover:bg-danger/10 transition-colors" title="Xóa vĩnh viễn">
+<span class="material-symbols-outlined">delete_forever</span>
+</button>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex flex-col sm:flex-row gap-4 px-4 py-5 justify-between border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-start gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">image</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-normal">Ảnh_chụp_màn_hình_01.png</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal">Ngày xóa: 25/10/2023</p>
+<p class="text-amber-600 dark:text-amber-500 text-sm font-medium mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span>
+                                Còn 2 ngày
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
+                            Khôi phục
+                        </button>
+<button class="flex items-center justify-center rounded-lg h-9 w-9 text-danger hover:bg-danger/10 transition-colors" title="Xóa vĩnh viễn">
+<span class="material-symbols-outlined">delete_forever</span>
+</button>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="flex flex-col sm:flex-row gap-4 px-4 py-5 justify-between hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+<div class="flex items-start gap-4">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">table_chart</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-normal">Danh sách khách hàng tiềm năng.xlsx</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal">Ngày xóa: 01/10/2023</p>
+<p class="text-amber-600 dark:text-amber-500 text-sm font-medium mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">timer</span>
+                                Còn 10 ngày
+                            </p>
+</div>
+</div>
+<div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+<button class="flex items-center justify-center rounded-lg h-9 px-4 bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors shadow-sm">
+                            Khôi phục
+                        </button>
+<button class="flex items-center justify-center rounded-lg h-9 w-9 text-danger hover:bg-danger/10 transition-colors" title="Xóa vĩnh viễn">
+<span class="material-symbols-outlined">delete_forever</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Empty State Support (Optional visual cue) -->
+<div class="flex flex-col items-center justify-center py-12 opacity-50 hidden">
+<span class="material-symbols-outlined text-6xl mb-4">delete_outline</span>
+<p class="text-lg font-medium">Thùng rác trống</p>
+<p class="text-sm">Không có tài liệu nào bị xóa gần đây</p>
+</div>
+</main>
+<footer class="mt-auto py-8 text-center text-slate-400 text-sm">
+<p>© 2023 Hệ thống Quản lý Tài liệu</p>
+</footer>
+</div>
+</body></html>

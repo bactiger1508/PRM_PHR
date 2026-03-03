@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "danger": "#D32F2F",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark flex items-center justify-center min-h-screen p-4">
+<!-- Modal Container -->
+<div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+<!-- Header / Icon Section -->
+<div class="flex flex-col items-center pt-8 pb-4 px-6 text-center">
+<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 text-danger">
+<span class="material-symbols-outlined !text-4xl">delete_forever</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-2xl font-bold leading-tight tracking-tight">
+                Xác nhận xóa
+            </h2>
+</div>
+<!-- Content Section -->
+<div class="px-8 pb-8 text-center">
+<p class="text-slate-600 dark:text-slate-400 text-base font-normal leading-relaxed">
+                Bạn có chắc chắn muốn xóa tài liệu này không? Tài liệu sẽ được chuyển vào <span class="font-semibold text-slate-800 dark:text-slate-200">Thùng rác</span>.
+            </p>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col gap-3 px-8 pb-8">
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-danger hover:bg-red-700 text-white text-base font-bold transition-colors duration-200 w-full shadow-sm shadow-red-200 dark:shadow-none">
+<span class="truncate">Xóa</span>
+</button>
+<button class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-base font-bold transition-colors duration-200 w-full">
+<span class="truncate">Hủy</span>
+</button>
+</div>
+<!-- Subtle Close Button (Top Right) -->
+<button class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</body></html>

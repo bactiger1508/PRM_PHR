@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "success-teal": "#00897B",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen">
+<div class="relative mx-auto flex min-h-screen max-w-[480px] flex-col bg-white dark:bg-slate-900 shadow-xl overflow-x-hidden">
+<!-- Header -->
+<div class="flex items-center bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-10">
+<button class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 ml-2">Tạo hồ sơ bệnh nhân mới</h2>
+</div>
+<!-- Form Section -->
+<div class="flex flex-col gap-6 p-4">
+<section>
+<h3 class="text-slate-900 dark:text-slate-100 text-xl font-bold leading-tight mb-4">Thông tin cá nhân</h3>
+<div class="space-y-4">
+<!-- Họ và tên -->
+<label class="flex flex-col">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">Họ và tên</span>
+<input class="form-input w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-primary focus:ring-2 focus:ring-primary/20 h-12 px-4 text-base transition-all" placeholder="Nhập họ và tên đầy đủ" type="text"/>
+</label>
+<div class="grid grid-cols-2 gap-4">
+<!-- Tuổi -->
+<label class="flex flex-col">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">Tuổi</span>
+<input class="form-input w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-primary focus:ring-2 focus:ring-primary/20 h-12 px-4 text-base" placeholder="34" type="number"/>
+</label>
+<!-- Số điện thoại -->
+<label class="flex flex-col">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">Số điện thoại</span>
+<input class="form-input w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-primary focus:ring-2 focus:ring-primary/20 h-12 px-4 text-base" placeholder="09xx xxx xxx" type="tel"/>
+</label>
+</div>
+<!-- Email -->
+<label class="flex flex-col">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-semibold mb-1.5 ml-1">Email</span>
+<input class="form-input w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:border-primary focus:ring-2 focus:ring-primary/20 h-12 px-4 text-base" placeholder="vi-du@email.com" type="email"/>
+</label>
+</div>
+</section>
+<!-- Submit Button -->
+<div class="pt-2">
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">save</span>
+                    Lưu hồ sơ
+                </button>
+</div>
+<!-- Success State Preview -->
+<div class="mt-4 p-5 rounded-xl border border-success-teal/20 bg-success-teal/5 dark:bg-success-teal/10 flex flex-col items-center text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+<div class="size-12 rounded-full bg-success-teal flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-white text-2xl">check_circle</span>
+</div>
+<h4 class="text-success-teal font-bold text-lg mb-1">Tạo hồ sơ thành công</h4>
+<p class="text-slate-600 dark:text-slate-400 text-sm mb-4">Bệnh nhân đã được thêm vào hệ thống quản lý</p>
+<div class="w-full bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-100 dark:border-slate-700 flex items-center justify-between">
+<div class="flex flex-col items-start">
+<span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Mã Y Tế</span>
+<span class="text-slate-900 dark:text-slate-100 font-mono font-bold text-lg">MED-829-X4</span>
+</div>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-xl">content_copy</span>
+<span class="text-xs font-semibold">Sao chép</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Spacing for bottom nav -->
+<div class="h-20"></div>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-4 pb-4 pt-2 flex justify-around">
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Trang chủ</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">person</span>
+<span class="text-[10px] font-medium">Hồ sơ</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">calendar_month</span>
+<span class="text-[10px] font-medium">Lịch hẹn</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-[10px] font-medium">Cài đặt</span>
+</a>
+</div>
+</div>
+</body></html>

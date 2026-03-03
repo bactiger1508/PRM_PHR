@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Danh sách Bệnh nhân - Quản lý Y tế</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#156bc1",
+              "background-light": "#f6f7f8",
+              "background-dark": "#111921",
+            },
+            fontFamily: {
+              "display": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body { font-family: 'Inter', sans-serif; }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header -->
+<header class="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">menu</span>
+<h1 class="text-xl font-bold tracking-tight">Danh sách Bệnh nhân</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-red-500"></span>
+</button>
+<img alt="Profile" class="size-8 rounded-full object-cover border border-slate-200" data-alt="Doctor profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdcEHi-ERr1Mm6XVkUcf6GZhLceiXA8TEhjclReU6yUeNrUuZ-BkpDReXBGiuc_c0AmjEGnOZDT3sBvwtgwaYUVanLQdzOQeXcAXSImQjRYAPDiHG5wV1rgRxJkhuz4gXhvHIHXtL5QOLtr3UGEXn-I0EMfrWSBqmb2OgshVfzgrpcSRSIhrYWHxv877eUTL1_PdbSkEzMadpmUju8K-bWE0wVNYl5DsFfx6WJEJTUa9e5EubGQE-R7VssAhSobjs_N5FfvyvPq_3Y"/>
+</div>
+</div>
+</header>
+<main class="flex-1 max-w-4xl mx-auto w-full pb-24">
+<!-- Stats Cards -->
+<div class="flex flex-wrap gap-4 p-4">
+<div class="flex min-w-[150px] flex-1 flex-col gap-2 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Tổng số bệnh nhân</p>
+<p class="text-primary text-3xl font-bold leading-tight">1,245</p>
+<div class="flex items-center gap-1 text-emerald-600 text-xs font-medium">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+12 tháng này</span>
+</div>
+</div>
+<div class="flex min-w-[150px] flex-1 flex-col gap-2 rounded-xl p-5 bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Đang điều trị</p>
+<p class="text-primary text-3xl font-bold leading-tight">156</p>
+<div class="flex items-center gap-1 text-slate-500 text-xs font-medium">
+<span class="material-symbols-outlined text-sm">hourglass_empty</span>
+<span>Tải trọng 85%</span>
+</div>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="px-4 py-2">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400 group-focus-within:text-primary transition-colors">search</span>
+</div>
+<input class="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm" placeholder="Tìm kiếm tên hoặc mã y tế..." type="text"/>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar">
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-white px-5 text-sm font-semibold shadow-md shadow-primary/20">
+                Tất cả
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:border-primary/50 transition-colors">
+                Khoa Nội
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:border-primary/50 transition-colors">
+                Khoa Ngoại
+            </button>
+<button class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:border-primary/50 transition-colors">
+                Khoa Sản
+            </button>
+</div>
+<!-- Patient List -->
+<div class="px-4 space-y-3 mt-2">
+<!-- Patient Card 1 -->
+<div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<div class="relative">
+<img alt="Nguyễn Thị Lan" class="size-14 rounded-full object-cover bg-slate-100" data-alt="Patient profile portrait woman" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl5EiYFwvyWrvvms_QFwCiEGjuBk8814GfHqvjXcgxeTvmKn4MoBVCEPbAnpjqVQMgriLe4gbm-bRMtE83indbPR33Mxy3MAjWzfUIUikXfESX5QPwCnszMSzPv0fWRR6gM0IZZwPQ5NADKQr8WQz8fDfImR8wGg3GTVFgbHDVM9ds3KD0swWGa2SSyHY6MxFlvZwij8dfp1-TC_DUcrv_efs_SEnUZuN8f0gtW8j5r1rj_QaHeoRo6qwe1R1UcBTdGmlCxQs3Ai6B"/>
+<span class="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900"></span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-900 dark:text-slate-100">Nguyễn Thị Lan</h3>
+<div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+<span class="font-medium">#BN-2023-001</span>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<span>Khoa Nội</span>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+<!-- Patient Card 2 -->
+<div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<div class="relative">
+<img alt="Trần Văn Hùng" class="size-14 rounded-full object-cover bg-slate-100" data-alt="Patient profile portrait man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJsVfuxzv_j4WRxXCrE25KgG0kl0hkvnc1OlPKvSqdu4I6KnQgNsO5JrdwrWxypTmIzT5mJqhDW5FxdTRb4aaxQZzMQ74Cyib963hmzmWu_hlT-2rhVAb2uRLf9jrTPGPPasgfekrEoGHhqAQ_GatpWkdNL5Jf-nCBnqcND4DZKRT_Njupxw-kbiLvMYncV5k43DB5GACpi_FiatH0FIi6InrQ4ktoBPo_gbmrqss5n8LaD2o_D-U8rvXSpTgR5_bh2YHIV_FmKobw"/>
+<span class="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900"></span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-900 dark:text-slate-100">Trần Văn Hùng</h3>
+<div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+<span class="font-medium">#BN-2023-142</span>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<span>Khoa Ngoại</span>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+<!-- Patient Card 3 -->
+<div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<div class="relative">
+<div class="size-14 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                        L
+                    </div>
+<span class="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900"></span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-900 dark:text-slate-100">Lê Minh Tuấn</h3>
+<div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+<span class="font-medium">#BN-2023-088</span>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<span>Khoa Nội</span>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+<!-- Patient Card 4 -->
+<div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow cursor-pointer opacity-80">
+<div class="relative">
+<img alt="Phạm Anh Đức" class="size-14 rounded-full object-cover bg-slate-100" data-alt="Patient profile portrait young man" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVh5Zpj5ElQgDejXTwYIGwfH_oORHFlPPoonb1Jk92HaLxyZYXRQRsiJ0YNO-rw7a9hbgM7bJY30rCiFacJtXKfziZHSSrlSErJtq5s_r58A6kQ3Fbh-aU83UH1CeoAi68g9xN2ztAYOUpsSEynJdk_aGUiL3ozSMB9w5muBuWDKpoYbnlcZYpHr4Yc5ch4AjcUrwt7exCZH8fBD7KXVHlQoFh5gIstKPcJXpLmkvGIndW0J8c38hygyAPEUrt6zpZHrKUKT7cOE9R"/>
+<span class="absolute bottom-0 right-0 block h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-900"></span>
+</div>
+<div class="flex-1">
+<h3 class="font-bold text-slate-900 dark:text-slate-100">Phạm Anh Đức</h3>
+<div class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+<span class="font-medium">#BN-2023-205</span>
+<span class="text-slate-300 dark:text-slate-700">•</span>
+<span>Khoa Ngoại</span>
+</div>
+</div>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-slate-400">chevron_right</span>
+</div>
+</div>
+</div>
+</main>
+<!-- FAB Button -->
+<button class="fixed right-6 bottom-24 size-14 bg-primary text-white rounded-full shadow-lg shadow-primary/30 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-20">
+<span class="material-symbols-outlined text-2xl font-bold">add</span>
+</button>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-2 pb-5 pt-2 flex justify-around items-center z-10">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-[10px] font-bold">Bệnh nhân</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium">Lịch hẹn</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-[10px] font-medium">Báo cáo</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Cá nhân</span>
+</a>
+</nav>
+</body></html>

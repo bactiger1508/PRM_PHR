@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-md mx-auto bg-white dark:bg-slate-900 min-h-screen flex flex-col relative shadow-xl">
+<!-- Header -->
+<header class="sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<div class="flex items-center p-4 justify-between">
+<button class="text-slate-600 dark:text-slate-400 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h2 class="text-lg font-bold leading-tight tracking-tight flex-1 text-center">Tài liệu Y tế</h2>
+<button class="text-slate-600 dark:text-slate-400 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<!-- Search Bar -->
+<div class="px-4 pb-4">
+<label class="relative flex items-center w-full">
+<span class="absolute left-3 text-slate-400 material-symbols-outlined">search</span>
+<input class="w-full pl-10 pr-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-none rounded-xl focus:ring-2 focus:ring-primary/50 text-sm" placeholder="Tìm kiếm tài liệu, bác sĩ..." type="text"/>
+</label>
+</div>
+<!-- Tabs -->
+<div class="flex px-4 overflow-x-auto no-scrollbar gap-2 pb-2">
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold bg-primary text-white">Tất cả</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors">Đơn thuốc</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors">Xét nghiệm</button>
+<button class="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 hover:text-primary transition-colors">Chẩn đoán</button>
+</div>
+</header>
+<!-- Content Area -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Section: Month -->
+<section class="mt-4">
+<div class="px-4 py-2">
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Tháng 10, 2023</h3>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Document Item 1 -->
+<div class="flex items-center p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center mr-4">
+<span class="material-symbols-outlined">prescriptions</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold truncate">Đơn thuốc viêm họng cấp</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">15 thg 10, 2023 • BS. Nguyễn Văn A</p>
+<div class="mt-2 flex gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/20">Nội khoa</span>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-600 dark:bg-green-900/20">Hoàn thành</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<!-- Document Item 2 -->
+<div class="flex items-center p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mr-4">
+<span class="material-symbols-outlined">lab_research</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold truncate">Xét nghiệm máu tổng quát</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">10 thg 10, 2023 • BV Đa khoa Tâm Anh</p>
+<div class="mt-2 flex gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-50 text-purple-600 dark:bg-purple-900/20">Xét nghiệm</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Section: Previous Month -->
+<section class="mt-6">
+<div class="px-4 py-2">
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">Tháng 09, 2023</h3>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Document Item 3 -->
+<div class="flex items-center p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 flex items-center justify-center mr-4">
+<span class="material-symbols-outlined">radiology</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold truncate">Kết quả Chụp X-Quang phổi</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">22 thg 09, 2023 • Trung tâm CDHA</p>
+<div class="mt-2 flex gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-orange-50 text-orange-600 dark:bg-orange-900/20">Chẩn đoán hình ảnh</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+<!-- Document Item 4 -->
+<div class="flex items-center p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 flex items-center justify-center mr-4">
+<span class="material-symbols-outlined">description</span>
+</div>
+<div class="flex-1 min-w-0">
+<h4 class="text-sm font-semibold truncate">Giấy ra viện</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">05 thg 09, 2023 • Khoa Nội tiết</p>
+<div class="mt-2 flex gap-2">
+<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-600 dark:bg-red-900/20">Hành chính</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-slate-300 group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pb-safe shadow-[0_-4px_12px_rgba(0,0,0,0.05)] px-2 pt-2 pb-3">
+<div class="flex justify-around items-center">
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium">Trang chủ</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="text-[10px] font-medium">Tài liệu</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="text-[10px] font-medium">Lịch hẹn</span>
+</a>
+<a class="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium">Hồ sơ</span>
+</a>
+</div>
+</nav>
+<!-- Floating Action Button -->
+<button class="fixed bottom-24 right-4 md:right-[calc(50%-200px)] w-14 h-14 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform z-30">
+<span class="material-symbols-outlined text-3xl">add</span>
+</button>
+</div>
+</body></html>

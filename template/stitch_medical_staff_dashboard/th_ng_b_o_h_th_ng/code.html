@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#156bc1",
+              "background-light": "#f6f7f8",
+              "background-dark": "#111921",
+            },
+            fontFamily: {
+              "display": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<title>Thông báo hệ thống</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full max-w-md mx-auto flex-col bg-white dark:bg-slate-900 shadow-xl overflow-x-hidden">
+<!-- Header -->
+<div class="flex items-center bg-white dark:bg-slate-900 p-4 border-b border-slate-100 dark:border-slate-800 justify-between sticky top-0 z-10">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center">Thông báo</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-10 w-10 bg-transparent text-slate-900 dark:text-slate-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Tabs -->
+<div class="bg-white dark:bg-slate-900 sticky top-[65px] z-10">
+<div class="flex border-b border-slate-100 dark:border-slate-800 px-4 gap-8">
+<a class="flex flex-col items-center justify-center border-b-2 border-primary text-primary pb-3 pt-4" href="#">
+<p class="text-sm font-bold leading-normal">Tất cả</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3 pt-4" href="#">
+<p class="text-sm font-bold leading-normal">Chưa đọc</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-2 border-transparent text-slate-500 dark:text-slate-400 pb-3 pt-4" href="#">
+<p class="text-sm font-bold leading-normal">Quan trọng</p>
+</a>
+</div>
+</div>
+<!-- Notification List -->
+<div class="flex flex-col divide-y divide-slate-50 dark:divide-slate-800">
+<!-- Notification Item 1 -->
+<div class="flex gap-4 bg-primary/5 dark:bg-primary/10 px-4 py-5 transition-colors">
+<div class="flex items-start gap-4 flex-1">
+<div class="text-primary flex items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">lab_research</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<div class="flex items-center gap-2 mb-1">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight">Kết quả xét nghiệm mới</p>
+<div class="size-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.6)]"></div>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-normal leading-relaxed mb-1">Kết quả xét nghiệm máu của bạn đã có. Vui lòng kiểm tra chi tiết trong mục hồ sơ y tế.</p>
+<p class="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">10 phút trước</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Notification Item 2 -->
+<div class="flex gap-4 bg-white dark:bg-slate-900 px-4 py-5">
+<div class="flex items-start gap-4 flex-1">
+<div class="text-green-600 flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">sync_saved_locally</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight mb-1">Đồng bộ dữ liệu thành công</p>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-normal leading-relaxed mb-1">Dữ liệu sức khỏe từ Apple Watch của bạn đã được cập nhật hoàn tất vào hệ thống.</p>
+<p class="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">1 giờ trước</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<!-- Notification Item 3 -->
+<div class="flex gap-4 bg-white dark:bg-slate-900 px-4 py-5">
+<div class="flex items-start gap-4 flex-1">
+<div class="text-amber-500 flex items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20 shrink-0 size-12">
+<span class="material-symbols-outlined text-2xl">calendar_month</span>
+</div>
+<div class="flex flex-1 flex-col justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-base font-semibold leading-tight mb-1">Nhắc nhở lịch hẹn</p>
+<p class="text-slate-600 dark:text-slate-400 text-sm font-normal leading-relaxed mb-1">Bạn có lịch hẹn tái khám với Bác sĩ Nguyễn Văn A vào lúc 09:00 sáng mai.</p>
+<p class="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">3 giờ trước</p>
+</div>
+</div>
+<div class="shrink-0">
+<button class="text-slate-400 hover:text-slate-600">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bottom Nav Bar -->
+<div class="mt-auto border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pb-4 pt-2 flex items-center justify-around sticky bottom-0">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal">Trang chủ</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">monitor_heart</span>
+<p class="text-[10px] font-medium leading-normal">Sức khỏe</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">notifications</span>
+<p class="text-[10px] font-medium leading-normal">Thông báo</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-[10px] font-medium leading-normal">Cá nhân</p>
+</a>
+</div>
+</div>
+</body></html>

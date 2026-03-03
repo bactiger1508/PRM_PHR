@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Cài đặt cá nhân</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full max-w-md mx-auto flex-col bg-white dark:bg-background-dark overflow-x-hidden border-x border-slate-200 dark:border-slate-800">
+<!-- Header -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 sticky top-0 z-10 border-b border-slate-100 dark:border-slate-800">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 ml-2">Cài đặt</h2>
+</div>
+<!-- Profile Section -->
+<div class="flex p-6 @container">
+<div class="flex w-full flex-col gap-4 items-center">
+<div class="flex gap-4 flex-col items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full min-h-28 w-28 ring-4 ring-primary/10 shadow-sm" data-alt="Ảnh đại diện người dùng nam trẻ tuổi chuyên nghiệp" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA0atGb7nQOrY9bJSnniRpk4vzaDaAFNLYDKTmVj4BgHsm1ZqyOeY3vSI2eItXDY6IQiQcDEnhhR3-Hsxp8BC9fpD0dKGfyM3U-xgk9R9JYcGwglBsx-E2qyeY4BfDtTpBbBmuyCQgQMbr0KZy-uOkEucVy9bL7nuZTzQH5VdjpnFigyEN-aJzuu3zxjSfaflhqtOYKzSHdMyFtgrDOiuUa3MZsJ4e3LdFeA2wnAGMPW1YT3HWhJIqQNPFzwWn9xRWIUwWV7UqRH_gK");'></div>
+<div class="flex flex-col items-center justify-center">
+<p class="text-slate-900 dark:text-slate-100 text-[22px] font-bold leading-tight tracking-tight text-center">Nguyễn Văn A</p>
+<p class="text-slate-500 dark:text-slate-400 text-sm font-normal leading-normal text-center mt-1">ID: 12345678</p>
+</div>
+</div>
+<button class="flex min-w-[140px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-6 bg-primary text-white text-sm font-bold leading-normal tracking-wide w-full max-w-[280px] hover:bg-primary/90 transition-colors">
+<span>Cập nhật hồ sơ</span>
+</button>
+</div>
+</div>
+<!-- Security Section -->
+<div class="px-4 py-2 mt-2">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-wider px-2 pb-2 opacity-60">Bảo mật</h3>
+<div class="flex flex-col gap-1">
+<!-- Change Password -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900/50 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-10">
+<span class="material-symbols-outlined">lock</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-base font-medium flex-1 truncate">Đổi mật khẩu</p>
+<div class="text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+<!-- Biometric Login -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900/50 p-3 rounded-xl">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-10">
+<span class="material-symbols-outlined">fingerprint</span>
+</div>
+<div class="flex flex-col flex-1">
+<p class="text-slate-900 dark:text-slate-100 text-base font-medium">Đăng nhập sinh trắc học</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<!-- App Settings Section -->
+<div class="px-4 py-2 mt-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-wider px-2 pb-2 opacity-60">Ứng dụng</h3>
+<div class="flex flex-col gap-1">
+<!-- Language -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900/50 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-10">
+<span class="material-symbols-outlined">language</span>
+</div>
+<div class="flex-1">
+<p class="text-slate-900 dark:text-slate-100 text-base font-medium">Ngôn ngữ</p>
+<p class="text-slate-500 text-xs">Tiếng Việt</p>
+</div>
+<div class="text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+<!-- Notifications -->
+<div class="flex items-center gap-4 bg-white dark:bg-slate-900/50 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+<div class="text-primary flex items-center justify-center rounded-lg bg-primary/10 shrink-0 size-10">
+<span class="material-symbols-outlined">notifications</span>
+</div>
+<p class="text-slate-900 dark:text-slate-100 text-base font-medium flex-1">Thông báo nhắc nhở</p>
+<div class="text-slate-400">
+<span class="material-symbols-outlined">chevron_right</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Logout Button -->
+<div class="p-6 mt-auto">
+<button class="flex w-full items-center justify-center gap-2 rounded-xl py-4 bg-orange-600 hover:bg-orange-700 text-white font-bold transition-all shadow-lg shadow-orange-600/20">
+<span class="material-symbols-outlined">logout</span>
+<span>Đăng xuất</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar -->
+<div class="flex gap-2 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-background-dark px-4 pb-6 pt-3 mt-4">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Trang chủ</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">search</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Khám phá</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Thông báo</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">person</span>
+<p class="text-[10px] font-medium leading-normal tracking-tight">Cá nhân</p>
+</a>
+</div>
+</div>
+</body></html>

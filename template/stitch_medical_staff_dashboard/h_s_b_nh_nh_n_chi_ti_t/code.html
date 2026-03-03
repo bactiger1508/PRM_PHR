@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<title>Hồ sơ bệnh nhân - Staff View</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<!-- Header Section -->
+<div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-10">
+<div class="flex items-center px-4 py-3 justify-between max-w-5xl mx-auto">
+<div class="flex items-center gap-3">
+<button class="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-full">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight">Chi tiết hồ sơ</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center justify-center p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<main class="max-w-5xl mx-auto pb-24">
+<!-- Patient Profile Header -->
+<div class="bg-white dark:bg-slate-900 p-4 md:p-6 mb-1 shadow-sm">
+<div class="flex flex-col md:flex-row gap-6 items-start md:items-center">
+<div class="relative">
+<div class="bg-slate-200 dark:bg-slate-800 aspect-square rounded-full w-24 h-24 md:w-32 md:h-32 bg-cover bg-center border-4 border-white dark:border-slate-800" data-alt="Avatar portrait of a male patient" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAfSqkQyC6NaGSVjZpOs6A1uBVfnmWf3NO_WYltQ6divabyX3A6ufNslbH3Re_1qeTtmH_vvSEdrXJJ2KVf7boi1_U6BxcDneVqmAb91n442JkMJpqLpbFOvQEmMS5b5afbLOFQp8xuPQd9aHU2AqG4m4TVTOPD1wYS-fVZr8vbQtWhebk4hjE_AvmjFmFS8jmN0CjmCt8cisCb6LFNT-68z1e4FiB3Gui7V0ohIFCQAo39GWZ8k5nNObnjUp5aNs98i7gqocLW8VUT")'>
+</div>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex flex-wrap items-center gap-3">
+<h2 class="text-2xl md:text-3xl font-bold text-slate-900 dark:text-slate-100">Nguyễn Văn An</h2>
+<span class="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold uppercase tracking-wider">
+                            Hoạt động
+                        </span>
+</div>
+<p class="text-slate-600 dark:text-slate-400 text-base flex flex-wrap gap-x-4">
+<span><span class="font-medium">Tuổi:</span> 35</span>
+<span class="hidden md:inline text-slate-300">|</span>
+<span><span class="font-medium">Giới tính:</span> Nam</span>
+<span class="hidden md:inline text-slate-300">|</span>
+<span><span class="font-medium">Mã Y Tế:</span> BN123456</span>
+</p>
+</div>
+<div class="w-full md:w-auto">
+<button class="w-full bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-xl">add</span>
+                        Thêm tài liệu
+                    </button>
+</div>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4">
+<div class="flex gap-8 max-w-5xl mx-auto">
+<a class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 font-semibold text-sm hover:text-slate-700" href="#">
+                    Thông tin
+                </a>
+<a class="py-4 border-b-2 border-primary text-primary font-bold text-sm" href="#">
+                    Tài liệu
+                </a>
+<a class="py-4 border-b-2 border-transparent text-slate-500 dark:text-slate-400 font-semibold text-sm hover:text-slate-700" href="#">
+                    Lịch sử khám
+                </a>
+</div>
+</div>
+<!-- Documents Content -->
+<div class="p-4 md:p-6 space-y-6">
+<!-- Filters -->
+<div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+<div class="flex flex-wrap gap-2 w-full md:w-auto">
+<div class="relative flex-1 md:w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-primary focus:border-primary" placeholder="Tìm tên tài liệu..." type="text"/>
+</div>
+<select class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm py-2 px-3 focus:ring-primary">
+<option>Tất cả loại</option>
+<option>Xét nghiệm</option>
+<option>X-Quang</option>
+<option>Đơn thuốc</option>
+</select>
+<button class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium hover:bg-slate-200">
+<span class="material-symbols-outlined text-sm">filter_alt</span>
+                        Tag
+                    </button>
+</div>
+<p class="text-sm text-slate-500 dark:text-slate-400 w-full md:w-auto">Đang hiển thị 12 tài liệu</p>
+</div>
+<!-- Documents List -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<!-- Doc Card 1 -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">description</span>
+</div>
+<span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">PDF • 2.4 MB</span>
+</div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">Kết quả xét nghiệm máu tổng quát</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Ngày tải: 12/10/2023</p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium">Xét nghiệm</span>
+<span class="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded text-[10px] font-medium">Quan trọng</span>
+</div>
+</div>
+<!-- Doc Card 2 -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">image</span>
+</div>
+<span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">DICOM • 15 MB</span>
+</div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">Phim chụp X-Quang phổi thẳng</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Ngày tải: 05/10/2023</p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium">Chẩn đoán hình ảnh</span>
+</div>
+</div>
+<!-- Doc Card 3 -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">medication</span>
+</div>
+<span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">PDF • 0.8 MB</span>
+</div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">Đơn thuốc điều trị ngoại trú</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Ngày tải: 01/10/2023</p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium">Đơn thuốc</span>
+<span class="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded text-[10px] font-medium">Đã cấp</span>
+</div>
+</div>
+<!-- Doc Card 4 -->
+<div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 dark:bg-primary/20 rounded-lg text-primary">
+<span class="material-symbols-outlined">clinical_notes</span>
+</div>
+<span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">DOCX • 1.2 MB</span>
+</div>
+<h3 class="font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">Báo cáo tóm tắt bệnh án</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Ngày tải: 28/09/2023</p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-medium">Hồ sơ chính</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar (Mobile) -->
+<div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 pb-4 pt-2 md:hidden">
+<div class="flex justify-around items-center">
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium">Trang chủ</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">group</span>
+<p class="text-[10px] font-medium">Bệnh nhân</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<p class="text-[10px] font-medium">Lịch hẹn</p>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<p class="text-[10px] font-medium">Cá nhân</p>
+</a>
+</div>
+</div>
+</body></html>

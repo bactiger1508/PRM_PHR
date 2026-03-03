@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#156bc1",
+                "background-light": "#f6f7f8",
+                "background-dark": "#111921",
+              },
+              fontFamily: {
+                "display": ["Inter"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-screen w-full max-w-md mx-auto flex-col bg-white dark:bg-slate-900 overflow-hidden shadow-xl">
+<div class="flex items-center bg-transparent p-4 justify-end">
+<button class="text-slate-500 dark:text-slate-400 text-base font-semibold leading-normal hover:text-primary transition-colors">
+                Bỏ qua
+            </button>
+</div>
+<div class="flex-1 flex flex-col justify-center px-6">
+<div class="@container">
+<div class="relative w-full aspect-square max-w-[280px] mx-auto flex items-center justify-center">
+<div class="absolute inset-0 bg-primary/5 rounded-full animate-pulse"></div>
+<div class="relative z-10 w-full h-full flex items-center justify-center bg-white dark:bg-slate-800 rounded-2xl shadow-sm overflow-hidden border border-slate-100 dark:border-slate-700" data-alt="Vector medical records folder with a red heart icon" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDjit3Bwd2wQNRt9s-ni7LvdbPTi2zSvG3C5uktJOCpluXcadAjtLcqdLdoINfKwx8cDT28YV37aXb8lWbmlKQfGPz6zxgpifyYP4UzXryd7-C2l_oC2BJZxIOSEyNUwPkZd8qthfASZY6c8lGoyffEPudUoUakjmQUqkf05xfeLR6LVTaowoW2Z5JMHhSYoIIcrk27Th4oKMXhauSjXyO4LKDzhhBOTW27-CImq35ZhuXw50vYEefZfbQbly4iUaz_9putry3sHR2b"); background-size: cover; background-position: center;'>
+</div>
+<div class="absolute -bottom-4 -right-4 bg-primary p-4 rounded-2xl shadow-lg">
+<span class="material-symbols-outlined text-white text-4xl">
+                            folder_shared
+                        </span>
+</div>
+</div>
+</div>
+<div class="mt-12 text-center">
+<h1 class="text-slate-900 dark:text-slate-50 tracking-tight text-3xl font-bold leading-tight pb-4">
+                    Quản lý tập trung
+                </h1>
+<p class="text-slate-600 dark:text-slate-300 text-lg font-normal leading-relaxed px-2">
+                    Lưu trữ và quản lý hồ sơ y tế của bạn và cả gia đình tại một nơi duy nhất, an toàn và bảo mật.
+                </p>
+</div>
+</div>
+<div class="px-6 pb-12">
+<div class="flex w-full flex-row items-center justify-center gap-2 mb-8">
+<div class="h-2 w-6 rounded-full bg-primary"></div>
+<div class="h-2 w-2 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+<div class="h-2 w-2 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+</div>
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                Tiếp theo
+                <span class="material-symbols-outlined">
+                    arrow_forward
+                </span>
+</button>
+</div>
+</div>
+</body></html>

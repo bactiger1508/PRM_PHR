@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#156bc1",
+              "background-light": "#f6f7f8",
+              "background-dark": "#111921",
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<title>Quản lý Nhãn</title>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
+<div class="relative flex h-auto min-h-screen w-full max-w-md mx-auto flex-col bg-background-light dark:bg-background-dark overflow-x-hidden">
+<!-- Header -->
+<div class="flex items-center bg-white dark:bg-slate-800 p-4 sticky top-0 z-10 border-b border-slate-200 dark:border-slate-700">
+<div class="text-primary flex size-10 shrink-0 items-center cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 ml-2">Quản lý Nhãn</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-10 w-10 bg-transparent text-slate-600 dark:text-slate-400">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Search Bar -->
+<div class="px-4 py-4 bg-white dark:bg-slate-800">
+<label class="flex flex-col min-w-40 h-12 w-full">
+<div class="flex w-full flex-1 items-stretch rounded-xl h-full border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+<div class="text-slate-400 flex items-center justify-center pl-4 bg-slate-50 dark:bg-slate-900">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="form-input flex w-full min-w-0 flex-1 border-none bg-slate-50 dark:bg-slate-900 focus:ring-0 h-full placeholder:text-slate-400 px-4 pl-2 text-base font-normal" placeholder="Tìm kiếm nhãn..." value=""/>
+</div>
+</label>
+</div>
+<!-- Action Buttons -->
+<div class="flex justify-stretch bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+<div class="flex flex-1 gap-3 px-4 pb-4">
+<button class="flex-1 flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-4 bg-primary text-white text-sm font-bold shadow-sm">
+<span class="material-symbols-outlined mr-2 text-sm">add</span>
+<span class="truncate">Thêm nhãn mới</span>
+</button>
+<button class="flex-1 flex cursor-pointer items-center justify-center overflow-hidden rounded-xl h-11 px-4 bg-primary/10 text-primary text-sm font-bold border border-primary/20">
+<span class="material-symbols-outlined mr-2 text-sm">call_merge</span>
+<span class="truncate">Gộp nhãn</span>
+</button>
+</div>
+</div>
+<!-- Labels List Section -->
+<div class="flex flex-col gap-1 p-4">
+<h3 class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider pb-2">Tất cả nhãn (12)</h3>
+<!-- Tag Item 1 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-slate-100 font-semibold">Tim mạch</span>
+<span class="text-slate-500 text-xs">24 tài liệu</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- Tag Item 2 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-slate-100 font-semibold">Tiểu đường</span>
+<span class="text-slate-500 text-xs">18 tài liệu</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- Tag Item 3 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-slate-100 font-semibold">Huyết áp</span>
+<span class="text-slate-500 text-xs">42 tài liệu</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- Tag Item 4 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-slate-100 font-semibold">Xét nghiệm máu</span>
+<span class="text-slate-500 text-xs">12 tài liệu</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- Tag Item 5 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-slate-100 font-semibold">Đơn thuốc 2023</span>
+<span class="text-slate-500 text-xs">8 tài liệu</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+<!-- Tag Item 6 -->
+<div class="flex items-center justify-between p-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 mb-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 dark:text-slate-100 font-semibold">Khác</span>
+<span class="text-slate-500 text-xs">3 tài liệu</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-primary transition-colors">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+<div class="flex-1"></div>
+<!-- Bottom Navigation -->
+<div class="flex gap-2 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 pb-3 pt-2 sticky bottom-0">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">home</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Trang chủ</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">description</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Tài liệu</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1">label</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Nhãn</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 dark:text-slate-500" href="#">
+<div class="flex h-8 items-center justify-center">
+<span class="material-symbols-outlined">settings</span>
+</div>
+<p class="text-[10px] font-medium leading-normal tracking-wide">Cài đặt</p>
+</a>
+</div>
+</div>
+</body></html>

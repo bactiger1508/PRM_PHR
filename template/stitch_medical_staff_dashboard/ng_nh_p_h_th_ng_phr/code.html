@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#1565C0",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="flex min-h-screen items-center justify-center p-4">
+<div class="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-xl overflow-hidden">
+<!-- Header/Logo Section -->
+<div class="flex flex-col items-center pt-10 pb-6 px-6">
+<div class="bg-primary/10 p-3 rounded-full mb-4">
+<span class="material-symbols-outlined text-primary text-5xl">health_metrics</span>
+</div>
+<h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">Hệ thống PHR</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-2 text-center">Hồ sơ sức khỏe điện tử cá nhân chuyên nghiệp</p>
+</div>
+<!-- Role Selection -->
+<div class="px-8 pb-6">
+<div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-lg">
+<label class="flex-1 cursor-pointer">
+<input checked="" class="hidden peer" name="role" type="radio" value="customer"/>
+<div class="text-center py-2 text-sm font-medium rounded-md transition-all peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm text-slate-600 dark:text-slate-400 dark:peer-checked:bg-slate-700 dark:peer-checked:text-white">
+                            Khách hàng
+                        </div>
+</label>
+<label class="flex-1 cursor-pointer">
+<input class="hidden peer" name="role" type="radio" value="staff"/>
+<div class="text-center py-2 text-sm font-medium rounded-md transition-all peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm text-slate-600 dark:text-slate-400 dark:peer-checked:bg-slate-700 dark:peer-checked:text-white">
+                            Nhân viên y tế
+                        </div>
+</label>
+</div>
+</div>
+<!-- Login Form -->
+<form class="px-8 pb-8 space-y-5">
+<div>
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Số điện thoại hoặc Email</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+<input class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="Nhập email hoặc số điện thoại" type="text"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Mật khẩu</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+<input class="w-full pl-10 pr-12 py-2.5 rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none" placeholder="••••••••" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" type="button">
+<span class="material-symbols-outlined text-xl">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<label class="flex items-center space-x-2 cursor-pointer">
+<input class="rounded border-slate-300 text-primary focus:ring-primary" type="checkbox"/>
+<span class="text-sm text-slate-600 dark:text-slate-400">Ghi nhớ</span>
+</label>
+<a class="text-sm font-semibold text-primary hover:underline" href="#">Quên mật khẩu?</a>
+</div>
+<button class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 rounded-lg shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98]" type="submit">
+                    Đăng nhập
+                </button>
+<div class="relative my-8">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-slate-200 dark:border-slate-700"></div>
+</div>
+<div class="relative flex justify-center text-sm">
+<span class="px-2 bg-white dark:bg-slate-900 text-slate-500">Hoặc đăng nhập với</span>
+</div>
+</div>
+<!-- Social Login -->
+<div class="grid grid-cols-3 gap-4">
+<button class="flex items-center justify-center py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" type="button">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M12.48 10.92v3.28h7.84c-.24 1.84-.90 3.16-1.92 4.16-1.12 1.12-2.8 2.32-5.92 2.32-4.72 0-8.52-3.84-8.52-8.56s3.8-8.56 8.52-8.56c2.56 0 4.44.96 5.84 2.24l2.32-2.32C18.48 1.48 15.84 0 12.48 0 5.56 0 0 5.56 0 12.48s5.56 12.48 12.48 12.48c3.76 0 6.6-1.24 8.76-3.48 2.24-2.24 2.92-5.4 2.92-8.12 0-.8-.08-1.52-.2-2.24h-11.48z" fill="#EA4335"></path>
+</svg>
+</button>
+<button class="flex items-center justify-center py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" type="button">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="#1877F2"></path>
+</svg>
+</button>
+<button class="flex items-center justify-center py-2.5 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" type="button">
+<svg class="w-5 h-5" viewbox="0 0 24 24">
+<path class="dark:fill-white" d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.535 17.876c-.202.03-.406.046-.609.046-.567 0-1.056-.39-1.173-.933l-1.209-5.619c-.176-.818-.813-1.455-1.631-1.631l-5.619-1.209c-.543-.117-.933-.606-.933-1.173 0-.203.016-.407.046-.609.117-.792.933-1.353 1.725-1.236l11.238 2.42c.792.171 1.253.987 1.082 1.779l-2.42 11.238c-.117.792-.933 1.353-1.725 1.236z" fill="#000000"></path>
+</svg>
+</button>
+</div>
+</form>
+<!-- Footer Section -->
+<div class="bg-slate-50 dark:bg-slate-800/50 py-4 px-8 text-center border-t border-slate-100 dark:border-slate-800">
+<p class="text-sm text-slate-600 dark:text-slate-400">
+                    Chưa có tài khoản? 
+                    <a class="font-bold text-primary hover:underline" href="#">Đăng ký ngay</a>
+</p>
+</div>
+</div>
+</div>
+<!-- Decorative Elements -->
+<div class="fixed top-0 right-0 -z-10 opacity-10 blur-3xl pointer-events-none">
+<div class="bg-primary w-[500px] h-[500px] rounded-full"></div>
+</div>
+<div class="fixed bottom-0 left-0 -z-10 opacity-10 blur-3xl pointer-events-none">
+<div class="bg-primary w-[300px] h-[300px] rounded-full"></div>
+</div>
+</body></html>

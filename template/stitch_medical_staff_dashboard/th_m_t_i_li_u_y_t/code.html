@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Thêm Tài liệu Y tế</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-md mx-auto bg-white dark:bg-slate-900 min-h-screen shadow-xl flex flex-col">
+<!-- Header -->
+<header class="flex items-center justify-between px-4 py-4 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
+<div class="flex items-center gap-3">
+<button class="flex items-center justify-center p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-slate-600 dark:text-slate-400">close</span>
+</button>
+<h1 class="text-lg font-bold tracking-tight">Thêm Tài liệu Y tế</h1>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2 rounded-lg font-bold text-sm transition-colors">
+                Lưu
+            </button>
+</header>
+<main class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Loại tài liệu -->
+<section>
+<h3 class="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Loại tài liệu</h3>
+<div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+<label class="flex-1 cursor-pointer group">
+<input checked="" class="peer hidden" name="doc_type" type="radio"/>
+<div class="py-2.5 text-center rounded-lg text-sm font-semibold text-slate-500 peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm dark:peer-checked:bg-slate-700 transition-all">
+                            Xét nghiệm
+                        </div>
+</label>
+<label class="flex-1 cursor-pointer group">
+<input class="peer hidden" name="doc_type" type="radio"/>
+<div class="py-2.5 text-center rounded-lg text-sm font-semibold text-slate-500 peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm dark:peer-checked:bg-slate-700 transition-all">
+                            Đơn thuốc
+                        </div>
+</label>
+<label class="flex-1 cursor-pointer group">
+<input class="peer hidden" name="doc_type" type="radio"/>
+<div class="py-2.5 text-center rounded-lg text-sm font-semibold text-slate-500 peer-checked:bg-white peer-checked:text-primary peer-checked:shadow-sm dark:peer-checked:bg-slate-700 transition-all">
+                            Chẩn đoán
+                        </div>
+</label>
+</div>
+</section>
+<!-- Tải lên -->
+<section class="grid grid-cols-2 gap-4">
+<button class="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-primary/30 rounded-2xl bg-primary/5 hover:bg-primary/10 transition-colors group">
+<div class="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20 group-active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-3xl">photo_camera</span>
+</div>
+<span class="text-sm font-bold text-primary">Chụp ảnh</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors group">
+<div class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-600 flex items-center justify-center text-slate-600 dark:text-slate-200 group-active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-3xl">image</span>
+</div>
+<span class="text-sm font-bold text-slate-600 dark:text-slate-300">Từ thư viện</span>
+</button>
+</section>
+<!-- Tiến trình tải lên -->
+<section class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-sm">description</span>
+<span class="text-xs font-medium text-slate-600 dark:text-slate-400">ket-qua-xet-nghiem.jpg</span>
+</div>
+<span class="text-xs font-bold text-primary">45%</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[45%] rounded-full"></div>
+</div>
+</section>
+<!-- Thông tin chi tiết -->
+<section class="space-y-4">
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Tiêu đề tài liệu</label>
+<input class="w-full px-4 py-3 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary" placeholder="Ví dụ: Xét nghiệm máu tổng quát" type="text"/>
+</div>
+<div class="grid grid-cols-1 gap-4">
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Ngày khám</label>
+<div class="relative">
+<input class="w-full px-4 py-3 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary" type="date"/>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Nhãn (Tags)</label>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="px-3 py-1 bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300 rounded-full text-xs font-semibold flex items-center gap-1">
+                            Sức khỏe định kỳ <span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</span>
+<span class="px-3 py-1 bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300 rounded-full text-xs font-semibold flex items-center gap-1">
+                            Bệnh viện Bạch Mai <span class="material-symbols-outlined text-[14px] cursor-pointer">close</span>
+</span>
+<button class="px-3 py-1 border border-slate-200 dark:border-slate-700 text-slate-500 rounded-full text-xs font-semibold hover:bg-slate-50 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">add</span> Thêm nhãn
+                        </button>
+</div>
+</div>
+<div>
+<label class="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Ghi chú</label>
+<textarea class="w-full px-4 py-3 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary" placeholder="Nhập ghi chú thêm về tài liệu này..." rows="3"></textarea>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Reuse from component list) -->
+<nav class="border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 pb-6 pt-2">
+<div class="flex gap-2">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-bold uppercase">Trang chủ</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#">
+<span class="material-symbols-outlined font-fill">description</span>
+<p class="text-[10px] font-bold uppercase">Tài liệu</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<p class="text-[10px] font-bold uppercase">Nhắc nhở</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-bold uppercase">Hồ sơ</p>
+</a>
+</div>
+</nav>
+</div>
+</body></html>

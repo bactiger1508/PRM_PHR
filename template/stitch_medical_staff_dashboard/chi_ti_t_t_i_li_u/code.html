@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+
+<html lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Chi tiết Tài liệu Y tế</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#156bc1",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111921",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-white dark:bg-background-dark group/design-root overflow-x-hidden max-w-md mx-auto shadow-xl">
+<!-- Security Header -->
+<div class="bg-primary/10 px-4 py-2 flex items-center justify-center gap-2 border-b border-primary/20">
+<span class="material-symbols-outlined text-primary text-[18px]">lock</span>
+<p class="text-primary text-[10px] font-bold uppercase tracking-wider text-center">TÀI LIỆU NÀY ĐƯỢC BẢO MẬT BỞI HỆ THỐNG PHR</p>
+</div>
+<!-- Top App Bar -->
+<div class="flex items-center bg-white dark:bg-background-dark p-4 pb-2 justify-between">
+<div class="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center cursor-pointer">
+<span class="material-symbols-outlined">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">Chi tiết Tài liệu</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex cursor-pointer items-center justify-center rounded-lg h-10 w-10 bg-transparent text-slate-900 dark:text-slate-100">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+</div>
+<!-- Document Preview Section -->
+<div class="p-4 @container">
+<div class="relative flex flex-col items-stretch justify-start rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+<div class="relative w-full aspect-[3/4] bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden group">
+<div class="absolute inset-0 bg-cover bg-center opacity-80" data-alt="Medical laboratory test results document preview" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB03yt8qB_JPDZfSaUgUmr2HUym4lUA3hOIU40jOVSpvXboERLjDDS6P57TxSeKKGn8zp5SZafse8FKbybNHt28YZG0ISgyeR2_SKqwAVdwvM5wQl1E0oeW2pn1nc0AouUxllOkJ85aiYUhevVLbMLLYp-FFL888s-OV18B6U5Fr59TNVTFX6JZ3_zjIdilfPKjalLWjqnbYunBl0W9TYXwSgt7aGDstPUerIik9kUIAzW9LaVWQzeYdcWctEwB0_bYXI-GoUvLhT3x")'>
+</div>
+<!-- Overlay with Icon -->
+<div class="absolute inset-0 bg-slate-900/20 flex items-center justify-center">
+<div class="bg-white/90 dark:bg-slate-800/90 p-4 rounded-full shadow-lg">
+<span class="material-symbols-outlined text-primary text-3xl">zoom_in</span>
+</div>
+</div>
+</div>
+<div class="flex w-full flex-col items-stretch justify-center gap-1 p-4">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-500 text-sm">visibility</span>
+<p class="text-slate-900 dark:text-slate-100 text-base font-bold leading-tight">Xem trước tài liệu</p>
+</div>
+<div class="flex items-center justify-between mt-1">
+<p class="text-slate-500 dark:text-slate-400 text-sm">Chế độ chỉ đọc</p>
+<button class="flex items-center justify-center rounded-lg h-8 px-4 bg-primary text-white text-xs font-semibold">
+                            Phóng to
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Details Info -->
+<div class="px-4 py-2">
+<h3 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-[-0.015em] mb-4">Thông tin chi tiết</h3>
+<div class="space-y-1">
+<div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Ngày cấp</p>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-semibold">20/05/2024</p>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Loại tài liệu</p>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-semibold text-right">Kết quả xét nghiệm máu</p>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Nhãn</p>
+<div class="flex gap-2">
+<span class="px-2 py-1 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase">Quan trọng</span>
+<span class="px-2 py-1 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-bold uppercase text-[10px] font-bold uppercase">Đã xác thực</span>
+</div>
+</div>
+<div class="flex justify-between items-center py-3 border-b border-slate-100 dark:border-slate-800">
+<p class="text-slate-500 dark:text-slate-400 text-sm font-medium">Nơi cấp</p>
+<p class="text-slate-900 dark:text-slate-100 text-sm font-semibold text-right">Bệnh viện Đa khoa Quốc tế</p>
+</div>
+</div>
+</div>
+<!-- Notes Section -->
+<div class="p-4">
+<div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+<p class="text-slate-900 dark:text-slate-100 text-sm font-bold mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">notes</span>
+                    Ghi chú
+                </p>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                    Tài liệu này bao gồm các chỉ số huyết học cơ bản. Bác sĩ yêu cầu tái khám sau 3 tháng để theo dõi nồng độ Cholesterol.
+                </p>
+</div>
+</div>
+<!-- Download Button -->
+<div class="mt-auto p-4 pb-8">
+<button class="w-full flex items-center justify-center gap-2 rounded-xl h-14 bg-primary text-white text-base font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined">download</span>
+                Tải xuống tài liệu (PDF)
+            </button>
+<p class="text-center text-slate-400 text-[10px] mt-4">
+                ID Tài liệu: PHR-2024-0520-XN01
+            </p>
+</div>
+</div>
+</body></html>
