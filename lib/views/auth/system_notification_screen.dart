@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class SystemNotificationScreen extends StatefulWidget {
-  const SystemNotificationScreen({super.key});
+  final bool embedded;
+  const SystemNotificationScreen({super.key, this.embedded = false});
 
   @override
   State<SystemNotificationScreen> createState() =>
@@ -15,6 +16,79 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget mainContent = Column(
+      children: [
+        Container(
+          color: Colors.white,
+          child: Row(
+            children: [
+              _buildTabItem(title: 'Tất cả', index: 0),
+              _buildTabItem(title: 'Chưa đọc', index: 1),
+              _buildTabItem(title: 'Quan trọng', index: 2),
+            ],
+          ),
+        ),
+        const Divider(height: 1, color: AppColors.border),
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildNotificationItem(
+                  icon: Icons.science_outlined,
+                  iconColor: AppColors.primary,
+                  iconBgColor: AppColors.primary.withValues(alpha: 0.1),
+                  title: 'Kết quả xét nghiệm mới',
+                  message:
+                      'Kết quả xét nghiệm máu của bạn đã có. Vui lòng kiểm tra chi tiết trong mục hồ sơ y tế.',
+                  time: '10 phút trước',
+                  isUnread: true,
+                  bgColor: AppColors.primary.withValues(alpha: 0.05),
+                ),
+                Container(
+                  height: 1,
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+                _buildNotificationItem(
+                  icon: Icons.sync_rounded,
+                  iconColor: Colors.green[600]!,
+                  iconBgColor: Colors.green[50]!,
+                  title: 'Đồng bộ dữ liệu thành công',
+                  message:
+                      'Dữ liệu sức khỏe từ Apple Watch của bạn đã được cập nhật hoàn tất vào hệ thống.',
+                  time: '1 giờ trước',
+                ),
+                Container(
+                  height: 1,
+                  color: AppColors.border.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+
+    if (widget.embedded) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'Thông báo',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: mainContent,
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -40,61 +114,8 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
             onPressed: () {},
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(48),
-          child: Column(
-            children: [
-              Container(color: AppColors.border, height: 1),
-              Container(
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    _buildTabItem(title: 'Tất cả', index: 0),
-                    _buildTabItem(title: 'Chưa đọc', index: 1),
-                    _buildTabItem(title: 'Quan trọng', index: 2),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildNotificationItem(
-                icon: Icons.science_outlined,
-                iconColor: AppColors.primary,
-                iconBgColor: AppColors.primary.withValues(alpha: 0.1),
-                title: 'Kết quả xét nghiệm mới',
-                message:
-                    'Kết quả xét nghiệm máu của bạn đã có. Vui lòng kiểm tra chi tiết trong mục hồ sơ y tế.',
-                time: '10 phút trước',
-                isUnread: true,
-                bgColor: AppColors.primary.withValues(alpha: 0.05),
-              ),
-              Container(
-                height: 1,
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-              _buildNotificationItem(
-                icon: Icons.sync_rounded,
-                iconColor: Colors.green[600]!,
-                iconBgColor: Colors.green[50]!,
-                title: 'Đồng bộ dữ liệu thành công',
-                message:
-                    'Dữ liệu sức khỏe từ Apple Watch của bạn đã được cập nhật hoàn tất vào hệ thống.',
-                time: '1 giờ trước',
-              ),
-              Container(
-                height: 1,
-                color: AppColors.border.withValues(alpha: 0.5),
-              ),
-            ],
-          ),
-        ),
-      ),
+      body: mainContent,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

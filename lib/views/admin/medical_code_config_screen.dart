@@ -10,9 +10,7 @@ class MedicalCodeConfigScreen extends StatefulWidget {
 }
 
 class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
-  int _selectedIndex = 0; // "Cấu hình"
   bool _requireOtp = true;
-  String _selectedAlgorithm = 'Luhn Algorithm';
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +66,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                       border: Border.all(
                         color: AppColors.primary.withValues(alpha: 0.3),
                         width: 2,
-                        style: BorderStyle.none,
-                      ), // dashed is not natively supported easily without dash_rect, using solid or lightly transparent borders
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -94,22 +91,23 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'PHR-8492-X',
+                          'PHR-16022004-24052024',
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: 20,
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 2,
+                            letterSpacing: 1,
                             color: AppColors.primary,
                           ),
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'VÍ DỤ ĐỊNH DẠNG MÃ HỆ THỐNG',
+                          'FORMAT: [TIỀN TỐ]-[NGÀY SINH]-[NGÀY TẠO]',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 10,
                             color: AppColors.textSecondary,
                             letterSpacing: 0.5,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ],
@@ -119,7 +117,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
               ),
             ),
 
-            // Tech Config Section
+            // Logic Config Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
@@ -134,7 +132,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        'Thông số kỹ thuật',
+                        'Thông số quy tắc',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -169,18 +167,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'Độ dài mã (ký tự)',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        _buildTextField(initialValue: '12', isNumber: true),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Thuật toán kiểm tra',
+                          'Quy tắc định danh',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -189,36 +176,14 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                         ),
                         const SizedBox(height: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            border: Border.all(color: AppColors.border),
+                            color: AppColors.backgroundLight,
                             borderRadius: BorderRadius.circular(8),
-                            color: Colors.white,
                           ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _selectedAlgorithm,
-                              isExpanded: true,
-                              items:
-                                  [
-                                    'Luhn Algorithm',
-                                    'Verhoeff Algorithm',
-                                    'ISO/IEC 7064',
-                                  ].map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(
-                                        value,
-                                        style: const TextStyle(fontSize: 14),
-                                      ),
-                                    );
-                                  }).toList(),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _selectedAlgorithm = val);
-                                }
-                              },
-                            ),
+                          child: const Text(
+                            'Mã y tế được tạo tự động theo quy tắc: [Tiền tố] - [Ngày sinh] - [Ngày tạo hồ sơ] để đảm bảo tính duy nhất và dễ tra cứu.',
+                            style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.4),
                           ),
                         ),
                       ],
@@ -267,7 +232,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Chính sách hết hạn (ngày)',
+                          'Thời gian hiệu lực mã (ngày)',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
@@ -275,7 +240,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _buildTextField(initialValue: '90', isNumber: true),
+                        _buildTextField(initialValue: '365', isNumber: true),
                         const SizedBox(height: 16),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -285,7 +250,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'Xác thực OTP khi tra cứu',
+                                    'Xác thực OTP qua Gmail',
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
@@ -294,7 +259,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   const Text(
-                                    'Yêu cầu mã OTP gửi đến SĐT bệnh nhân',
+                                    'Yêu cầu mã OTP gửi đến Gmail bệnh nhân khi tra cứu',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
@@ -322,7 +287,11 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Đã lưu cấu hình mã y tế mới')),
+                  );
+                },
                 icon: const Icon(Icons.save),
                 label: const Text('Lưu cấu hình'),
                 style: ElevatedButton.styleFrom(
@@ -343,38 +312,6 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
             ),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        backgroundColor: Colors.white,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Cấu hình',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Thống kê',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Tài khoản',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.tune_outlined),
-            activeIcon: Icon(Icons.tune),
-            label: 'Cài đặt',
-          ),
-        ],
       ),
     );
   }

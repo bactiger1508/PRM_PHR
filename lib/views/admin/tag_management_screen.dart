@@ -9,8 +9,6 @@ class TagManagementScreen extends StatefulWidget {
 }
 
 class _TagManagementScreenState extends State<TagManagementScreen> {
-  int _selectedIndex = 2; // "Nhãn" selected on bottom nav
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,38 +170,6 @@ class _TagManagementScreenState extends State<TagManagementScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        backgroundColor: Colors.white,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            activeIcon: Icon(Icons.description),
-            label: 'Tài liệu',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.label_outline),
-            activeIcon: Icon(Icons.label),
-            label: 'Nhãn',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Cài đặt',
-          ),
-        ],
       ),
     );
   }

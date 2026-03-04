@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
 class SystemAuditLogScreen extends StatefulWidget {
-  const SystemAuditLogScreen({super.key});
+  final bool embedded;
+  const SystemAuditLogScreen({super.key, this.embedded = false});
 
   @override
   State<SystemAuditLogScreen> createState() => _SystemAuditLogScreenState();
@@ -13,6 +14,128 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Widget mainContent = Column(
+      children: [
+        // Search
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Tìm kiếm nhân viên hoặc hành động...',
+              hintStyle: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textLight,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: AppColors.textLight,
+              ),
+              filled: true,
+              fillColor: AppColors.backgroundLight,
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+        ),
+        // Filters
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+          height: 48,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _buildFilterChip('Thời gian'),
+              const SizedBox(width: 8),
+              _buildFilterChip('Người dùng'),
+              const SizedBox(width: 8),
+              _buildFilterChip('Hành động'),
+            ],
+          ),
+        ),
+        Container(color: AppColors.border, height: 1), // Divider
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 24),
+            children: [
+              _buildDateHeader('HÔM NAY'),
+              _buildLogItem(
+                name: 'BS. Nguyễn Minh Anh',
+                time: '09:45',
+                action: 'Đã sửa hồ sơ bệnh nhân #BN0921',
+                actionColor: AppColors.primary,
+                device: 'MacBook Pro • 192.168.1.15',
+                deviceIcon: Icons.laptop_mac,
+                avatarUrl:
+                    'https://ui-avatars.com/api/?name=Nguyen+Minh+Anh&background=e0e7ff&color=156bc1',
+              ),
+              const Divider(height: 1, color: AppColors.border),
+              _buildLogItem(
+                name: 'Lê Hoàng Nam (IT)',
+                time: '08:12',
+                action: 'Đăng nhập hệ thống quản trị',
+                actionColor: AppColors.textPrimary,
+                device: 'Windows PC • Office Network',
+                deviceIcon: Icons.desktop_windows,
+                avatarUrl:
+                    'https://ui-avatars.com/api/?name=Le+Hoang+Nam&background=e2e8f0&color=475569',
+              ),
+              _buildDateHeader('HÔM QUA'),
+              _buildLogItem(
+                name: 'ĐD. Trần Thu Thủy',
+                time: '17:30',
+                action: 'Xuất báo cáo doanh thu tháng 10',
+                actionColor: AppColors.textPrimary,
+                device: 'iPad Air • Safari Browser',
+                deviceIcon: Icons.tablet_mac,
+                avatarUrl:
+                    'https://ui-avatars.com/api/?name=Tran+Thu+Thuy&background=fce7f3&color=db2777',
+              ),
+              const Divider(height: 1, color: AppColors.border),
+              _buildLogItem(
+                name: 'BS. Phạm Gia Bảo',
+                time: '15:20',
+                action: 'Xóa hồ sơ bệnh nhân #BN4421',
+                actionColor: Colors.red[500]!,
+                device: 'iPhone 15 Pro • App v2.4',
+                deviceIcon: Icons.smartphone,
+                avatarUrl:
+                    'https://ui-avatars.com/api/?name=Pham+Gia+Bao&background=ffedd5&color=c2410c',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    if (widget.embedded) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          centerTitle: true,
+          title: const Text(
+            'Nhật ký hệ thống',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        body: mainContent,
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
@@ -38,109 +161,8 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
             onPressed: () {},
           ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(104), // search + filters
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Search
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm nhân viên hoặc hành động...',
-                    hintStyle: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: AppColors.textLight,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.backgroundLight,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-              ),
-              // Filters
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-                height: 48,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildFilterChip('Thời gian'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Người dùng'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('Hành động'),
-                  ],
-                ),
-              ),
-              Container(color: AppColors.border, height: 1), // Divider
-            ],
-          ),
-        ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [
-          _buildDateHeader('HÔM NAY'),
-          _buildLogItem(
-            name: 'BS. Nguyễn Minh Anh',
-            time: '09:45',
-            action: 'Đã sửa hồ sơ bệnh nhân #BN0921',
-            actionColor: AppColors.primary,
-            device: 'MacBook Pro • 192.168.1.15',
-            deviceIcon: Icons.laptop_mac,
-            avatarUrl:
-                'https://ui-avatars.com/api/?name=Nguyen+Minh+Anh&background=e0e7ff&color=156bc1',
-          ),
-          const Divider(height: 1, color: AppColors.border),
-          _buildLogItem(
-            name: 'Lê Hoàng Nam (IT)',
-            time: '08:12',
-            action: 'Đăng nhập hệ thống quản trị',
-            actionColor: AppColors.textPrimary,
-            device: 'Windows PC • Office Network',
-            deviceIcon: Icons.desktop_windows,
-            avatarUrl:
-                'https://ui-avatars.com/api/?name=Le+Hoang+Nam&background=e2e8f0&color=475569',
-          ),
-          _buildDateHeader('HÔM QUA'),
-          _buildLogItem(
-            name: 'ĐD. Trần Thu Thủy',
-            time: '17:30',
-            action: 'Xuất báo cáo doanh thu tháng 10',
-            actionColor: AppColors.textPrimary,
-            device: 'iPad Air • Safari Browser',
-            deviceIcon: Icons.tablet_mac,
-            avatarUrl:
-                'https://ui-avatars.com/api/?name=Tran+Thu+Thuy&background=fce7f3&color=db2777',
-          ),
-          const Divider(height: 1, color: AppColors.border),
-          _buildLogItem(
-            name: 'BS. Phạm Gia Bảo',
-            time: '15:20',
-            action: 'Xóa hồ sơ bệnh nhân #BN4421',
-            actionColor: Colors.red[500]!,
-            device: 'iPhone 15 Pro • App v2.4',
-            deviceIcon: Icons.smartphone,
-            avatarUrl:
-                'https://ui-avatars.com/api/?name=Pham+Gia+Bao&background=ffedd5&color=c2410c',
-          ),
-        ],
-      ),
+      body: mainContent,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

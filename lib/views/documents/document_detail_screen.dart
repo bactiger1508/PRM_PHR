@@ -342,41 +342,17 @@ class DocumentDetailScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Download Section
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                      child: Column(
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.download),
-                            label: const Text('Tải xuống tài liệu (PDF)'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 4,
-                              shadowColor: AppColors.primary.withValues(
-                                alpha: 0.3,
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                    // ID Section
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      child: Center(
+                        child: Text(
+                          'ID Tài liệu: PHR-2024-0520-XN01',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textLight,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'ID Tài liệu: PHR-2024-0520-XN01',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textLight,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],
