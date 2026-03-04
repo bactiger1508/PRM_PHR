@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import '../../viewmodels/create_patient_viewmodel.dart';
 import '../theme/app_theme.dart';
 
 class CreatePatientScreen extends StatefulWidget {
@@ -10,12 +12,38 @@ class CreatePatientScreen extends StatefulWidget {
 }
 
 class _CreatePatientScreenState extends State<CreatePatientScreen> {
-  int _selectedIndex = 1; // "Hồ sơ"
+  final CreatePatientViewModel _viewModel = CreatePatientViewModel();
 
-  // Simulating a state after form submission
-  bool _isSuccess = false;
+  final _nameController = TextEditingController();
+  final _dobController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
 
   static const Color successTeal = Color(0xFF00897B);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _dobController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        _dobController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +65,6 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: AppColors.border, height: 1),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -57,24 +81,28 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
             ),
             const SizedBox(height: 24),
 
-            // Name Input
-            _buildInputLabel('Họ và tên'),
+            _buildInputLabel('Họ và tên *'),
             const SizedBox(height: 6),
-            _buildTextField(hintText: 'Nhập họ và tên đầy đủ'),
+            _buildTextField(
+              controller: _nameController,
+              hintText: 'Nguyễn Văn A',
+            ),
             const SizedBox(height: 16),
 
-            // Age & Phone Row
             Row(
               children: [
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildInputLabel('Tuổi'),
+                      _buildInputLabel('Ngày sinh *'),
                       const SizedBox(height: 6),
                       _buildTextField(
-                        hintText: '34',
-                        keyboardType: TextInputType.number,
+                        controller: _dobController,
+                        hintText: 'dd/mm/yyyy',
+                        readOnly: true,
+                        onTap: () => _selectDate(context),
+                        suffixIcon: const Icon(Icons.calendar_today, size: 20),
                       ),
                     ],
                   ),
@@ -87,6 +115,7 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
                       _buildInputLabel('Số điện thoại'),
                       const SizedBox(height: 6),
                       _buildTextField(
+                        controller: _phoneController,
                         hintText: '09xx xxx xxx',
                         keyboardType: TextInputType.phone,
                       ),
@@ -97,77 +126,65 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Email Input
-            _buildInputLabel('Email'),
+            _buildInputLabel('Email (Để tạo tài khoản đăng nhập)'),
             const SizedBox(height: 6),
             _buildTextField(
-              hintText: 'vi-du@email.com',
+              controller: _emailController,
+              hintText: 'bo-trong-neu-la-tre-em.com',
               keyboardType: TextInputType.emailAddress,
             ),
-            const SizedBox(height: 32),
-
-            // Submit Button
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(
-                  () => _isSuccess = !_isSuccess,
-                ); // Toggle success for demo
-              },
-              icon: const Icon(Icons.save),
-              label: const Text('Lưu hồ sơ'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                shadowColor: AppColors.primary.withValues(alpha: 0.3),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            const SizedBox(height: 8),
+            const Text(
+              '* Nếu không có Email, bệnh nhân sẽ không có tài khoản riêng nhưng vẫn có Mã Y Tế để người thân quản lý.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontStyle: FontStyle.italic),
             ),
+            const SizedBox(height: 24),
 
-            // Success State Preview
-            if (_isSuccess) ...[
-              const SizedBox(height: 24),
-              _buildSuccessPreview(),
-            ],
+            ListenableBuilder(
+              listenable: _viewModel,
+              builder: (context, _) {
+                return Column(
+                  children: [
+                    if (_viewModel.errorMsg != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.red.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(_viewModel.errorMsg!, style: const TextStyle(color: Colors.red)),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
 
-            const SizedBox(height: 48), // Bottom spacing
+                    ElevatedButton.icon(
+                      onPressed: _viewModel.isLoading
+                          ? null
+                          : () async {
+                              await _viewModel.createPatient(
+                                fullName: _nameController.text,
+                                dob: _dobController.text,
+                                phone: _phoneController.text,
+                                email: _emailController.text,
+                                createdByStaffId: 1,
+                              );
+                            },
+                      icon: const Icon(Icons.save),
+                      label: Text(_viewModel.isLoading ? 'Đang lưu...' : 'Lưu hồ sơ'),
+                    ),
+
+                    if (_viewModel.isSuccess) ...[
+                      const SizedBox(height: 24),
+                      _buildSuccessPreview(_viewModel.successMedicalCode, _emailController.text.isNotEmpty),
+                    ],
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 48),
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        backgroundColor: Colors.white,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Hồ sơ',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Cài đặt',
-          ),
-        ],
       ),
     );
   }
@@ -175,49 +192,24 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
   Widget _buildInputLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(left: 4.0),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
-        ),
-      ),
+      child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
     );
   }
 
-  Widget _buildTextField({
-    required String hintText,
-    TextInputType keyboardType = TextInputType.text,
-  }) {
+  Widget _buildTextField({TextEditingController? controller, required String hintText, TextInputType keyboardType = TextInputType.text, bool readOnly = false, VoidCallback? onTap, Widget? suffixIcon}) {
     return TextField(
+      controller: controller,
       keyboardType: keyboardType,
+      readOnly: readOnly,
+      onTap: onTap,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(fontSize: 16, color: AppColors.textLight),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
+        suffixIcon: suffixIcon,
       ),
     );
   }
 
-  Widget _buildSuccessPreview() {
+  Widget _buildSuccessPreview(String medicalCode, bool hasAccount) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -227,80 +219,38 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
       ),
       child: Column(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: successTeal,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
+          const Icon(Icons.check_circle, color: successTeal, size: 48),
           const SizedBox(height: 12),
-          const Text(
-            'Tạo hồ sơ thành công',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: successTeal,
-            ),
-          ),
+          const Text('Tạo hồ sơ thành công', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: successTeal)),
           const SizedBox(height: 4),
-          const Text(
-            'Bệnh nhân đã được thêm vào hệ thống quản lý',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          Text(
+            hasAccount 
+              ? 'Tài khoản đăng nhập: Email\nMật khẩu mặc định: 123456' 
+              : 'Hồ sơ đã được lưu. Hãy dùng Mã Y Tế này để liên kết với tài khoản của cha/mẹ.',
+            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: AppColors.border)),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'MÃ Y TẾ',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textLight,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    Text(
-                      'MED-829-X4',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('MÃ Y TẾ', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textLight)),
+                      Text(medicalCode, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                    ],
+                  ),
                 ),
-                TextButton.icon(
+                IconButton(
                   onPressed: () {
-                    Clipboard.setData(const ClipboardData(text: 'MED-829-X4'));
+                    Clipboard.setData(ClipboardData(text: medicalCode));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã sao chép mã y tế')));
                   },
-                  icon: const Icon(Icons.content_copy, size: 20),
-                  label: const Text(
-                    'Sao chép',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                  ),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                  ),
+                  icon: const Icon(Icons.content_copy, size: 20, color: AppColors.primary),
                 ),
               ],
             ),

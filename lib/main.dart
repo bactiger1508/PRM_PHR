@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
-import 'views/dev/dev_menu_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'views/theme/app_theme.dart';
+import 'views/login/login_screen.dart';
+import 'views/admin/admin_setup_screen.dart';
+import 'data/db/database_helper.dart';
 
 void main() async {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await dotenv.load(fileName: '.env');
+
+  // Check if an admin account exists
+  final dbHelper = DatabaseHelper.instance;
+  final bool hasAdmin = await dbHelper.hasAdminAccount();
+
+  runApp(MyApp(hasAdmin: hasAdmin));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool hasAdmin;
+
+  const MyApp({super.key, required this.hasAdmin});
 
   @override
   Widget build(BuildContext context) {
@@ -15,8 +29,7 @@ class MyApp extends StatelessWidget {
       title: 'PHR App',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      // Set DevMenuScreen as the starting page for easy UI development
-      home: const DevMenuScreen(),
+      home: hasAdmin ? const LoginScreen() : const AdminSetupScreen(),
     );
   }
 }
