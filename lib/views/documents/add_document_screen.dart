@@ -213,12 +213,16 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             // Details Form
             _buildInputLabel('Tiêu đề tài liệu'),
             const SizedBox(height: 6),
-            _buildTextField(hintText: 'Ví dụ: Xét nghiệm máu tổng quát'),
+            _buildTextField(
+              hintText: 'Ví dụ: Xét nghiệm máu tổng quát',
+              textInputAction: TextInputAction.next,
+            ),
             const SizedBox(height: 16),
 
             _buildInputLabel('Ngày khám'),
             const SizedBox(height: 6),
             TextField(
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
                 hintText: 'dd/mm/yyyy',
                 hintStyle: const TextStyle(
@@ -293,6 +297,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             const SizedBox(height: 6),
             TextField(
               maxLines: 3,
+              textInputAction: TextInputAction.done,
               decoration: InputDecoration(
                 hintText: 'Nhập ghi chú thêm về tài liệu này...',
                 hintStyle: const TextStyle(
@@ -425,8 +430,12 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     );
   }
 
-  Widget _buildTextField({required String hintText}) {
+  Widget _buildTextField({
+    required String hintText,
+    TextInputAction textInputAction = TextInputAction.next,
+  }) {
     return TextField(
+      textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),

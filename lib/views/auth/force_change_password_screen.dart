@@ -56,7 +56,7 @@ class _ForceChangePasswordScreenState extends State<ForceChangePasswordScreen> {
   void dispose() {
     _passwordController.dispose();
     _confirmController.dispose();
-    _viewModel.dispose();
+    // Do NOT dispose the singleton _viewModel
     super.dispose();
   }
 

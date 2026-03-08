@@ -132,6 +132,7 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
               controller: _emailController,
               hintText: 'bo-trong-neu-la-tre-em.com',
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.done,
             ),
             const SizedBox(height: 8),
             const Text(
@@ -196,12 +197,21 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
     );
   }
 
-  Widget _buildTextField({TextEditingController? controller, required String hintText, TextInputType keyboardType = TextInputType.text, bool readOnly = false, VoidCallback? onTap, Widget? suffixIcon}) {
+  Widget _buildTextField({
+    TextEditingController? controller,
+    required String hintText,
+    TextInputType keyboardType = TextInputType.text,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    Widget? suffixIcon,
+    TextInputAction textInputAction = TextInputAction.next,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: keyboardType,
       readOnly: readOnly,
       onTap: onTap,
+      textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hintText,
         suffixIcon: suffixIcon,
@@ -255,6 +265,51 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
               ],
             ),
           ),
+          
+          if (!hasAccount) ...[
+            const SizedBox(height: 16),
+            if (_viewModel.accessCode == null)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _viewModel.isLoading ? null : () => _viewModel.generateAccessCode(),
+                  icon: const Icon(Icons.link),
+                  label: const Text('Tạo Mã liên kết (Family)'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.orange.withValues(alpha: 0.5))),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('MÃ LIÊN KẾT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textLight)),
+                          Text(
+                            _viewModel.accessCode!, 
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange, letterSpacing: 2)
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _viewModel.accessCode!));
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã sao chép mã liên kết')));
+                      },
+                      icon: const Icon(Icons.content_copy, size: 20, color: Colors.orange),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ],
       ),
     );

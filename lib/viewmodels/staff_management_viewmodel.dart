@@ -36,6 +36,7 @@ class StaffManagementViewModel extends ChangeNotifier {
   Future<bool> createStaff({
     required String fullName,
     required String email,
+    String? phone,
   }) async {
     _isLoading = true;
     _errorMsg = null;
@@ -46,6 +47,7 @@ class StaffManagementViewModel extends ChangeNotifier {
       final newUser = UserEntity(
         fullName: fullName,
         email: email,
+        phone: phone,
         role: 'STAFF',
       );
 

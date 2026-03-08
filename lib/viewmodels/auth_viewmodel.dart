@@ -4,11 +4,13 @@ import '../data/interfaces/auth_repository.dart';
 import '../domain/entities/user_entity.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  static final AuthViewModel instance = AuthViewModel();
+  static final AuthViewModel instance = AuthViewModel._internal();
+
+  factory AuthViewModel() => instance;
 
   final AuthRepository _authRepo;
 
-  AuthViewModel({AuthRepository? authRepo})
+  AuthViewModel._internal({AuthRepository? authRepo})
     : _authRepo = authRepo ?? AuthRepositoryImpl();
 
   bool _isLoading = false;
@@ -86,5 +88,10 @@ class AuthViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void logout() {
+    _currentUser = null;
+    notifyListeners();
   }
 }

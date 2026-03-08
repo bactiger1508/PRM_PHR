@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../documents/document_list_screen.dart';
 import '../login/login_screen.dart';
 import '../auth/personal_settings_screen.dart';
 import '../auth/system_notification_screen.dart';
+import '../customer/add_family_member_screen.dart';
 
 class FamilyHomeScreen extends StatefulWidget {
   const FamilyHomeScreen({super.key});
@@ -27,6 +28,18 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
           const PersonalSettingsScreen(embedded: true),
         ],
       ),
+      floatingActionButton: _selectedIndex == 0 
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddFamilyMemberScreen()),
+                );
+              },
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -65,7 +78,7 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: const Text(
-          'Khách hàng & Gia đình',
+          'Gia đình của tôi',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -83,62 +96,23 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Search Bar
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Tra cứu bằng Mã Y Tế',
-                  hintStyle: const TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textLight,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.textLight,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.backgroundLight,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 0,
-                    horizontal: 16,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Header
+            // Header Info
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-              child: const Column(
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: const [
                   Text(
-                    'Thành viên gia đình',
+                    'Danh sách thành viên',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Quản lý thông tin hồ sơ sức khỏe của gia đình bạn',
+                    'Nhấn vào dấu + để liên kết hồ sơ người thân',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
@@ -148,7 +122,7 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
               ),
             ),
 
-            // Family Members
+            // Family Members List
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ListView(
@@ -159,22 +133,16 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
                     context: context,
                     name: 'Nguyễn Văn A',
                     relation: 'Bản thân',
-                    id: '102938',
+                    id: 'PHR-15051989-20102023-01',
                     lastUpdate: '20/10/2023',
                     isPrimary: true,
                   ),
                   const SizedBox(height: 16),
                   _buildFamilyMemberCard(
                     context: context,
-                    name: 'Trần Thị B',
-                    relation: 'Vợ/Chồng',
-                    lastUpdate: '15/10/2023',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFamilyMemberCard(
-                    context: context,
                     name: 'Nguyễn Văn C',
                     relation: 'Con',
+                    id: 'PHR-12082015-01092023-01',
                     lastUpdate: '01/09/2023',
                   ),
                 ],
@@ -257,28 +225,19 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
                         ],
                       ),
                     ),
-                    if (id != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundLight,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'ID: $id',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textLight,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
+                if (id != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Mã Y Tế: $id',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Row(
                   children: [

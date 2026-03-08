@@ -23,8 +23,8 @@ class AuthRepositoryImpl implements AuthRepository {
     final List<Map<String, dynamic>> maps = await db.query(
       'user_accounts',
       where:
-          'email = ? AND password_hash = ? AND $roleCondition AND status = ?',
-      whereArgs: [email, passwordHash, 'ACTIVE'],
+          '(email = ? OR phone = ?) AND password_hash = ? AND $roleCondition AND status = ?',
+      whereArgs: [email, email, passwordHash, 'ACTIVE'],
     );
 
     if (maps.isNotEmpty) {
@@ -57,9 +57,12 @@ class AuthRepositoryImpl implements AuthRepository {
     String defaultPassword,
   ) async {
     final db = await _dbHelper.database;
+    final email = (staffUser.email != null && staffUser.email!.trim().isNotEmpty) ? staffUser.email!.trim() : null;
+    final phone = (staffUser.phone != null && staffUser.phone!.trim().isNotEmpty) ? staffUser.phone!.trim() : null;
+
     final model = UserModel(
-      email: staffUser.email,
-      phone: staffUser.phone,
+      email: email,
+      phone: phone,
       fullName: staffUser.fullName,
       passwordHash: HashUtils.hashPassword(defaultPassword),
       role: staffUser.role,

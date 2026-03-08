@@ -4,7 +4,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../theme/app_theme.dart';
 import '../staff/staff_dashboard_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
-import '../staff/family_home_screen.dart';
+import '../customer/family_home_screen.dart';
 import '../auth/force_change_password_screen.dart';
 import '../auth/forgot_password_screen.dart';
 
@@ -259,6 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 4),
                               TextField(
                                 controller: _emailController,
+                                textInputAction: TextInputAction.next,
                                 decoration: InputDecoration(
                                   hintText: 'Nhập email hoặc tên đăng nhập',
                                   hintStyle: TextStyle(
@@ -301,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextField(
                                 controller: _passwordController,
                                 obscureText: _obscureText,
+                                textInputAction: TextInputAction.done,
                                 decoration: InputDecoration(
                                   hintText: '••••••••',
                                   hintStyle: TextStyle(
@@ -453,7 +455,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (context) =>
-                                                      const FamilyHomeScreen(),
+                                                      const CustomerFamilyHomeScreen(),
                                                 ),
                                               );
                                             } else if (user.role == 'ADMIN') {
@@ -522,3 +524,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

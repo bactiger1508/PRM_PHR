@@ -253,11 +253,13 @@ class AddStaffBottomSheet extends StatefulWidget {
 class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
 
   @override
   void dispose() {
     _fullNameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     // Clear error states when closing
     widget.viewModel.clearState();
     super.dispose();
@@ -281,6 +283,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
     final success = await widget.viewModel.createStaff(
       fullName: _fullNameController.text,
       email: _emailController.text,
+      phone: _phoneController.text.isEmpty ? null : _phoneController.text,
     );
 
     if (success) {
@@ -376,8 +379,25 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
             TextField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
                 labelText: 'Email (Đăng nhập)',
+                filled: true,
+                fillColor: AppColors.backgroundLight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.done,
+              decoration: InputDecoration(
+                labelText: 'Số điện thoại',
+                hintText: 'VD: 0987654321',
                 filled: true,
                 fillColor: AppColors.backgroundLight,
                 border: OutlineInputBorder(

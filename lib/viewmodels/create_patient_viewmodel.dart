@@ -21,6 +21,9 @@ class CreatePatientViewModel extends ChangeNotifier {
   String _successMedicalCode = '';
   String get successMedicalCode => _successMedicalCode;
 
+  String? _accessCode;
+  String? get accessCode => _accessCode;
+
   Future<bool> createPatient({
     required String fullName,
     required String dob,
@@ -71,6 +74,24 @@ class CreatePatientViewModel extends ChangeNotifier {
   void clearState() {
     _isSuccess = false;
     _errorMsg = null;
+    _accessCode = null;
     notifyListeners();
+  }
+
+  Future<void> generateAccessCode() async {
+    if (_successMedicalCode.isEmpty) return;
+    
+    _isLoading = true;
+    _errorMsg = null;
+    notifyListeners();
+
+    try {
+      _accessCode = await _patientRepo.generateAccessCode(_successMedicalCode);
+    } catch (e) {
+      _errorMsg = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }
