@@ -243,38 +243,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                         _buildTextField(initialValue: '365', isNumber: true),
                         const SizedBox(height: 16),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Xác thực OTP qua Gmail',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  const Text(
-                                    'Yêu cầu mã OTP gửi đến Gmail bệnh nhân khi tra cứu',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Switch(
-                              value: _requireOtp,
-                              activeThumbColor: AppColors.primary,
-                              onChanged: (val) =>
-                                  setState(() => _requireOtp = val),
-                            ),
-                          ],
+                          crossAxisAlignment: CrossAxisAlignment.center
                         ),
                       ],
                     ),

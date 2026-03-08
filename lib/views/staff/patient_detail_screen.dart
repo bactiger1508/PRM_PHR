@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'create_medical_exam_screen.dart';
+import 'medical_exam_list_screen.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   const PatientDetailScreen({super.key});
@@ -122,9 +124,19 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               color: Colors.white,
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CreateMedicalExamScreen(
+                        preselectedPatientId: 1, // TODO: Use actual patient ID
+                        preselectedPatientName: 'Nguyễn Văn An',
+                      ),
+                    ),
+                  );
+                },
                 icon: const Icon(Icons.add, size: 20),
-                label: const Text('Thêm tài liệu'),
+                label: const Text('Tạo đơn khám'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -338,6 +350,12 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
   Widget _buildHistoryTab() {
-    return const Center(child: Padding(padding: EdgeInsets.all(40), child: Text('Chưa có lịch sử khám bệnh.')));
+    return const SizedBox(
+      height: 400,
+      child: MedicalExamListScreen(
+        embedded: true,
+        patientProfileId: 1, // TODO: Use actual patient ID
+      ),
+    );
   }
 }

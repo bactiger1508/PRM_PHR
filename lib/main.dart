@@ -4,9 +4,15 @@ import 'views/theme/app_theme.dart';
 import 'views/login/login_screen.dart';
 import 'views/admin/admin_setup_screen.dart';
 import 'data/db/database_helper.dart';
+import 'package:flutter/foundation.dart'; // Import for kDebugMode
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // In debug mode, clear the static database instance to ensure a fresh connection on hot restart.
+  if (kDebugMode) {
+    DatabaseHelper.clearStaticDatabaseInstance();
+  }
 
   // Load environment variables
   await dotenv.load(fileName: '.env');

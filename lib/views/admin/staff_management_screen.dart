@@ -81,7 +81,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 border: Border.all(color: AppColors.border, width: 0.5),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
+                    color: Colors.black.withOpacity(0.02),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -93,7 +93,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
+                      color: AppColors.primary.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -130,8 +130,8 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                               ),
                               decoration: BoxDecoration(
                                 color: staff.role == 'ADMIN'
-                                    ? Colors.purple.withValues(alpha: 0.1)
-                                    : Colors.blue.withValues(alpha: 0.1),
+                                    ? Colors.purple.withOpacity(0.1)
+                                    : Colors.blue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
@@ -346,7 +346,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(12),
-                    color: Colors.red.withValues(alpha: 0.1),
+                    color: Colors.red.withOpacity(0.1),
                     child: Text(
                       widget.viewModel.errorMsg!,
                       style: const TextStyle(color: Colors.red),
@@ -355,9 +355,12 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
                 }
                 return const SizedBox.shrink();
               },
-            ),
+            ), // This was the problematic line
             TextField(
               controller: _fullNameController,
+              enableSuggestions: true,
+              autocorrect: true,
+              textCapitalization: TextCapitalization.words,
               decoration: InputDecoration(
                 labelText: 'Họ và tên',
                 hintText: 'VD: BS. Nguyễn Văn A',
@@ -389,7 +392,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: Colors.orange.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(

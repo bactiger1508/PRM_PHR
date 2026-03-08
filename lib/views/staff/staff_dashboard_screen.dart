@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'create_patient_screen.dart';
 import 'patient_list_screen.dart';
+import 'create_medical_exam_screen.dart';
+import 'medical_exam_list_screen.dart';
 import '../auth/personal_settings_screen.dart';
 import '../documents/document_list_screen.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -25,6 +27,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         children: [
           _buildHomePage(context),
           const PatientListScreen(embedded: true),
+          const MedicalExamListScreen(embedded: true),
           const DocumentListScreen(embedded: true),
           const PersonalSettingsScreen(embedded: true),
         ],
@@ -50,9 +53,14 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             label: 'Bệnh nhân',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.assignment_outlined),
+            activeIcon: Icon(Icons.assignment),
+            label: 'Đơn Khám',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.description_outlined),
             activeIcon: Icon(Icons.description),
-            label: 'Tài liệu y tế',
+            label: 'Tài liệu',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
@@ -179,6 +187,23 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickAction(
+                          icon: Icons.assignment_add,
+                          label: 'Tạo Đơn\nKhám',
+                          color: Colors.blue[600]!,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const CreateMedicalExamScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickAction(
                           icon: Icons.group,
                           label: 'Danh sách\nBệnh nhân',
                           color: Colors.orange,
@@ -192,7 +217,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                           label: 'Tài liệu\nY tế',
                           color: Colors.teal,
                           onTap: () {
-                            setState(() => _selectedIndex = 2);
+                            setState(() => _selectedIndex = 3);
                           },
                         ),
                       ),

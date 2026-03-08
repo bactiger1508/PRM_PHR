@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'schema.dart';
+import 'package:flutter/foundation.dart'; // Import for @visibleForTesting
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -11,8 +12,9 @@ class DatabaseHelper {
   DatabaseHelper._init();
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
-
+    if (_database != null && _database!.isOpen) return _database!;
+    
+    // If the database is not open or null, re-initialize it.
     _database = await _initDB('phr_database.db');
     return _database!;
   }
@@ -23,7 +25,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -43,6 +45,14 @@ class DatabaseHelper {
       // Add full_name column to user_accounts
       await db.execute(
         'ALTER TABLE user_accounts ADD COLUMN full_name TEXT',
+      );
+    }
+    if (oldVersion < 4) {
+      // Add "Đơn Khám Bệnh" category for medical examinations
+      await db.insert(
+        'document_categories',
+        {'name': 'Đơn Khám Bệnh', 'description': 'Phiếu khám bệnh, chẩn đoán, đơn thuốc'},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
       );
     }
   }
@@ -89,6 +99,7 @@ class DatabaseHelper {
         'description': 'X-Quang, MRI, CT Scan, Siêu âm',
       },
       {'name': 'Khác', 'description': 'Các loại tài liệu khác'},
+      {'name': 'Đơn Khám Bệnh', 'description': 'Phiếu khám bệnh, chẩn đoán, đơn thuốc'},
     ];
 
     for (var cat in categories) {
@@ -110,8 +121,16 @@ class DatabaseHelper {
     return (count ?? 0) > 0;
   }
 
-  Future close() async {
-    final db = await instance.database;
-    db.close();
+  Future<void> close() async {
+    if (_database != null && _database!.isOpen) {
+      await _database!.close();
+    }
+    _database = null; // Clear the static reference
+  }
+
+  // For development purposes, to force re-initialization on hot restart
+  @visibleForTesting
+  static void clearStaticDatabaseInstance() {
+    _database = null;
   }
 }
