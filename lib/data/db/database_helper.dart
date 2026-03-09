@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'schema.dart';
-import 'package:flutter/foundation.dart'; // Import for @visibleForTesting
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -129,7 +128,6 @@ class DatabaseHelper {
   }
 
   // For development purposes, to force re-initialization on hot restart
-  @visibleForTesting
   static void clearStaticDatabaseInstance() {
     _database = null;
   }

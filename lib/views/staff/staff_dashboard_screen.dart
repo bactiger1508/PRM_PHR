@@ -3,7 +3,6 @@ import '../theme/app_theme.dart';
 import 'create_patient_screen.dart';
 import 'patient_list_screen.dart';
 import 'create_medical_exam_screen.dart';
-import 'medical_exam_list_screen.dart';
 import '../auth/personal_settings_screen.dart';
 import '../documents/document_list_screen.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -27,11 +26,29 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         children: [
           _buildHomePage(context),
           const PatientListScreen(embedded: true),
-          const MedicalExamListScreen(embedded: true),
           const DocumentListScreen(embedded: true),
           const PersonalSettingsScreen(embedded: true),
         ],
       ),
+      floatingActionButton: SizedBox(
+        width: 64,
+        height: 64,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CreateMedicalExamScreen(),
+              ),
+            );
+          },
+          backgroundColor: AppColors.primary,
+          elevation: 4,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, color: Colors.white, size: 32),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -51,11 +68,6 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             icon: Icon(Icons.group_outlined),
             activeIcon: Icon(Icons.group),
             label: 'Bệnh nhân',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment_outlined),
-            activeIcon: Icon(Icons.assignment),
-            label: 'Đơn Khám',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.description_outlined),
@@ -217,7 +229,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                           label: 'Tài liệu\nY tế',
                           color: Colors.teal,
                           onTap: () {
-                            setState(() => _selectedIndex = 3);
+                            setState(() => _selectedIndex = 2);
                           },
                         ),
                       ),

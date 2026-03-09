@@ -15,6 +15,12 @@ abstract class AuthRepository {
   /// Gets all staff and admin accounts.
   Future<List<UserEntity>> getAllStaffs();
 
+  /// Updates a staff account's information.
+  Future<bool> updateStaff(int userId, {String? fullName, String? email, String? phone, String? status});
+
+  /// Deletes a staff account by ID.
+  Future<bool> deleteStaff(int userId);
+
   /// Creates a customer account for a patient.
   Future<int> createCustomerAccount(String email, String password, String? fullName);
 

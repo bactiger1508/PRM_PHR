@@ -161,6 +161,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     int? recordDate,
     String? notes,
     required int createdByStaffId,
+    String status = 'SAVED',
   }) async {
     if (title.isEmpty) {
       _errorMsg = 'Vui lòng nhập tiêu đề tài liệu.';
@@ -182,7 +183,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
         recordDate: recordDate,
         title: title,
         notes: notes,
-        status: 'SAVED',
+        status: status,
         createdBy: createdByStaffId,
       );
 
@@ -237,6 +238,52 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     _uploadProgress = {};
     _errorMsg = null;
     notifyListeners();
+  }
+
+  /// Xóa mềm document (có thể khôi phục)
+  Future<bool> softDeleteDocument(int docId) async {
+    try {
+      final result = await _docRepo.deleteDocument(docId);
+      if (result) {
+        _documents.removeWhere((d) => d.id == docId);
+        notifyListeners();
+      }
+      return result;
+    } catch (e) {
+      _errorMsg = 'Không thể xóa tài liệu.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Khôi phục document đã xóa mềm
+  Future<bool> restoreDocument(int docId) async {
+    try {
+      final result = await _docRepo.restoreDocument(docId);
+      if (result) {
+        notifyListeners();
+      }
+      return result;
+    } catch (e) {
+      _errorMsg = 'Không thể khôi phục tài liệu.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Load tài liệu do nhân viên hiện tại tạo
+  Future<void> loadDocumentsByCreator(int staffId) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _documents = await _docRepo.getDocumentsByCreator(staffId);
+    } catch (e) {
+      _errorMsg = 'Không thể tải danh sách tài liệu.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Xóa document

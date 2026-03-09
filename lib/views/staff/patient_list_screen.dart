@@ -12,14 +12,6 @@ class PatientListScreen extends StatefulWidget {
 
 class _PatientListScreenState extends State<PatientListScreen> {
   int _selectedIndex = 0; // "Bệnh nhân" initially selected on bottom nav bar
-  int _selectedFilterIndex = 0;
-
-  final List<String> _filters = [
-    'Tất cả',
-    'Khoa Nội',
-    'Khoa Ngoại',
-    'Khoa Sản',
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +27,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    title: 'Tổng số bệnh nhân',
+                    title: 'Tổng số hồ sơ',
                     value: '1,245',
                     trendText: '+12 tháng này',
                     trendIcon: Icons.trending_up,
@@ -45,11 +37,11 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildStatCard(
-                    title: 'Đang điều trị',
+                    title: 'Tổng số bệnh nhân',
                     value: '156',
-                    trendText: 'Tải trọng 85%',
-                    trendIcon: Icons.hourglass_empty,
-                    trendColor: AppColors.textSecondary,
+                    trendText: '+5 tháng này',
+                    trendIcon: Icons.trending_up,
+                    trendColor: Colors.green[600]!,
                   ),
                 ),
               ],
@@ -96,49 +88,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Filters
-          SizedBox(
-            height: 48,
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              scrollDirection: Axis.horizontal,
-              itemCount: _filters.length,
-              itemBuilder: (context, index) {
-                final isSelected = index == _selectedFilterIndex;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(_filters[index]),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() => _selectedFilterIndex = index);
-                    },
-                    backgroundColor: Colors.white,
-                    selectedColor: AppColors.primary,
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? Colors.white
-                          : AppColors.textSecondary,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                      fontSize: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                      side: BorderSide(
-                        color: isSelected
-                            ? Colors.transparent
-                            : AppColors.border,
-                      ),
-                    ),
-                    showCheckmark: false,
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
+
 
           // Patient List
           ListView(
@@ -149,7 +99,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
               _buildPatientCard(
                 name: 'Nguyễn Văn An',
                 code: 'BN123456',
-                department: 'Khoa Nội',
                 avatarUrl:
                     'https://ui-avatars.com/api/?name=Nguyen+Van+An&background=e2e8f0&color=475569',
                 isOnline: true,
@@ -158,7 +107,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
               _buildPatientCard(
                 name: 'Nguyễn Thị Lan',
                 code: '#BN-2023-001',
-                department: 'Khoa Nội',
                 avatarUrl:
                     'https://ui-avatars.com/api/?name=Nguyen+Thi+Lan&background=fce7f3&color=db2777',
                 isOnline: true,
@@ -167,7 +115,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
               _buildPatientCard(
                 name: 'Trần Văn Hùng',
                 code: '#BN-2023-142',
-                department: 'Khoa Ngoại',
                 avatarUrl:
                     'https://ui-avatars.com/api/?name=Tran+Van+Hung&background=e0e7ff&color=156bc1',
                 isOnline: true,
@@ -176,7 +123,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
               _buildPatientCard(
                 name: 'Lê Minh Tuấn',
                 code: '#BN-2023-088',
-                department: 'Khoa Nội',
                 initial: 'L',
                 isOnline: true,
               ),
@@ -184,7 +130,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
               _buildPatientCard(
                 name: 'Phạm Anh Đức',
                 code: '#BN-2023-205',
-                department: 'Khoa Ngoại',
                 avatarUrl:
                     'https://ui-avatars.com/api/?name=Pham+Anh+Duc&background=ffedd5&color=c2410c',
                 isOnline: true,
@@ -370,7 +315,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
   Widget _buildPatientCard({
     required String name,
     required String code,
-    required String department,
     String? avatarUrl,
     String? initial,
     bool isOnline = false,
@@ -466,20 +410,6 @@ class _PatientListScreenState extends State<PatientListScreen> {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            '•',
-                            style: TextStyle(color: AppColors.textLight),
-                          ),
-                        ),
-                        Text(
-                          department,
-                          style: const TextStyle(
-                            fontSize: 12,
                             color: AppColors.textSecondary,
                           ),
                         ),

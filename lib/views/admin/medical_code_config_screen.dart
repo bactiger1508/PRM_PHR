@@ -10,8 +10,6 @@ class MedicalCodeConfigScreen extends StatefulWidget {
 }
 
 class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
-  bool _requireOtp = true;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

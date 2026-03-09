@@ -86,6 +86,37 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<bool> updateStaff(int userId, {String? fullName, String? email, String? phone, String? status}) async {
+    final db = await _dbHelper.database;
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().millisecondsSinceEpoch,
+    };
+    if (fullName != null) updates['full_name'] = fullName.trim();
+    if (email != null) updates['email'] = email.trim();
+    if (phone != null) updates['phone'] = phone.trim().isEmpty ? null : phone.trim();
+    if (status != null) updates['status'] = status;
+
+    final count = await db.update(
+      'user_accounts',
+      updates,
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+    return count > 0;
+  }
+
+  @override
+  Future<bool> deleteStaff(int userId) async {
+    final db = await _dbHelper.database;
+    final count = await db.delete(
+      'user_accounts',
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+    return count > 0;
+  }
+
+  @override
   Future<int> createCustomerAccount(
     String email,
     String defaultPassword,

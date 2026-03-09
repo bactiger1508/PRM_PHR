@@ -78,4 +78,44 @@ class StaffManagementViewModel extends ChangeNotifier {
     _isSuccess = false;
     notifyListeners();
   }
+
+  Future<bool> updateStaff(int userId, {String? fullName, String? email, String? phone, String? status}) async {
+    _isLoading = true;
+    _errorMsg = null;
+    notifyListeners();
+
+    try {
+      final ok = await _authRepo.updateStaff(userId, fullName: fullName, email: email, phone: phone, status: status);
+      if (ok) await loadStaffs();
+      return ok;
+    } catch (e) {
+      if (e.toString().contains('UNIQUE')) {
+        _errorMsg = 'Email đã được sử dụng.';
+      } else {
+        _errorMsg = 'Lỗi khi cập nhật nhân viên: ${e.toString()}';
+      }
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteStaff(int userId) async {
+    _isLoading = true;
+    _errorMsg = null;
+    notifyListeners();
+
+    try {
+      final ok = await _authRepo.deleteStaff(userId);
+      if (ok) await loadStaffs();
+      return ok;
+    } catch (e) {
+      _errorMsg = 'Lỗi khi xoá nhân viên: ${e.toString()}';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

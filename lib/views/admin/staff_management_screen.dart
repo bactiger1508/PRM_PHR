@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../domain/entities/user_entity.dart';
 import '../../viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
 
@@ -32,6 +33,82 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => AddStaffBottomSheet(viewModel: _viewModel),
     );
+  }
+
+  void _showStaffDetails(UserEntity staff) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Chi tiết nhân viên'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _detailRow('Họ tên', staff.fullName ?? 'Chưa cập nhật'),
+            _detailRow('Email', staff.email ?? 'Chưa cập nhật'),
+            _detailRow('Điện thoại', staff.phone ?? 'Chưa cập nhật'),
+            _detailRow('Vai trò', staff.role == 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'),
+            _detailRow('Trạng thái', staff.status == 'ACTIVE' ? 'Đang hoạt động' : 'Tạm khóa'),
+            if (staff.createdAt != null)
+              _detailRow('Ngày tạo', '${staff.createdAt!.day}/${staff.createdAt!.month}/${staff.createdAt!.year}'),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Đóng')),
+        ],
+      ),
+    );
+  }
+
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textSecondary, fontSize: 14)),
+          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary))),
+        ],
+      ),
+    );
+  }
+
+  void _showEditStaffModal(UserEntity staff) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditStaffBottomSheet(viewModel: _viewModel, staff: staff),
+    );
+  }
+
+  Future<void> _confirmDeleteStaff(UserEntity staff) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Xoá nhân viên'),
+        content: Text('Bạn có chắc muốn xoá nhân viên "${staff.fullName ?? staff.email}"?\nHành động này không thể hoàn tác.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xoá'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      final ok = await _viewModel.deleteStaff(staff.id!);
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_viewModel.errorMsg ?? 'Lỗi khi xoá nhân viên')),
+        );
+      }
+    }
   }
 
   @override
@@ -73,102 +150,129 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
             final staff = _viewModel.staffs[index];
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border, width: 0.5),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
+            return GestureDetector(
+              onTap: () => _showStaffDetails(staff),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border, width: 0.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
                     ),
-                    child: Center(
-                      child: Text(
-                        staff.role == 'ADMIN' ? 'A' : 'S',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          staff.role == 'ADMIN' ? 'A' : 'S',
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              staff.fullName ?? staff.email ?? 'Ẩn danh',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: staff.role == 'ADMIN'
-                                    ? Colors.purple.withOpacity(0.1)
-                                    : Colors.blue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                staff.role,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: staff.role == 'ADMIN'
-                                      ? Colors.purple
-                                      : Colors.blue,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  staff.fullName ?? staff.email ?? 'Ẩn danh',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: staff.role == 'ADMIN'
+                                      ? Colors.purple.withOpacity(0.1)
+                                      : Colors.blue.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  staff.role,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: staff.role == 'ADMIN'
+                                        ? Colors.purple
+                                        : Colors.blue,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            staff.email ?? 'Chưa cập nhật email',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          staff.email ?? 'Chưa cập nhật email',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Trạng thái: ${staff.status == 'ACTIVE' ? 'Đang hoạt động' : 'Tạm khóa'}',
-                          style: TextStyle(
-                            color: staff.status == 'ACTIVE'
-                                ? Colors.green
-                                : Colors.red,
-                            fontSize: 12,
+                          const SizedBox(height: 4),
+                          Text(
+                            'Trạng thái: ${staff.status == 'ACTIVE' ? 'Đang hoạt động' : 'Tạm khóa'}',
+                            style: TextStyle(
+                              color: staff.status == 'ACTIVE'
+                                  ? Colors.green
+                                  : Colors.red,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
+                        ],
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: AppColors.textLight),
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'view':
+                            _showStaffDetails(staff);
+                            break;
+                          case 'edit':
+                            _showEditStaffModal(staff);
+                            break;
+                          case 'delete':
+                            _confirmDeleteStaff(staff);
+                            break;
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        const PopupMenuItem(value: 'view', child: ListTile(leading: Icon(Icons.visibility_outlined), title: Text('Xem chi tiết'), dense: true, contentPadding: EdgeInsets.zero)),
+                        const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit_outlined), title: Text('Chỉnh sửa'), dense: true, contentPadding: EdgeInsets.zero)),
+                        const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline, color: Colors.red), title: Text('Xoá', style: TextStyle(color: Colors.red)), dense: true, contentPadding: EdgeInsets.zero)),
                       ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -455,6 +559,173 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class EditStaffBottomSheet extends StatefulWidget {
+  final StaffManagementViewModel viewModel;
+  final UserEntity staff;
+
+  const EditStaffBottomSheet({super.key, required this.viewModel, required this.staff});
+
+  @override
+  State<EditStaffBottomSheet> createState() => _EditStaffBottomSheetState();
+}
+
+class _EditStaffBottomSheetState extends State<EditStaffBottomSheet> {
+  late final TextEditingController _fullNameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+  late String _selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _fullNameController = TextEditingController(text: widget.staff.fullName ?? '');
+    _emailController = TextEditingController(text: widget.staff.email ?? '');
+    _phoneController = TextEditingController(text: widget.staff.phone ?? '');
+    _selectedStatus = widget.staff.status;
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    widget.viewModel.clearState();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_fullNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập họ và tên.')),
+      );
+      return;
+    }
+
+    if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng nhập email hợp lệ.')),
+      );
+      return;
+    }
+
+    final success = await widget.viewModel.updateStaff(
+      widget.staff.id!,
+      fullName: _fullNameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text.isEmpty ? null : _phoneController.text,
+      status: _selectedStatus,
+    );
+
+    if (success && mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cập nhật nhân viên thành công.')),
+      );
+    } else if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(widget.viewModel.errorMsg ?? 'Lỗi khi cập nhật')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Chỉnh sửa nhân viên',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                ),
+                IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
+              ],
+            ),
+            const SizedBox(height: 24),
+            TextField(
+              controller: _fullNameController,
+              textCapitalization: TextCapitalization.words,
+              decoration: InputDecoration(
+                labelText: 'Họ và tên',
+                filled: true,
+                fillColor: AppColors.backgroundLight,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                filled: true,
+                fillColor: AppColors.backgroundLight,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'Số điện thoại',
+                filled: true,
+                fillColor: AppColors.backgroundLight,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              value: _selectedStatus,
+              decoration: InputDecoration(
+                labelText: 'Trạng thái',
+                filled: true,
+                fillColor: AppColors.backgroundLight,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+              items: const [
+                DropdownMenuItem(value: 'ACTIVE', child: Text('Đang hoạt động')),
+                DropdownMenuItem(value: 'INACTIVE', child: Text('Tạm khóa')),
+              ],
+              onChanged: (v) => setState(() => _selectedStatus = v!),
+            ),
+            const SizedBox(height: 24),
+            ListenableBuilder(
+              listenable: widget.viewModel,
+              builder: (context, _) {
+                return ElevatedButton(
+                  onPressed: widget.viewModel.isLoading ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 56),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: widget.viewModel.isLoading
+                      ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
+                      : const Text('Lưu thay đổi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 );
               },
             ),

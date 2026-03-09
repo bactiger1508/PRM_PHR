@@ -181,6 +181,62 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
     return count > 0;
   }
 
+  /// Khôi phục document đã xóa mềm
+  Future<bool> restoreDocument(int docId) async {
+    final db = await _dbHelper.database;
+    final count = await db.update(
+      'medical_documents',
+      {
+        'is_deleted': 0,
+        'status': 'SAVED',
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [docId],
+    );
+    return count > 0;
+  }
+
+  /// Lấy tài liệu do nhân viên tạo
+  Future<List<MedicalDocumentEntity>> getDocumentsByCreator(int staffId) async {
+    final db = await _dbHelper.database;
+
+    final docs = await db.rawQuery('''
+      SELECT md.*, dc.name as category_name, ua.full_name as created_by_name
+      FROM medical_documents md
+      LEFT JOIN document_categories dc ON md.category_id = dc.id
+      LEFT JOIN user_accounts ua ON md.created_by = ua.id
+      WHERE md.created_by = ? AND md.is_deleted = 0
+      ORDER BY md.created_at DESC
+    ''', [staffId]);
+
+    List<MedicalDocumentEntity> result = [];
+    for (var doc in docs) {
+      final docId = doc['id'] as int;
+
+      final files = await db.query(
+        'document_files',
+        where: 'document_id = ?',
+        whereArgs: [docId],
+      );
+      final fileEntities =
+          files.map((f) => DocumentFileModel.fromJson(f)).toList();
+
+      final tagMaps = await db.rawQuery('''
+        SELECT t.tag_name FROM tags t
+        INNER JOIN document_tags dt ON dt.tag_id = t.id
+        WHERE dt.document_id = ?
+      ''', [docId]);
+      final tagNames =
+          tagMaps.map((t) => t['tag_name'] as String).toList();
+
+      result.add(MedicalDocumentModel.fromJson(doc,
+          files: fileEntities, tags: tagNames));
+    }
+
+    return result;
+  }
+
   @override
   Future<List<Map<String, dynamic>>> getDocumentCategories() async {
     final db = await _dbHelper.database;

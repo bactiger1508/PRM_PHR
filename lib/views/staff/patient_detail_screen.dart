@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'create_medical_exam_screen.dart';
-import 'medical_exam_list_screen.dart';
 
 class PatientDetailScreen extends StatefulWidget {
   const PatientDetailScreen({super.key});
@@ -157,7 +156,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 children: [
                   _buildTab('Thông tin', 0),
                   _buildTab('Tài liệu', 1),
-                  _buildTab('Lịch sử khám', 2),
                 ],
               ),
             ),
@@ -165,7 +163,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             // Dynamic Content Area
             if (_selectedTab == 0) _buildInfoTab(),
             if (_selectedTab == 1) _buildDocumentsTab(),
-            if (_selectedTab == 2) _buildHistoryTab(),
           ],
         ),
       ),
@@ -210,7 +207,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           _buildInfoRow(Icons.phone_outlined, 'Số điện thoại', '0912 345 678'),
           _buildInfoRow(Icons.email_outlined, 'Email', 'an.nguyen@gmail.com'),
           _buildInfoRow(Icons.cake_outlined, 'Ngày sinh', '15/05/1989'),
-          _buildInfoRow(Icons.location_on_outlined, 'Địa chỉ', '123 Đường ABC, Quận 1, TP.HCM'),
           _buildInfoRow(Icons.family_restroom_outlined, 'Người giám hộ', 'Trần Thị B (Vợ)'),
         ],
       ),
@@ -242,7 +238,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // Filters row
+          // Search and category filter row
           Row(
             children: [
               Expanded(
@@ -279,9 +275,6 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Icon(Icons.filter_alt_outlined, color: AppColors.textSecondary),
-              const Text(' Tag', style: TextStyle(color: AppColors.textSecondary)),
             ],
           ),
           const SizedBox(height: 12),
@@ -349,13 +342,4 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
     );
   }
 
-  Widget _buildHistoryTab() {
-    return const SizedBox(
-      height: 400,
-      child: MedicalExamListScreen(
-        embedded: true,
-        patientProfileId: 1, // TODO: Use actual patient ID
-      ),
-    );
-  }
 }
