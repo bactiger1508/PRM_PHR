@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:phrprmgroupproject/views/staff/create_medical_exam_screen.dart';
+import 'package:phrprmgroupproject/views/staff/family_home_screen.dart';
+import 'package:phrprmgroupproject/views/staff/medical_exam_list_screen.dart';
 import 'views/theme/app_theme.dart';
 import 'views/login/login_screen.dart';
 import 'views/admin/admin_setup_screen.dart';
