@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../domain/entities/user_entity.dart';
@@ -26,6 +27,7 @@ class AuthViewModel extends ChangeNotifier {
     String phoneOrEmail,
     String password,
     bool isCustomer,
+    bool rememberMe,
   ) async {
     if (phoneOrEmail.isEmpty || password.isEmpty) {
       _errorMsg = 'Vui lòng nhập số điện thoại/email và mật khẩu.';
@@ -44,6 +46,13 @@ class AuthViewModel extends ChangeNotifier {
             'Thông tin đăng nhập không chính xác hoặc sai loại tài khoản.';
       } else {
         _currentUser = user;
+        if (rememberMe) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('isLoggedIn', true);
+          await prefs.setBool('isCustomer', isCustomer);
+          await prefs.setInt('userId', user.id!);
+          await prefs.setString('userRole', user.role ?? '');
+        }
       }
       return user;
     } catch (e) {
@@ -90,8 +99,13 @@ class AuthViewModel extends ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
     _currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('userId');
+    await prefs.remove('userRole');
+    await prefs.remove('isCustomer');
     notifyListeners();
   }
 }
