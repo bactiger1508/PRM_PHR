@@ -5,6 +5,7 @@ import 'document_detail_screen.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/medical_document_viewmodel.dart';
 import '../../domain/entities/medical_document_entity.dart';
+import 'widgets/document_filter_bar.dart';
 
 class DocumentListScreen extends StatefulWidget {
   final bool embedded;
@@ -116,96 +117,23 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Filter bar
+          // Reusable Filter Bar Widget
+          DocumentFilterBar(
+            selectedCategory: _selectedCategory,
+            selectedStatus: _selectedStatus,
+            selectedTimeFilter: _selectedTimeFilter,
+            categories: _categories,
+            statuses: _statuses,
+            timeFilters: _timeFilters,
+            onCategoryChanged: (val) => setState(() => _selectedCategory = val),
+            onStatusChanged: (val) => setState(() => _selectedStatus = val),
+            onTimeFilterChanged: (val) => setState(() => _selectedTimeFilter = val),
+          ),
+          
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Column(
               children: [
-                // Category and Status filters row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedCategory,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                            items: _categories.map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(e, overflow: TextOverflow.ellipsis),
-                            )).toList(),
-                            onChanged: (val) => setState(() => _selectedCategory = val!),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedStatus,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                            items: _statuses.map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(
-                                e == 'DRAFT' ? 'Bản nháp' : e == 'SAVED' ? 'Đã lưu' : e,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )).toList(),
-                            onChanged: (val) => setState(() => _selectedStatus = val!),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Time filter row
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedTimeFilter,
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                      style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                      items: _timeFilters.map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time, size: 16, color: AppColors.textLight),
-                            const SizedBox(width: 8),
-                            Text(e),
-                          ],
-                        ),
-                      )).toList(),
-                      onChanged: (val) => setState(() => _selectedTimeFilter = val!),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
                 // "Created by me" indicator
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
