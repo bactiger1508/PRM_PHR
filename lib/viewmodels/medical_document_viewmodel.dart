@@ -238,6 +238,50 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     }
   }
 
+  /// Cập nhật tài liệu y tế
+  Future<bool> updateDocument({
+    required int docId,
+    required String title,
+    String? notes,
+    int? recordDate,
+  }) async {
+    if (title.isEmpty) {
+      _errorMsg = 'Vui lòng nhập tiêu đề tài liệu.';
+      notifyListeners();
+      return false;
+    }
+
+    _isSaving = true;
+    _errorMsg = null;
+    notifyListeners();
+
+    try {
+      final categoryId = _selectedCategoryIndex + 1;
+
+      final doc = MedicalDocumentEntity(
+        id: docId,
+        patientProfileId: 0, // Not needed for update
+        categoryId: categoryId,
+        title: title,
+        notes: notes,
+        recordDate: recordDate,
+      );
+
+      final success = await _docRepo.updateDocument(doc);
+      if (success) {
+        // Cập nhật lại list tags nếu có thay đổi
+        await _docRepo.updateTagsForDocument(docId, _selectedTags);
+      }
+      return success;
+    } catch (e) {
+      _errorMsg = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
+    }
+  }
+
   /// Reset form
   void resetForm() {
     _selectedCategoryIndex = 0;

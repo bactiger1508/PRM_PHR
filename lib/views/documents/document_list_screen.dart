@@ -24,7 +24,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   String _selectedTimeFilter = 'Tất cả';
 
   final List<String> _categories = ['Tất cả', 'Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán', 'Khác'];
-  final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED'];
+  final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED', 'DELETED'];
   final List<String> _timeFilters = ['Tất cả', '7 ngày qua', '30 ngày qua', '3 tháng qua', '6 tháng qua', '1 năm qua'];
 
   @override
@@ -58,8 +58,11 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
         return false;
       }
       // Filter by Status
-      if (_selectedStatus != 'Tất cả' && doc.status != _selectedStatus) {
-        return false;
+      if (_selectedStatus == 'Tất cả') {
+        // Mặc định ẩn các tài liệu đã xóa (DELETED) khi xem 'Tất cả'
+        if (doc.status == 'DELETED') return false;
+      } else {
+        if (doc.status != _selectedStatus) return false;
       }
       // Filter by Time
       if (_selectedTimeFilter != 'Tất cả') {
@@ -288,6 +291,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
 
     return _buildDocItem(
       context,
+      doc: doc,
       icon: icon,
       iconBgColor: iconBgColor,
       iconColor: iconColor,
@@ -300,6 +304,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
 
   Widget _buildDocItem(
     BuildContext context, {
+    required MedicalDocumentEntity doc,
     required IconData icon,
     required Color iconBgColor,
     required Color iconColor,
@@ -312,8 +317,11 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const DocumentDetailScreen()),
-        );
+          MaterialPageRoute(builder: (context) => DocumentDetailScreen(document: doc)),
+        ).then((_) {
+          // Refresh list when returning from detail screen in case document was soft deleted
+          _loadDocuments();
+        });
       },
       child: Padding(
         padding: const EdgeInsets.all(16.0),

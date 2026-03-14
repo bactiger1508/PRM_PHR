@@ -79,7 +79,7 @@ class DocumentFilterBar extends StatelessWidget {
                       items: statuses.map((e) => DropdownMenuItem(
                         value: e,
                         child: Text(
-                          e == 'DRAFT' ? 'Bản nháp' : e == 'SAVED' ? 'Đã lưu' : e,
+                          e == 'DRAFT' ? 'Bản nháp' : e == 'SAVED' ? 'Đã lưu' : e == 'DELETED' ? 'Thùng rác' : e,
                           overflow: TextOverflow.ellipsis,
                         ),
                       )).toList(),

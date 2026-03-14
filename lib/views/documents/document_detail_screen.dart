@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../../domain/entities/medical_document_entity.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/medical_document_viewmodel.dart';
+import 'update_document_screen.dart';
 
 class DocumentDetailScreen extends StatefulWidget {
-  const DocumentDetailScreen({super.key});
+  final MedicalDocumentEntity document;
+  
+  const DocumentDetailScreen({super.key, required this.document});
 
   @override
   State<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
 }
 
 class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
-  bool _isDeleted = false;
+  late bool _isDeleted;
+
+  @override
+  void initState() {
+    super.initState();
+    _isDeleted = widget.document.status == 'DELETED';
+  }
 
   void _showOptionsMenu(BuildContext context) {
     showModalBottomSheet(
@@ -43,14 +56,19 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 ),
                 title: const Text('Chỉnh sửa tài liệu', style: TextStyle(fontWeight: FontWeight.w600)),
                 subtitle: const Text('Cập nhật thông tin tài liệu', style: TextStyle(fontSize: 12)),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Mở trang chỉnh sửa tài liệu...'),
-                      backgroundColor: AppColors.primary,
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => UpdateDocumentScreen(document: widget.document),
                     ),
                   );
+                  if (result == true) {
+                    if (!context.mounted) return;
+                    // Cập nhật thành công, đóng luôn chi tiết để về List refresh lại
+                    Navigator.pop(context, true);
+                  }
                 },
               ),
               const Divider(height: 1, indent: 16, endIndent: 16),
@@ -87,6 +105,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   }
 
   void _showDeleteConfirmDialog(BuildContext context) {
+    // Save these before async gap
+    final isCurrentlyDeleted = _isDeleted;
+    final docId = widget.document.id!;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -94,18 +116,18 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
         title: Row(
           children: [
             Icon(
-              _isDeleted ? Icons.restore : Icons.delete_outline,
-              color: _isDeleted ? Colors.green[600] : Colors.red[600],
+              isCurrentlyDeleted ? Icons.restore : Icons.delete_outline,
+              color: isCurrentlyDeleted ? Colors.green[600] : Colors.red[600],
             ),
             const SizedBox(width: 8),
             Text(
-              _isDeleted ? 'Khôi phục?' : 'Xóa tài liệu?',
+              isCurrentlyDeleted ? 'Khôi phục?' : 'Xóa tài liệu?',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],
         ),
         content: Text(
-          _isDeleted
+          isCurrentlyDeleted
               ? 'Tài liệu sẽ được đưa trở lại danh sách tài liệu của bạn.'
               : 'Tài liệu sẽ được chuyển vào thùng rác. Bạn có thể khôi phục lại sau.',
           style: const TextStyle(color: AppColors.textSecondary),
@@ -116,29 +138,43 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
             child: const Text('Hủy'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              // Đóng dialog TRƯỚC khi gọi async
               Navigator.pop(ctx);
-              setState(() => _isDeleted = !_isDeleted);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(_isDeleted ? 'Đã xóa tài liệu (có thể khôi phục)' : 'Đã khôi phục tài liệu'),
-                  backgroundColor: _isDeleted ? Colors.orange : Colors.green,
-                  action: SnackBarAction(
-                    label: 'Hoàn tác',
-                    textColor: Colors.white,
-                    onPressed: () {
-                      setState(() => _isDeleted = !_isDeleted);
-                    },
-                  ),
-                ),
-              );
+              
+              final docViewModel = MedicalDocumentViewModel();
+              bool success = false;
+              
+              if (isCurrentlyDeleted) {
+                success = await docViewModel.restoreDocument(docId);
+              } else {
+                success = await docViewModel.softDeleteDocument(docId);
+              }
+
+              if (success) {
+                if (!mounted) return;
+                setState(() => _isDeleted = !isCurrentlyDeleted);
+                final msg = isCurrentlyDeleted ? 'Đã khôi phục tài liệu' : 'Đã xóa tài liệu (có thể khôi phục)';
+                final color = isCurrentlyDeleted ? Colors.green : Colors.orange;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(msg), backgroundColor: color),
+                );
+                // Pop về list để reload
+                Navigator.pop(context, true);
+              } else {
+                if (!mounted) return;
+                final errMsg = docViewModel.errorMsg ?? 'Có lỗi xảy ra';
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(errMsg), backgroundColor: Colors.red),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isDeleted ? Colors.green[600] : Colors.red[600],
+              backgroundColor: isCurrentlyDeleted ? Colors.green[600] : Colors.red[600],
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(_isDeleted ? 'Khôi phục' : 'Xóa'),
+            child: Text(isCurrentlyDeleted ? 'Khôi phục' : 'Xóa'),
           ),
         ],
       ),
@@ -190,11 +226,22 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       ),
                     ),
                     TextButton(
-                      onPressed: () {
-                        setState(() => _isDeleted = false);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Đã khôi phục tài liệu'), backgroundColor: Colors.green),
-                        );
+                      onPressed: () async {
+                        final docViewModel = MedicalDocumentViewModel();
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final success = await docViewModel.restoreDocument(widget.document.id!);
+                        
+                        if (success && mounted) {
+                          setState(() => _isDeleted = false);
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(content: Text('Đã khôi phục tài liệu'), backgroundColor: Colors.green),
+                          );
+                          Navigator.pop(context, true);
+                        } else if (mounted && docViewModel.errorMsg != null) {
+                           scaffoldMessenger.showSnackBar(
+                            SnackBar(content: Text(docViewModel.errorMsg!), backgroundColor: Colors.red),
+                          );
+                        }
                       },
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red[700],
@@ -213,29 +260,29 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: AppColors.textPrimary,
-                    ),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const Expanded(
                     child: Text(
                       'Chi tiết Tài liệu',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.more_vert,
-                      color: AppColors.textPrimary,
-                    ),
-                    onPressed: () => _showOptionsMenu(context),
+                  // Authorization check: only show options menu if user is creator
+                  Builder(
+                    builder: (context) {
+                      final isCreator = AuthViewModel.instance.currentUser?.id == widget.document.createdBy;
+                      if (isCreator) {
+                        return IconButton(
+                          icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
+                          onPressed: () => _showOptionsMenu(context),
+                        );
+                      }
+                      // Empty placeholder to keep the text centered
+                      return const SizedBox(width: 48); 
+                    },
                   ),
                 ],
               ),
@@ -378,153 +425,111 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
                     // Details Info
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Thông tin chi tiết',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                            ),
+                          Text(
+                            widget.document.title ?? 'Không có tiêu đề',
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                           ),
                           const SizedBox(height: 12),
-                          _buildDetailRow('Ngày cấp', '20/05/2024'),
+                          
                           _buildDetailRow(
-                            'Loại tài liệu',
-                            'Kết quả xét nghiệm máu',
+                            'Ngày khám', 
+                            widget.document.recordDate != null 
+                              ? DateFormat('dd/MM/yyyy').format(DateTime.fromMillisecondsSinceEpoch(widget.document.recordDate!))
+                              : 'N/A'
+                          ),
+                          _buildDetailRow(
+                            'Danh mục',
+                            widget.document.categoryName ?? 'Không phân loại',
+                          ),
+                          _buildDetailRow(
+                            'Người tạo',
+                            widget.document.createdByName != null ? 'BS. ${widget.document.createdByName}' : 'N/A',
                           ),
 
                           // Tags Row
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Nhãn',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textSecondary,
+                          if (widget.document.tags.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Text(
+                                    'Nhãn',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                                   ),
-                                ),
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(
-                                          alpha: 0.1,
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Wrap(
+                                      alignment: WrapAlignment.end,
+                                      spacing: 8,
+                                      runSpacing: 4,
+                                      children: widget.document.tags.map((tag) => Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[200],
+                                          borderRadius: BorderRadius.circular(4),
                                         ),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: const Text(
-                                        'QUAN TRỌNG',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.primary,
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey[800]),
                                         ),
-                                      ),
+                                      )).toList(),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.green[50],
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        'ĐÃ XÁC THỰC',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.green[700]!,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                           const Divider(height: 1, color: AppColors.border),
-
-                          _buildDetailRow(
-                            'Nơi cấp',
-                            'Bệnh viện Đa khoa Quốc tế',
-                          ),
                         ],
                       ),
                     ),
 
-                    // Notes Section
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundLight,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: const [
-                                Icon(
-                                  Icons.notes,
-                                  size: 16,
-                                  color: AppColors.textPrimary,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Ghi chú',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
+                    if (widget.document.notes != null && widget.document.notes!.isNotEmpty)
+                      // Notes Section
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.backgroundLight,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: const [
+                                  Icon(Icons.notes, size: 16, color: AppColors.textPrimary),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Ghi chú',
+                                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            const Text(
-                              'Tài liệu này bao gồm các chỉ số huyết học cơ bản. Bác sĩ yêu cầu tái khám sau 3 tháng để theo dõi nồng độ Cholesterol.',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textSecondary,
-                                height: 1.5,
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(
+                                widget.document.notes!,
+                                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
 
                     // ID Section
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(16, 8, 16, 32),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                       child: Center(
                         child: Text(
-                          'ID Tài liệu: PHR-2024-0520-XN01',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.textLight,
-                          ),
+                          'ID Tài liệu: PHR-2024-DOC-\${widget.document.id}',
+                          style: const TextStyle(fontSize: 10, color: AppColors.textLight),
                         ),
                       ),
                     ),
