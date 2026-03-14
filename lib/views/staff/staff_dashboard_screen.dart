@@ -16,6 +16,7 @@ class StaffDashboardScreen extends StatefulWidget {
 
 class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   int _selectedIndex = 0;
+  int _documentRefreshKey = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         children: [
           _buildHomePage(context),
           const PatientListScreen(embedded: true),
-          const DocumentListScreen(embedded: true),
+          DocumentListScreen(key: ValueKey('doc_list_$_documentRefreshKey'), embedded: true),
           const PersonalSettingsScreen(embedded: true),
         ],
       ),
@@ -34,13 +35,20 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         width: 64,
         height: 64,
         child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const CreateMedicalExamScreen(),
               ),
             );
+            if (result == true) {
+              setState(() {
+                _documentRefreshKey++;
+                // Tự động chuyển qua tab Tài liệu nêú muốn
+                _selectedIndex = 2; 
+              });
+            }
           },
           backgroundColor: AppColors.primary,
           elevation: 4,
