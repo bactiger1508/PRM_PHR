@@ -135,6 +135,14 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   Future<void> loadTags() async {
     try {
       _availableTags = await _docRepo.getAllTags();
+      // Nếu DB chưa có tag nào, dùng danh sách mặc định
+      if (_availableTags.isEmpty) {
+        _availableTags = [
+          'Tim mạch', 'Hô hấp', 'Tiêu hóa', 'Thần kinh', 'Xương khớp',
+          'Nội tiết', 'Da liễu', 'Mắt', 'Tai mũi họng', 'Quan trọng',
+          'Sức khỏe định kỳ', 'Nội khoa', 'Ngoại khoa', 'Chẩn đoán hình ảnh',
+        ];
+      }
       notifyListeners();
     } catch (_) {}
   }

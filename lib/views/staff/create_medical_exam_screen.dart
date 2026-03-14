@@ -142,152 +142,31 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     );
   }
 
-  void _showAddTagDialog() {
-    _tagInputController.clear();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            final query = _tagInputController.text.toLowerCase();
-            final filteredTags = _viewModel.availableTags
-                .where((t) =>
-                    t.toLowerCase().contains(query) &&
-                    !_viewModel.selectedTags.contains(t))
-                .toList();
+  bool _showTagDropdown = false;
 
-            return Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx).viewInsets.bottom,
-              ),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Handle bar
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      'Thêm nhãn',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: TextField(
-                      controller: _tagInputController,
-                      autofocus: true,
-                      onChanged: (v) => setModalState(() {}),
-                      onSubmitted: (value) {
-                        if (value.trim().isNotEmpty) {
-                          setState(() {
-                            _viewModel.addTag(value.trim());
-                          });
-                          Navigator.pop(ctx);
-                        }
-                      },
-                      decoration: InputDecoration(
-                        hintText: 'Nhập tên nhãn...',
-                        hintStyle: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textLight,
-                        ),
-                        prefixIcon: const Icon(Icons.label_outline,
-                            color: AppColors.textLight),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.add_circle,
-                              color: AppColors.primary),
-                          onPressed: () {
-                            if (_tagInputController.text.trim().isNotEmpty) {
-                              setState(() {
-                                _viewModel
-                                    .addTag(_tagInputController.text.trim());
-                              });
-                              Navigator.pop(ctx);
-                            }
-                          },
-                        ),
-                        filled: true,
-                        fillColor: AppColors.backgroundLight,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (filteredTags.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Nhãn có sẵn',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textLight,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: filteredTags
-                            .take(10)
-                            .map((tag) => ActionChip(
-                                  onPressed: () {
-                                    setState(() {
-                                      _viewModel.addTag(tag);
-                                    });
-                                    Navigator.pop(ctx);
-                                  },
-                                  backgroundColor: AppColors.backgroundLight,
-                                  label: Text(
-                                    tag,
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
+  void _onTagInputChanged(String value) {
+    setState(() {
+      _showTagDropdown = value.trim().isNotEmpty;
+    });
+  }
+
+  void _selectTag(String tag) {
+    setState(() {
+      _viewModel.addTag(tag);
+      _tagInputController.clear();
+      _showTagDropdown = false;
+    });
+  }
+
+  void _addCustomTag() {
+    final tag = _tagInputController.text.trim();
+    if (tag.isNotEmpty) {
+      setState(() {
+        _viewModel.addTag(tag);
+        _tagInputController.clear();
+        _showTagDropdown = false;
+      });
+    }
   }
 
   void _showPatientPicker() {
@@ -928,63 +807,244 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   }
 
   Widget _buildTagsSection() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        ..._viewModel.selectedTags.asMap().entries.map((entry) {
-          final tag = entry.value;
-          // Alternate colors for tags
-          final colors = [
-            [Colors.blue[50]!, Colors.blue[600]!],
-            [Colors.purple[50]!, Colors.purple[600]!],
-            [Colors.teal[50]!, Colors.teal[600]!],
-            [Colors.orange[50]!, Colors.orange[700]!],
-            [Colors.pink[50]!, Colors.pink[600]!],
-          ];
-          final colorPair = colors[entry.key % colors.length];
+    final colors = [
+      [Colors.blue[50]!, Colors.blue[600]!],
+      [Colors.purple[50]!, Colors.purple[600]!],
+      [Colors.teal[50]!, Colors.teal[600]!],
+      [Colors.orange[50]!, Colors.orange[700]!],
+      [Colors.pink[50]!, Colors.pink[600]!],
+    ];
 
-          return Chip(
-            label: Text(
-              tag,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: colorPair[1],
-              ),
+    // Filter available tags: prefix match (startsWith) and not already selected
+    final query = _tagInputController.text.trim().toLowerCase();
+    final filteredSuggestions = _viewModel.availableTags
+        .where((t) =>
+            t.toLowerCase().startsWith(query) &&
+            !_viewModel.selectedTags.contains(t))
+        .take(8)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Selected tags as chips
+        if (_viewModel.selectedTags.isNotEmpty) ...[
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _viewModel.selectedTags.asMap().entries.map((entry) {
+              final tag = entry.value;
+              final colorPair = colors[entry.key % colors.length];
+              return Chip(
+                label: Text(
+                  tag,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: colorPair[1],
+                  ),
+                ),
+                backgroundColor: colorPair[0],
+                deleteIcon: Icon(Icons.close, size: 14, color: colorPair[1]),
+                onDeleted: () => setState(() => _viewModel.removeTag(tag)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide.none,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 8),
+        ],
+
+        // Autocomplete input field
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _showTagDropdown ? AppColors.primary : AppColors.border,
+              width: _showTagDropdown ? 2 : 1,
             ),
-            backgroundColor: colorPair[0],
-            deleteIcon: Icon(Icons.close, size: 14, color: colorPair[1]),
-            onDeleted: () => setState(() {
-              _viewModel.removeTag(tag);
-            }),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide.none,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-          );
-        }),
-        ActionChip(
-          onPressed: _showAddTagDialog,
-          backgroundColor: Colors.white,
-          side: const BorderSide(color: AppColors.border),
-          label: const Row(
-            mainAxisSize: MainAxisSize.min,
+          ),
+          child: Column(
             children: [
-              Icon(Icons.add, size: 14, color: AppColors.textSecondary),
-              SizedBox(width: 4),
-              Text(
-                'Thêm nhãn',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textSecondary,
+              TextField(
+                controller: _tagInputController,
+                onChanged: _onTagInputChanged,
+                onSubmitted: (_) => _addCustomTag(),
+                decoration: InputDecoration(
+                  hintText: 'Gõ để tìm hoặc tạo nhãn mới...',
+                  hintStyle: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textLight,
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.label_outline,
+                    color: AppColors.textLight,
+                    size: 20,
+                  ),
+                  suffixIcon: _tagInputController.text.trim().isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.add_circle,
+                            color: AppColors.primary,
+                          ),
+                          onPressed: _addCustomTag,
+                          tooltip: 'Thêm nhãn mới',
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                 ),
               ),
+
+              // Dropdown suggestions
+              if (_showTagDropdown && filteredSuggestions.isNotEmpty) ...[
+                const Divider(height: 1, color: AppColors.border),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: filteredSuggestions.length,
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, color: AppColors.border),
+                    itemBuilder: (context, index) {
+                      final tag = filteredSuggestions[index];
+                      // Highlight starting portion
+                      final lowerTag = tag.toLowerCase();
+                      final isMatch = lowerTag.startsWith(query);
+                      return InkWell(
+                        onTap: () => _selectTag(tag),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.label,
+                                size: 16,
+                                color: AppColors.primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: isMatch
+                                    ? RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: tag.substring(
+                                                  0, query.length),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.primary,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                                text: tag.substring(
+                                                    query.length)),
+                                          ],
+                                        ),
+                                      )
+                                    : Text(
+                                        tag,
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                              ),
+                              const Icon(
+                                Icons.add,
+                                size: 16,
+                                color: AppColors.textLight,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+
+              // No suggestions hint
+              if (_showTagDropdown &&
+                  filteredSuggestions.isEmpty &&
+                  _tagInputController.text.trim().isNotEmpty) ...[
+                const Divider(height: 1, color: AppColors.border),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.add_circle_outline,
+                          size: 16, color: AppColors.primary),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Tạo nhãn "${_tagInputController.text.trim()}"',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
+
+        // Quick-pick suggestions (show 5 tags when not typing)
+        if (!_showTagDropdown) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: _viewModel.availableTags
+                .where((t) => !_viewModel.selectedTags.contains(t))
+                .take(5)
+                .map((tag) => GestureDetector(
+                      onTap: () => _selectTag(tag),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add,
+                                size: 13, color: AppColors.textSecondary),
+                            const SizedBox(width: 4),
+                            Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
       ],
     );
   }
