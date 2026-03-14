@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
 import 'patient_detail_screen.dart';
 
@@ -12,9 +14,26 @@ class PatientListScreen extends StatefulWidget {
 
 class _PatientListScreenState extends State<PatientListScreen> {
   int _selectedIndex = 0; // "Bệnh nhân" initially selected on bottom nav bar
+  final StaffManagementViewModel _staffViewModel = StaffManagementViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _staffViewModel.loadStats();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final stats = _staffViewModel.stats;
+
+    final formatter = NumberFormat('#,###', 'en_US');
+
+    final String totalDocuments = stats != null ? formatter.format(stats.totalDocuments) : '0';
+    final String docsThisMonth = stats != null ? '+${formatter.format(stats.documentsThisMonth)} tháng này' : '+0 tháng này';
+
+    final String totalPatients = stats != null ? formatter.format(stats.totalPatients) : '0';
+    final String patientsThisMonth = stats != null ? '+${formatter.format(stats.patientsThisMonth)} tháng này' : '+0 tháng này';
+
     // Extract the main body content into a variable
     final Widget mainContent = SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 24),
@@ -28,8 +47,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 Expanded(
                   child: _buildStatCard(
                     title: 'Tổng số hồ sơ',
-                    value: '1,245',
-                    trendText: '+12 tháng này',
+                    value: totalDocuments,
+                    trendText: docsThisMonth,
                     trendIcon: Icons.trending_up,
                     trendColor: Colors.green[600]!,
                   ),
@@ -38,8 +57,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 Expanded(
                   child: _buildStatCard(
                     title: 'Tổng số bệnh nhân',
-                    value: '156',
-                    trendText: '+5 tháng này',
+                    value: totalPatients,
+                    trendText: patientsThisMonth,
                     trendIcon: Icons.trending_up,
                     trendColor: Colors.green[600]!,
                   ),

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:phrprmgroupproject/data/db/database_helper.dart';
+import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
+import 'package:phrprmgroupproject/data/interfaces/patient_repository.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../domain/entities/user_entity.dart';
 
 class StaffManagementViewModel extends ChangeNotifier {
   final AuthRepository _authRepo = AuthRepositoryImpl();
+  final PatientRepository _patientRepository = PatientRepositoryImpl();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -17,6 +21,9 @@ class StaffManagementViewModel extends ChangeNotifier {
 
   List<UserEntity> _staffs = [];
   List<UserEntity> get staffs => _staffs;
+
+  DashboardStats? _stats;
+  DashboardStats? get stats => _stats;
 
   Future<void> loadStaffs() async {
     _isLoading = true;
@@ -113,6 +120,20 @@ class StaffManagementViewModel extends ChangeNotifier {
     } catch (e) {
       _errorMsg = 'Lỗi khi xoá nhân viên: ${e.toString()}';
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadStats() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _stats = await _patientRepository.getStats();
+    } catch (e) {
+      print('Lỗi tải thống kê: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

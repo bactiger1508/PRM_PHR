@@ -215,4 +215,9 @@ class PatientRepositoryImpl implements PatientRepository {
     final count = await db.update('patient_profiles', values, where: 'id = ?', whereArgs: [patientId]);
     return count > 0;
   }
+
+  @override
+  Future<DashboardStats> getStats() async {
+    return await DatabaseHelper.instance.getDashboardStats();
+  }
 }
