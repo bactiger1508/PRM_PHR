@@ -8,6 +8,7 @@ class UserEntity {
   final String status;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? avatar;
 
   UserEntity({
     this.id,
@@ -19,5 +20,6 @@ class UserEntity {
     this.status = 'ACTIVE',
     this.createdAt,
     this.updatedAt,
+    this.avatar,
   });
 }

@@ -108,4 +108,18 @@ class AuthViewModel extends ChangeNotifier {
     await prefs.remove('isCustomer');
     notifyListeners();
   }
+
+  void updateLocalAvatar(String newAvatarPath) {
+    if (_currentUser != null) {
+      _currentUser = UserEntity(
+        id: _currentUser!.id,
+        fullName: _currentUser!.fullName,
+        phone: _currentUser!.phone,
+        email: _currentUser!.email,
+        role: _currentUser!.role,
+        avatar: newAvatarPath,
+      );
+      notifyListeners();
+    }
+  }
 }

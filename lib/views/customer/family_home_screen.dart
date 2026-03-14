@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
@@ -18,6 +20,7 @@ class CustomerFamilyHomeScreen extends StatefulWidget {
 class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
   int _selectedIndex = 0;
   final FamilyMemberViewModel _viewModel = FamilyMemberViewModel();
+  String? avatarCurrentUser = AuthViewModel.instance.currentUser?.avatar;
 
   @override
   void initState() {
@@ -170,6 +173,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                           id: selfMember['medical_code'],
                           lastUpdate: _formatDate(selfMember['updated_at']),
                           isPrimary: true,
+                          avatar: selfMember['avatar']
                         ),
                         const SizedBox(height: 32),
                       ],
@@ -260,6 +264,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
     String? id,
     required String lastUpdate,
     bool isPrimary = false,
+    String? avatar,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -316,14 +321,19 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
               CircleAvatar(
                 radius: 32,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                child: Text(
+                backgroundImage: (avatar != null && avatar.isNotEmpty)
+                    ? FileImage(File(avatar)) as ImageProvider
+                    : null,
+                child: (avatar == null || avatar.isEmpty)
+                    ? Text(
                   name.isNotEmpty ? name[0] : '?',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
-                ),
+                )
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
