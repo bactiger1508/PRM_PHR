@@ -1,3 +1,4 @@
+import 'package:phrprmgroupproject/data/db/database_helper.dart';
 import '../../domain/entities/patient_entity.dart';
 
 abstract class PatientRepository {
@@ -19,4 +20,6 @@ abstract class PatientRepository {
 
   /// Fetches all linked patient profiles for a customer
   Future<List<Map<String, dynamic>>> getFamilyMembers(int customerId);
+
+  Future<DashboardStats> getStats();
 }

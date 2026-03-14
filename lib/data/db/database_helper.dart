@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'schema.dart';
@@ -131,4 +132,86 @@ class DatabaseHelper {
   static void clearStaticDatabaseInstance() {
     _database = null;
   }
+
+  Future<DashboardStats> getDashboardStats() async {
+    final db = await DatabaseHelper.instance.database;
+
+    final now = DateTime.now();
+    final startOfMonthMs = DateTime(now.year, now.month, 1).millisecondsSinceEpoch;
+    final currentYearMonth = DateFormat('yyyy-MM').format(now);
+    final patientTotalResult = await db.rawQuery('SELECT COUNT(*) as count FROM patient_profiles');
+    final totalPatients = Sqflite.firstIntValue(patientTotalResult) ?? 0;
+
+    final allPatients = await db.rawQuery('SELECT created_at FROM patient_profiles');
+    int patientsThisMonth = 0;
+
+    for (var row in allPatients) {
+      final createdAt = row['created_at'];
+      if (createdAt == null) continue;
+
+      if (createdAt is int) {
+        if (createdAt >= startOfMonthMs) patientsThisMonth++;
+      } else if (createdAt is String) {
+        final parseInt = int.tryParse(createdAt);
+        if (parseInt != null) {
+          if (parseInt >= startOfMonthMs) patientsThisMonth++;
+        } else if (createdAt.startsWith(currentYearMonth)) {
+          patientsThisMonth++;
+        } else {
+          final parsedDate = DateTime.tryParse(createdAt);
+          if (parsedDate != null && parsedDate.millisecondsSinceEpoch >= startOfMonthMs) {
+            patientsThisMonth++;
+          }
+        }
+      }
+    }
+
+    final docTotalResult = await db.rawQuery('SELECT COUNT(*) as count FROM medical_documents WHERE is_deleted = 0');
+    final totalDocuments = Sqflite.firstIntValue(docTotalResult) ?? 0;
+
+    final allDocs = await db.rawQuery('SELECT created_at FROM medical_documents WHERE is_deleted = 0');
+    int documentsThisMonth = 0;
+
+    for (var row in allDocs) {
+      final createdAt = row['created_at'];
+      if (createdAt == null) continue;
+
+      if (createdAt is int) {
+        if (createdAt >= startOfMonthMs) documentsThisMonth++;
+      } else if (createdAt is String) {
+        final parseInt = int.tryParse(createdAt);
+        if (parseInt != null) {
+          if (parseInt >= startOfMonthMs) documentsThisMonth++;
+        } else if (createdAt.startsWith(currentYearMonth)) {
+          documentsThisMonth++;
+        } else {
+          final parsedDate = DateTime.tryParse(createdAt);
+          if (parsedDate != null && parsedDate.millisecondsSinceEpoch >= startOfMonthMs) {
+            documentsThisMonth++;
+          }
+        }
+      }
+    }
+
+    return DashboardStats(
+      totalPatients: totalPatients,
+      patientsThisMonth: patientsThisMonth,
+      totalDocuments: totalDocuments,
+      documentsThisMonth: documentsThisMonth,
+    );
+  }
+}
+
+class DashboardStats {
+  final int totalPatients;
+  final int patientsThisMonth;
+  final int totalDocuments;
+  final int documentsThisMonth;
+
+  DashboardStats({
+    required this.totalPatients,
+    required this.patientsThisMonth,
+    required this.totalDocuments,
+    required this.documentsThisMonth,
+  });
 }
