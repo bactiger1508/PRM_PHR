@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/domain/entities/user_entity.dart';
 import '../../core/utils/hash_utils.dart';
 import '../../core/services/email_service.dart';
 import '../../domain/entities/patient_entity.dart';
@@ -222,6 +223,41 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
+  Future<List<UserEntity>> getAllCustomers() async {
+    final db = await DatabaseHelper.instance.database;
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user_accounts',
+      where: 'role = ?',
+      whereArgs: ['CUSTOMER'],
+      orderBy: 'id DESC',
+    );
+
+    return maps.map((map) => UserEntity(
+      id: map['id'],
+      fullName: map['full_name'],
+      email: map['email'],
+      phone: map['phone'],
+      role: map['role'],
+      status: map['status'],
+      avatar: map['avatar'],
+    )).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getDocumentsByPatientId(int patientId) async {
+    final db = await DatabaseHelper.instance.database;
+    final String sql = '''
+      SELECT 
+        md.*, 
+        dc.name as category_name 
+      FROM medical_documents md
+      LEFT JOIN document_categories dc ON md.category_id = dc.id
+      WHERE md.patient_profile_id = ? AND md.is_deleted = 0
+      ORDER BY md.id DESC
+    ''';
+
+    return await db.rawQuery(sql, [patientId]);
   Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 3}) async {
     final db = await DatabaseHelper.instance.database;
 
