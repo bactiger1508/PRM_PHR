@@ -25,6 +25,9 @@ class StaffManagementViewModel extends ChangeNotifier {
   DashboardStats? _stats;
   DashboardStats? get stats => _stats;
 
+  List<Map<String, dynamic>> _recentPatients = [];
+  List<Map<String, dynamic>> get recentPatients => _recentPatients;
+
   Future<void> loadStaffs() async {
     _isLoading = true;
     _errorMsg = null;
@@ -134,6 +137,21 @@ class StaffManagementViewModel extends ChangeNotifier {
       _stats = await _patientRepository.getStats();
     } catch (e) {
       print('Lỗi tải thống kê: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadRecentDocuments() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _recentPatients = await _patientRepository.getRecentPatients(limit: 3);
+      print('Hồ sơ gần đây ${_recentPatients}');
+    } catch (e) {
+      print('Lỗi tải dữ liệu tài liệu: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

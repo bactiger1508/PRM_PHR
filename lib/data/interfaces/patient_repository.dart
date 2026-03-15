@@ -22,4 +22,6 @@ abstract class PatientRepository {
   Future<List<Map<String, dynamic>>> getFamilyMembers(int customerId);
 
   Future<DashboardStats> getStats();
+
+  Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 3});
 }

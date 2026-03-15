@@ -141,6 +141,8 @@ class DatabaseHelper {
     final currentYearMonth = DateFormat('yyyy-MM').format(now);
     final patientTotalResult = await db.rawQuery('SELECT COUNT(*) as count FROM patient_profiles');
     final totalPatients = Sqflite.firstIntValue(patientTotalResult) ?? 0;
+    final startOfTodayMs = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+    final currentYearMonthDay = DateFormat('yyyy-MM-dd').format(now);
 
     final allPatients = await db.rawQuery('SELECT created_at FROM patient_profiles');
     int patientsThisMonth = 0;
@@ -171,6 +173,7 @@ class DatabaseHelper {
 
     final allDocs = await db.rawQuery('SELECT created_at FROM medical_documents WHERE is_deleted = 0');
     int documentsThisMonth = 0;
+    int documentsToday = 0;
 
     for (var row in allDocs) {
       final createdAt = row['created_at'];
@@ -178,16 +181,23 @@ class DatabaseHelper {
 
       if (createdAt is int) {
         if (createdAt >= startOfMonthMs) documentsThisMonth++;
+        if (createdAt >= startOfTodayMs) documentsToday++;
       } else if (createdAt is String) {
         final parseInt = int.tryParse(createdAt);
         if (parseInt != null) {
           if (parseInt >= startOfMonthMs) documentsThisMonth++;
+          if (parseInt >= startOfTodayMs) documentsToday++;
         } else if (createdAt.startsWith(currentYearMonth)) {
           documentsThisMonth++;
+        } else if (createdAt.startsWith(currentYearMonthDay)) { // So sánh theo ngày hôm nay
+          documentsToday++;
         } else {
           final parsedDate = DateTime.tryParse(createdAt);
           if (parsedDate != null && parsedDate.millisecondsSinceEpoch >= startOfMonthMs) {
             documentsThisMonth++;
+          }
+          if (parsedDate != null && parsedDate.millisecondsSinceEpoch >= startOfTodayMs) {
+            documentsToday++;
           }
         }
       }
@@ -198,6 +208,7 @@ class DatabaseHelper {
       patientsThisMonth: patientsThisMonth,
       totalDocuments: totalDocuments,
       documentsThisMonth: documentsThisMonth,
+      documentToday: documentsToday
     );
   }
 }
@@ -207,11 +218,13 @@ class DashboardStats {
   final int patientsThisMonth;
   final int totalDocuments;
   final int documentsThisMonth;
+  final int documentToday;
 
   DashboardStats({
     required this.totalPatients,
     required this.patientsThisMonth,
     required this.totalDocuments,
     required this.documentsThisMonth,
+    required this.documentToday,
   });
 }
