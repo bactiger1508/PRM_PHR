@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/views/staff/patient_detail_screen.dart';
 import '../theme/app_theme.dart';
 import '../documents/document_list_screen.dart';
 import '../auth/personal_settings_screen.dart';
@@ -173,7 +174,9 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                           id: selfMember['medical_code'],
                           lastUpdate: _formatDate(selfMember['updated_at']),
                           isPrimary: true,
-                          avatar: selfMember['avatar']
+                          avatar: selfMember['avatar'],
+                          email: selfMember['email'],
+                          phone: selfMember['phone'],
                         ),
                         const SizedBox(height: 32),
                       ],
@@ -197,6 +200,8 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                               id: member['medical_code'],
                               lastUpdate: _formatDate(member['updated_at']),
                               isPrimary: false,
+                              email: member['email'],
+                              phone: member['phone'],
                             );
                           },
                         ),
@@ -265,6 +270,8 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
     required String lastUpdate,
     bool isPrimary = false,
     String? avatar,
+    String? email,
+    String? phone,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -401,7 +408,10 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const DocumentListScreen(),
+                              builder: (context) => PatientDetailScreen(
+                                email: email,
+                                phone: phone,
+                              ),
                             ),
                           );
                         },
