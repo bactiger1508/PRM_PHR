@@ -222,6 +222,7 @@ class PatientRepositoryImpl implements PatientRepository {
     return await DatabaseHelper.instance.getDashboardStats();
   }
 
+  @override
   Future<List<UserEntity>> getAllCustomers() async {
     final db = await DatabaseHelper.instance.database;
 
@@ -241,5 +242,21 @@ class PatientRepositoryImpl implements PatientRepository {
       status: map['status'],
       avatar: map['avatar'],
     )).toList();
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> getDocumentsByPatientId(int patientId) async {
+    final db = await DatabaseHelper.instance.database;
+    final String sql = '''
+      SELECT 
+        md.*, 
+        dc.name as category_name 
+      FROM medical_documents md
+      LEFT JOIN document_categories dc ON md.category_id = dc.id
+      WHERE md.patient_profile_id = ? AND md.is_deleted = 0
+      ORDER BY md.id DESC
+    ''';
+
+    return await db.rawQuery(sql, [patientId]);
   }
 }
