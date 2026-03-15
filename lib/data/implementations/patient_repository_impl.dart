@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/domain/entities/user_entity.dart';
 import '../../core/utils/hash_utils.dart';
 import '../../core/services/email_service.dart';
 import '../../domain/entities/patient_entity.dart';
@@ -219,5 +220,26 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<DashboardStats> getStats() async {
     return await DatabaseHelper.instance.getDashboardStats();
+  }
+
+  Future<List<UserEntity>> getAllCustomers() async {
+    final db = await DatabaseHelper.instance.database;
+
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user_accounts',
+      where: 'role = ?',
+      whereArgs: ['CUSTOMER'],
+      orderBy: 'id DESC',
+    );
+
+    return maps.map((map) => UserEntity(
+      id: map['id'],
+      fullName: map['full_name'],
+      email: map['email'],
+      phone: map['phone'],
+      role: map['role'],
+      status: map['status'],
+      avatar: map['avatar'],
+    )).toList();
   }
 }
