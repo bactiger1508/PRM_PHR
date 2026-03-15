@@ -27,4 +27,5 @@ abstract class PatientRepository {
   Future<List<UserEntity>> getAllCustomers();
 
   Future<List<Map<String, dynamic>>> getDocumentsByPatientId(int patientId);
+  Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 3});
 }

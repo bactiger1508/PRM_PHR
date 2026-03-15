@@ -27,6 +27,8 @@ class StaffManagementViewModel extends ChangeNotifier {
 
   List<UserEntity> _customers = [];
   List<UserEntity> get customers => _customers;
+  List<Map<String, dynamic>> _recentPatients = [];
+  List<Map<String, dynamic>> get recentPatients => _recentPatients;
 
   Future<void> loadStaffs() async {
     _isLoading = true;
@@ -142,7 +144,7 @@ class StaffManagementViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
-
+  
   Future<void> loadPatients() async {
     _isLoading = true;
     notifyListeners();
@@ -152,6 +154,21 @@ class StaffManagementViewModel extends ChangeNotifier {
       print('customer: ${_customers}');
     } catch (e) {
       print('Lỗi tải danh sách khách hàng: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadRecentDocuments() async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      _recentPatients = await _patientRepository.getRecentPatients(limit: 3);
+      print('Hồ sơ gần đây ${_recentPatients}');
+    } catch (e) {
+      print('Lỗi tải dữ liệu tài liệu: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
