@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/hash_utils.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../theme/app_theme.dart';
+import '../staff/staff_dashboard_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
+import '../customer/family_home_screen.dart';
+import '../auth/force_change_password_screen.dart';
+import '../auth/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,6 +19,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isCustomer = true;
   bool _obscureText = true;
   bool _rememberMe = false;
+
+  final AuthViewModel _viewModel = AuthViewModel();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -213,6 +222,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 24),
 
+                        ListenableBuilder(
+                          listenable: _viewModel,
+                          builder: (context, _) {
+                            if (_viewModel.errorMsg != null) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32.0,
+                                  vertical: 8.0,
+                                ),
+                                child: Text(
+                                  _viewModel.errorMsg!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+
                         // Login Form
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -220,14 +253,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Số điện thoại hoặc Email',
+                                'Email hoặc Tên đăng nhập',
                                 style: AppTextStyles.body,
                               ),
                               const SizedBox(height: 4),
                               TextField(
                                 controller: _emailController,
+                                textInputAction: TextInputAction.next,
                                 decoration: InputDecoration(
-                                  hintText: 'Nhập email hoặc số điện thoại',
+                                  hintText: 'Nhập email hoặc tên đăng nhập',
                                   hintStyle: TextStyle(
                                     color: AppColors.textLight,
                                     fontSize: 14,
@@ -268,6 +302,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               TextField(
                                 controller: _passwordController,
                                 obscureText: _obscureText,
+                                textInputAction: TextInputAction.done,
                                 decoration: InputDecoration(
                                   hintText: '••••••••',
                                   hintStyle: TextStyle(
@@ -358,7 +393,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ],
                                   ),
                                   TextButton(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ForgotPasswordScreen(),
+                                        ),
+                                      );
+                                    },
                                     style: TextButton.styleFrom(
                                       padding: EdgeInsets.zero,
                                       minimumSize: Size.zero,
@@ -376,9 +419,66 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               // Login Button
                               ElevatedButton(
-                                onPressed: () {
-                                  // Handle Login Logic
-                                },
+                                onPressed: _viewModel.isLoading
+                                    ? null
+                                    : () async {
+                                        final user = await _viewModel.login(
+                                          _emailController.text,
+                                          _passwordController.text,
+                                          isCustomer,
+                                          _rememberMe
+                                        );
+
+                                        if (user != null) {
+                                          if (!context.mounted) return;
+
+                                          // First time login check for ALL roles
+                                          if (HashUtils.verifyPassword(
+                                            '123456',
+                                            user.passwordHash ?? '',
+                                          )) {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ForceChangePasswordScreen(
+                                                      userId: user.id!,
+                                                      userName:
+                                                          user.email ??
+                                                          'Người dùng',
+                                                      userRole: user.role,
+                                                    ),
+                                              ),
+                                            );
+                                          } else {
+                                            if (isCustomer) {
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const CustomerFamilyHomeScreen(),
+                                                ),
+                                              );
+                                            } else if (user.role == 'ADMIN') {
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const AdminDashboardScreen(),
+                                                ),
+                                              );
+                                            } else {
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      const StaffDashboardScreen(),
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        }
+                                      },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
@@ -394,143 +494,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                     alpha: 0.4,
                                   ),
                                 ),
-                                child: const Text(
-                                  'Đăng nhập',
-                                  style: AppTextStyles.buttonText,
-                                ),
+                                child: _viewModel.isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Đăng nhập',
+                                        style: AppTextStyles.buttonText,
+                                      ),
                               ),
 
                               const SizedBox(height: 32),
-
-                              // Divider
-                              Row(
-                                children: [
-                                  const Expanded(
-                                    child: Divider(color: AppColors.border),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    child: Text(
-                                      'Hoặc đăng nhập với',
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                  const Expanded(
-                                    child: Divider(color: AppColors.border),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 28),
-
-                              // Social Login Buttons
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {},
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        side: const BorderSide(
-                                          color: AppColors.border,
-                                        ),
-                                        backgroundColor: Colors.white,
-                                      ),
-                                      child: _buildGoogleIcon(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {},
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        side: const BorderSide(
-                                          color: AppColors.border,
-                                        ),
-                                        backgroundColor: Colors.white,
-                                      ),
-                                      child: _buildFacebookIcon(),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {},
-                                      style: OutlinedButton.styleFrom(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 12,
-                                        ),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        side: const BorderSide(
-                                          color: AppColors.border,
-                                        ),
-                                        backgroundColor: Colors.white,
-                                      ),
-                                      child: _buildAppleIcon(),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 32),
-                            ],
-                          ),
-                        ),
-
-                        // Footer Section
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFF8FAFC), // slate-50
-                            border: Border(
-                              top: BorderSide(color: Color(0xFFF1F5F9)),
-                            ), // slate-100
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(12),
-                              bottomRight: Radius.circular(12),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Chưa có tài khoản? ',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () {},
-                                child: const Text(
-                                  'Đăng ký ngay',
-                                  style: AppTextStyles.linkText,
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -545,31 +524,5 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  // Helper widgets for Social Icons since we don't have local SVG/PNGs available
-  // The template HTML uses inline SVG for Google, FB, Apple.
-  // We can render similar looking static icons using Flutter's built-in or custom painters.
-  Widget _buildGoogleIcon() {
-    // Simplifying visual for demo, using simple colored text to represent Google colors
-    // For exact replica, an SVG package is recommended.
-    return RichText(
-      text: const TextSpan(
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        children: [
-          TextSpan(
-            text: 'G',
-            style: TextStyle(color: Color(0xFF4285F4)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFacebookIcon() {
-    return const Icon(Icons.facebook, color: Color(0xFF1877F2), size: 24);
-  }
-
-  Widget _buildAppleIcon() {
-    return const Icon(Icons.apple, color: Colors.black, size: 24);
-  }
 }
+

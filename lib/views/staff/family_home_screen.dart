@@ -1,5 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../documents/document_list_screen.dart';
+import '../auth/personal_settings_screen.dart';
+import '../auth/system_notification_screen.dart';
+import '../customer/add_family_member_screen.dart';
 
 class FamilyHomeScreen extends StatefulWidget {
   const FamilyHomeScreen({super.key});
@@ -9,22 +13,71 @@ class FamilyHomeScreen extends StatefulWidget {
 }
 
 class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
-  int _selectedIndex = 0; // "Trang chủ"
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildHomePage(context),
+          const SystemNotificationScreen(embedded: true),
+          const PersonalSettingsScreen(embedded: true),
+        ],
+      ),
+      floatingActionButton: _selectedIndex == 0 
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AddFamilyMemberScreen()),
+                );
+              },
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            )
+          : null,
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textLight,
+        backgroundColor: Colors.white,
+        selectedFontSize: 10,
+        unselectedFontSize: 10,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Trang chủ',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications_none),
+            activeIcon: Icon(Icons.notifications),
+            label: 'Thông báo',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: 'Cá nhân',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHomePage(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: const Text(
-          'Khách hàng & Gia đình',
+          'Gia đình của tôi',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -42,62 +95,23 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Search Bar
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Tra cứu bằng Mã Y Tế',
-                  hintStyle: const TextStyle(
-                    fontSize: 16,
-                    color: AppColors.textLight,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.textLight,
-                  ),
-                  filled: true,
-                  fillColor: AppColors.backgroundLight,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 0,
-                    horizontal: 16,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.border),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(
-                      color: AppColors.primary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Header
+            // Header Info
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'Thành viên gia đình',
+                    'Danh sách thành viên',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Quản lý thông tin hồ sơ sức khỏe của gia đình bạn',
+                    'Nhấn vào dấu + để liên kết hồ sơ người thân',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
@@ -107,7 +121,7 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
               ),
             ),
 
-            // Family Members
+            // Family Members List
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ListView(
@@ -115,98 +129,36 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _buildFamilyMemberCard(
+                    context: context,
                     name: 'Nguyễn Văn A',
                     relation: 'Bản thân',
-                    id: '102938',
+                    id: 'PHR-15051989-20102023-01',
                     lastUpdate: '20/10/2023',
-                    avatarUrl:
-                        'https://ui-avatars.com/api/?name=Nguyen+Van+A&background=e2e8f0&color=475569',
                     isPrimary: true,
                   ),
                   const SizedBox(height: 16),
                   _buildFamilyMemberCard(
-                    name: 'Trần Thị B',
-                    relation: 'Vợ/Chồng',
-                    lastUpdate: '15/10/2023',
-                    avatarUrl:
-                        'https://ui-avatars.com/api/?name=Tran+Thi+B&background=fce7f3&color=db2777',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFamilyMemberCard(
+                    context: context,
                     name: 'Nguyễn Văn C',
                     relation: 'Con',
+                    id: 'PHR-12082015-01092023-01',
                     lastUpdate: '01/09/2023',
-                    avatarUrl:
-                        'https://ui-avatars.com/api/?name=Nguyen+Van+C&background=e0e7ff&color=156bc1',
                   ),
                 ],
-              ),
-            ),
-
-            // Add Member Button
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: OutlinedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.person_add, size: 24),
-                label: const Text(
-                  'Thêm thành viên',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  backgroundColor: Colors.transparent,
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  side: BorderSide(
-                    color: AppColors.border,
-                    width: 2,
-                  ), // Note: Flutter OutlinedButton doesn't natively support dashed borders easily, using solid here or custom painter. Doing solid for simplicity.
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
               ),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        backgroundColor: Colors.white,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.description_outlined),
-            activeIcon: Icon(Icons.description),
-            label: 'Hồ sơ',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            activeIcon: Icon(Icons.settings),
-            label: 'Cài đặt',
-          ),
-        ],
-      ),
     );
   }
 
   Widget _buildFamilyMemberCard({
+    required BuildContext context,
     required String name,
     required String relation,
     String? id,
     required String lastUpdate,
-    required String avatarUrl,
     bool isPrimary = false,
   }) {
     return Container(
@@ -228,8 +180,15 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
         children: [
           CircleAvatar(
             radius: 32,
-            backgroundImage: NetworkImage(avatarUrl),
-            backgroundColor: AppColors.backgroundLight,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            child: Text(
+              name.isNotEmpty ? name[0] : '?',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -265,28 +224,19 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
                         ],
                       ),
                     ),
-                    if (id != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.backgroundLight,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          'ID: $id',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textLight,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
+                if (id != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Mã Y Tế: $id',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textLight,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -309,7 +259,14 @@ class _FamilyHomeScreenState extends State<FamilyHomeScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DocumentListScreen(),
+                        ),
+                      );
+                    },
                     icon: const Icon(Icons.visibility, size: 14),
                     label: const Text('Xem hồ sơ'),
                     style: ElevatedButton.styleFrom(

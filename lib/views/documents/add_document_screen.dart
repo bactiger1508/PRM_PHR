@@ -14,6 +14,25 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
 
   final List<String> _docTypes = ['Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán'];
 
+  // Tag management
+  final List<String> _selectedTags = [];
+  final List<String> _availableTags = [
+    'Tim mạch', 'Hô hấp', 'Tiêu hóa', 'Thần kinh', 'Xương khớp',
+    'Nội tiết', 'Da liễu', 'Mắt', 'Tai mũi họng', 'Quan trọng',
+    'Sức khỏe định kỳ', 'Bệnh viện Bạch Mai',
+  ];
+  final TextEditingController _tagController = TextEditingController();
+  bool _showTagSuggestions = false;
+
+  // Status tracking
+  String _documentStatus = 'DRAFT';
+
+  @override
+  void dispose() {
+    _tagController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -24,7 +43,17 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
         titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            // Auto-save as draft when pressing X
+            setState(() => _documentStatus = 'DRAFT');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Tài liệu đã được lưu dưới dạng bản nháp'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'Thêm Tài liệu Y tế',
@@ -39,7 +68,16 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             padding: const EdgeInsets.only(right: 16.0),
             child: Center(
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  setState(() => _documentStatus = 'SAVED');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Tài liệu đã được lưu thành công'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                  Navigator.pop(context);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -213,12 +251,16 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             // Details Form
             _buildInputLabel('Tiêu đề tài liệu'),
             const SizedBox(height: 6),
-            _buildTextField(hintText: 'Ví dụ: Xét nghiệm máu tổng quát'),
+            _buildTextField(
+              hintText: 'Ví dụ: Xét nghiệm máu tổng quát',
+              textInputAction: TextInputAction.next,
+            ),
             const SizedBox(height: 16),
 
             _buildInputLabel('Ngày khám'),
             const SizedBox(height: 6),
             TextField(
+              textInputAction: TextInputAction.next,
               decoration: InputDecoration(
                 hintText: 'dd/mm/yyyy',
                 hintStyle: const TextStyle(
@@ -251,40 +293,110 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
 
             _buildInputLabel('Nhãn (Tags)'),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            // Autocomplete tag input
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildTagChip(
-                  'Sức khỏe định kỳ',
-                  Colors.blue[100]!,
-                  Colors.blue[600]!,
-                ),
-                _buildTagChip(
-                  'Bệnh viện Bạch Mai',
-                  Colors.purple[100]!,
-                  Colors.purple[600]!,
-                ),
-                ActionChip(
-                  onPressed: () {},
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(color: AppColors.border),
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.add, size: 14, color: AppColors.textSecondary),
-                      SizedBox(width: 4),
-                      Text(
-                        'Thêm nhãn',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textSecondary,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _tagController,
+                        onChanged: (value) {
+                          setState(() {
+                            _showTagSuggestions = value.isNotEmpty;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Nhập để tìm hoặc thêm nhãn...',
+                          hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
+                          prefixIcon: const Icon(Icons.label_outline, color: AppColors.textLight),
+                          suffixIcon: _tagController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.add_circle, color: AppColors.primary),
+                                  onPressed: () {
+                                    final newTag = _tagController.text.trim();
+                                    if (newTag.isNotEmpty && !_selectedTags.contains(newTag)) {
+                                      setState(() {
+                                        _selectedTags.add(newTag);
+                                        if (!_availableTags.contains(newTag)) {
+                                          _availableTags.add(newTag);
+                                        }
+                                        _tagController.clear();
+                                        _showTagSuggestions = false;
+                                      });
+                                    }
+                                  },
+                                )
+                              : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         ),
                       ),
+                      if (_showTagSuggestions) ...[
+                        const Divider(height: 1, color: AppColors.border),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 150),
+                          child: ListView(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            children: _availableTags
+                                .where((tag) =>
+                                    tag.toLowerCase().contains(_tagController.text.toLowerCase()) &&
+                                    !_selectedTags.contains(tag))
+                                .map((tag) => ListTile(
+                                      dense: true,
+                                      title: Text(tag, style: const TextStyle(fontSize: 14)),
+                                      leading: const Icon(Icons.label, size: 18, color: AppColors.primary),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedTags.add(tag);
+                                          _tagController.clear();
+                                          _showTagSuggestions = false;
+                                        });
+                                      },
+                                    ))
+                                .toList(),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
+                if (_selectedTags.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _selectedTags.map((tag) {
+                      return Chip(
+                        label: Text(
+                          tag,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[600],
+                          ),
+                        ),
+                        backgroundColor: Colors.blue[100],
+                        deleteIcon: Icon(Icons.close, size: 14, color: Colors.blue[600]),
+                        onDeleted: () {
+                          setState(() => _selectedTags.remove(tag));
+                        },
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide.none,
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 16),
@@ -293,6 +405,7 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             const SizedBox(height: 6),
             TextField(
               maxLines: 3,
+              textInputAction: TextInputAction.done,
               decoration: InputDecoration(
                 hintText: 'Nhập ghi chú thêm về tài liệu này...',
                 hintStyle: const TextStyle(
@@ -425,8 +538,12 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
     );
   }
 
-  Widget _buildTextField({required String hintText}) {
+  Widget _buildTextField({
+    required String hintText,
+    TextInputAction textInputAction = TextInputAction.next,
+  }) {
     return TextField(
+      textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
@@ -445,27 +562,6 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
           borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
-    );
-  }
-
-  Widget _buildTagChip(String label, Color bgColor, Color textColor) {
-    return Chip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-          color: textColor,
-        ),
-      ),
-      backgroundColor: bgColor,
-      deleteIcon: Icon(Icons.close, size: 14, color: textColor),
-      onDeleted: () {},
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide.none,
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
     );
   }
 }

@@ -1,16 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
+import 'package:phrprmgroupproject/domain/entities/patient_entity.dart';
 import '../theme/app_theme.dart';
+import 'create_medical_exam_screen.dart';
 
 class PatientDetailScreen extends StatefulWidget {
-  const PatientDetailScreen({super.key});
+  final String? email;
+  final String? phone;
+
+  const PatientDetailScreen({super.key, this.email, this.phone});
 
   @override
   State<PatientDetailScreen> createState() => _PatientDetailScreenState();
 }
 
 class _PatientDetailScreenState extends State<PatientDetailScreen> {
-  int _selectedTab = 1; // "Tài liệu"
-  int _selectedIndex = 1; // "Bệnh nhân" on bottom nav
+  int _selectedTab = 1; // Mặc định mở tab "Tài liệu" như trong ảnh
+
+  bool _isLoading = true;
+  bool _isLoadingDocs = true;
+  PatientEntity? _patientProfile;
+  List<Map<String, dynamic>> _documents = [];
+  final _patientRepository = PatientRepositoryImpl();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPatientData();
+  }
+
+  Future<void> _loadPatientData() async {
+    try {
+      final data = await _patientRepository.getPatientByPhoneOrEmail(
+        email: widget.email,
+        phone: widget.phone,
+      );
+
+      if (mounted) {
+        setState(() {
+          _patientProfile = data;
+          _isLoading = false;
+        });
+
+        if (data != null && data.id != null) {
+          _loadDocuments(data.id!);
+        } else {
+          setState(() => _isLoadingDocs = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadDocuments(int patientId) async {
+    try {
+      final docs = await _patientRepository.getDocumentsByPatientId(patientId);
+      if (mounted) {
+        setState(() {
+          _documents = docs;
+          _isLoadingDocs = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoadingDocs = false);
+    }
+  }
+
+  String _formatDocDate(dynamic createdAt) {
+    if (createdAt == null) return 'Chưa rõ';
+    DateTime? d;
+    if (createdAt is num)
+      d = DateTime.fromMillisecondsSinceEpoch(createdAt.toInt());
+    else if (createdAt is String)
+      d = DateTime.tryParse(createdAt) ??
+          DateTime.fromMillisecondsSinceEpoch(int.tryParse(createdAt) ?? 0);
+    if (d == null) return 'Chưa rõ';
+    return DateFormat('dd/MM/yyyy').format(d);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,493 +114,377 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Patient Profile Header
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border, width: 4),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://ui-avatars.com/api/?name=Nguyen+Van+An&background=e2e8f0&color=475569',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Wrap(
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            const Text(
-                              'Nguyễn Văn An',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green[50],
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                'HOẠT ĐỘNG',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green[700]!,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 4,
-                          children: [
-                            RichText(
-                              text: const TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Tuổi: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  TextSpan(text: '35'),
-                                ],
-                              ),
-                            ),
-                            const Text(
-                              '|',
-                              style: TextStyle(color: AppColors.border),
-                            ),
-                            RichText(
-                              text: const TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Giới tính: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  TextSpan(text: 'Nam'),
-                                ],
-                              ),
-                            ),
-                            const Text(
-                              '|',
-                              style: TextStyle(color: AppColors.border),
-                            ),
-                            RichText(
-                              text: const TextSpan(
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: 'Mã Y Tế: ',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  TextSpan(text: 'BN123456'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.add, size: 20),
-                          label: const Text('Thêm tài liệu'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Navigation Tabs
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(bottom: BorderSide(color: AppColors.border)),
-              ),
-              child: Row(
-                children: [
-                  _buildTab('Thông tin', 0),
-                  const SizedBox(width: 32),
-                  _buildTab('Tài liệu', 1),
-                  const SizedBox(width: 32),
-                  _buildTab('Lịch sử khám', 2),
-                ],
-              ),
-            ),
-
-            // Documents Content Area
-            if (_selectedTab == 1)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
+            if (_patientProfile == null)
+              Container(
+                padding: const EdgeInsets.all(32),
+                alignment: Alignment.center,
                 child: Column(
                   children: [
-                    // Filters row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Tìm tên tài liệu...',
-                              hintStyle: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textLight,
-                              ),
-                              prefixIcon: const Icon(
-                                Icons.search,
-                                color: AppColors.textLight,
-                              ),
-                              filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 0,
-                                horizontal: 16,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: AppColors.border,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: AppColors.border,
-                                ),
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderRadius: BorderRadius.all(
-                                  Radius.circular(8),
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: 'Tất cả loại',
-                              items:
-                                  [
-                                        'Tất cả loại',
-                                        'Xét nghiệm',
-                                        'X-Quang',
-                                        'Đơn thuốc',
-                                      ]
-                                      .map(
-                                        (e) => DropdownMenuItem(
-                                          value: e,
-                                          child: Text(
-                                            e,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                      )
-                                      .toList(),
-                              onChanged: (_) {},
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.filter_alt, size: 16),
-                          label: const Text('Tag'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textSecondary,
-                            backgroundColor: AppColors.backgroundLight,
-                            side: BorderSide.none,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: const Text(
-                        'Đang hiển thị 12 tài liệu',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textLight,
-                        ),
+                    const Icon(Icons.folder_off, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Tài khoản này chưa có Hồ sơ Y tế',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Document List
-                    GridView.count(
-                      crossAxisCount: MediaQuery.of(context).size.width > 600
-                          ? 3
-                          : 1,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: MediaQuery.of(context).size.width > 600
-                          ? 1.5
-                          : 2.5,
-                      children: [
-                        _buildDocCard(
-                          icon: Icons.description,
-                          fileType: 'PDF',
-                          size: '2.4 MB',
-                          title: 'Kết quả xét nghiệm máu tổng quát',
-                          date: '12/10/2023',
-                          tags: [
-                            {
-                              'name': 'Xét nghiệm',
-                              'color': AppColors.backgroundLight,
-                              'textColor': AppColors.textSecondary,
-                            },
-                            {
-                              'name': 'Quan trọng',
-                              'color': Colors.orange[50]!,
-                              'textColor': Colors.orange[700]!,
-                            },
-                          ],
+                    ElevatedButton(
+                      onPressed: () {
+                        // Nút chuyển sang màn tạo hồ sơ
+                      },
+                      child: const Text('Tạo hồ sơ ngay'),
+                    ),
+                  ],
+                ),
+              )
+            // TRƯỜNG HỢP 3: CÓ HỒ SƠ -> HIỂN THỊ DỮ LIỆU THẬT
+            else ...[
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Avatar (Tự trích xuất chữ cái đầu của tên thật)
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: AppColors.backgroundLight,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Center(
+                        child: Text(
+                          _patientProfile!.fullName
+                                  ?.substring(0, 1)
+                                  .toUpperCase() ??
+                              'N',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                        _buildDocCard(
-                          icon: Icons.image,
-                          fileType: 'DICOM',
-                          size: '15 MB',
-                          title: 'Phim chụp X-Quang phổi thẳng',
-                          date: '05/10/2023',
-                          tags: [
-                            {
-                              'name': 'Chẩn đoán hình ảnh',
-                              'color': AppColors.backgroundLight,
-                              'textColor': AppColors.textSecondary,
-                            },
-                          ],
-                        ),
-                        _buildDocCard(
-                          icon: Icons.medication,
-                          fileType: 'PDF',
-                          size: '0.8 MB',
-                          title: 'Đơn thuốc điều trị ngoại trú',
-                          date: '01/10/2023',
-                          tags: [
-                            {
-                              'name': 'Đơn thuốc',
-                              'color': AppColors.backgroundLight,
-                              'textColor': AppColors.textSecondary,
-                            },
-                            {
-                              'name': 'Đã cấp',
-                              'color': Colors.blue[50]!,
-                              'textColor': Colors.blue[700]!,
-                            },
-                          ],
-                        ),
-                        _buildDocCard(
-                          icon: Icons
-                              .medical_information, // closest to clinical_notes
-                          fileType: 'DOCX',
-                          size: '1.2 MB',
-                          title: 'Báo cáo tóm tắt bệnh án',
-                          date: '28/09/2023',
-                          tags: [
-                            {
-                              'name': 'Hồ sơ chính',
-                              'color': AppColors.backgroundLight,
-                              'textColor': AppColors.textSecondary,
-                            },
-                          ],
-                        ),
-                      ],
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _patientProfile!.fullName ?? 'Chưa có tên',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Ngày sinh: ${_patientProfile!.dob ?? 'Chưa cập nhật'}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            'Mã Y Tế: ${_patientProfile!.medicalCode ?? 'Chưa có'}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
+
+              // Add Document Button
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CreateMedicalExamScreen(
+                          preselectedPatientId: 1,
+                          // TODO: Use actual patient ID
+                          preselectedPatientName: 'Nguyễn Văn An',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add, size: 20),
+                  label: const Text('Tạo đơn khám'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+
+              // Navigation Tabs
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                ),
+                child: Row(
+                  children: [
+                    _buildTab('Thông tin', 0),
+                    _buildTab('Tài liệu', 1),
+                  ],
+                ),
+              ),
+
+              // Dynamic Content Area
+              if (_selectedTab == 0) _buildInfoTab(),
+              if (_selectedTab == 1) _buildDocumentsTab(),
+            ],
           ],
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        backgroundColor: Colors.white,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Trang chủ',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group_outlined),
-            activeIcon: Icon(Icons.group),
-            label: 'Bệnh nhân',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Cá nhân',
-          ),
-        ],
       ),
     );
   }
 
   Widget _buildTab(String title, int index) {
     bool isSelected = _selectedTab == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTab = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? AppColors.primary : Colors.transparent,
-              width: 2,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _selectedTab = index),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: isSelected ? AppColors.primary : Colors.transparent,
+                width: 2,
+              ),
             ),
           ),
-        ),
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-            color: isSelected ? AppColors.primary : AppColors.textSecondary,
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildInfoTab() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInfoRow(
+            Icons.phone_outlined,
+            'Số điện thoại',
+            _patientProfile?.phone ?? 'Chưa cập nhật',
+          ),
+          _buildInfoRow(
+            Icons.email_outlined,
+            'Email',
+            _patientProfile?.email ?? 'Chưa cập nhật',
+          ),
+          _buildInfoRow(
+            Icons.cake_outlined,
+            'Ngày sinh',
+            _patientProfile?.dob ?? 'Chưa cập nhật',
+          ),
+          // _buildInfoRow(Icons.family_restroom_outlined, 'Người giám hộ', 'Trần Thị B (Vợ)'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: AppColors.textLight),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textLight,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentsTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          // Search and category filter row
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Tìm tên tài liệu...',
+                    hintStyle: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textLight,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.textLight,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: 'Tất cả loại',
+                    items: ['Tất cả loại', 'Xét nghiệm', 'X-Quang', 'Đơn thuốc']
+                        .map(
+                          (e) => DropdownMenuItem(
+                            value: e,
+                            child: Text(
+                              e,
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (_) {},
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Đang hiển thị ${_documents.length} tài liệu',
+              // Tự động đếm số lượng
+              style: const TextStyle(fontSize: 13, color: AppColors.textLight),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // if (_isLoadingDocs)
+          //   const Padding(
+          //     padding: EdgeInsets.all(32.0),
+          //     child: CircularProgressIndicator(),
+          //   )
+          // else
+            if (_documents.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Text(
+                'Chưa có tài liệu nào',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            )
+          else
+            ..._documents.map((doc) {
+              final String title = doc['title'] ?? 'Tài liệu không tên';
+
+              final String date = _formatDocDate(
+                doc['record_date'] ?? doc['created_at'],
+              );
+
+              final String categoryName =
+                  doc['category_name'] ?? 'Chưa phân loại';
+
+              final String status = doc['status'] ?? 'SAVED';
+
+              return _buildDocCard(
+                title: title,
+                date: date,
+                type: 'Hồ sơ y tế • $categoryName',
+                tags: [categoryName, status],
+              );
+            }).toList(),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDocCard({
-    required IconData icon,
-    required String fileType,
-    required String size,
     required String title,
     required String date,
-    required List<Map<String, dynamic>> tags,
+    required String type,
+    required List<String> tags,
   }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: AppColors.primary, size: 24),
-              ),
+              const Icon(Icons.description, color: AppColors.primary, size: 32),
               Text(
-                '$fileType • $size',
+                type,
                 style: const TextStyle(
                   fontSize: 10,
-                  fontWeight: FontWeight.bold,
                   color: AppColors.textLight,
-                  letterSpacing: 0.5,
                 ),
               ),
             ],
@@ -541,12 +493,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
           Text(
@@ -556,27 +506,34 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               color: AppColors.textSecondary,
             ),
           ),
-          const Spacer(),
+          const SizedBox(height: 12),
           Wrap(
             spacing: 8,
-            runSpacing: 4,
-            children: tags.map((t) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: t['color'],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  t['name'],
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w500,
-                    color: t['textColor'],
+            children: tags
+                .map(
+                  (t) => Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: t == 'Quan trọng'
+                          ? Colors.orange[50]
+                          : AppColors.backgroundLight,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      t,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: t == 'Quan trọng'
+                            ? Colors.orange[700]
+                            : AppColors.textSecondary,
+                      ),
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                )
+                .toList(),
           ),
         ],
       ),

@@ -16,7 +16,7 @@ import '../staff/staff_dashboard_screen.dart';
 import '../staff/patient_list_screen.dart';
 import '../staff/create_patient_screen.dart';
 import '../staff/patient_detail_screen.dart';
-import '../staff/family_home_screen.dart';
+import '../customer/family_home_screen.dart';
 import '../documents/document_list_screen.dart';
 import '../documents/add_document_screen.dart';
 import '../documents/document_detail_screen.dart';
@@ -81,7 +81,7 @@ class DevMenuScreen extends StatelessWidget {
           _buildItem(context, 'Patient List', const PatientListScreen()),
           _buildItem(context, 'Create Patient', const CreatePatientScreen()),
           _buildItem(context, 'Patient Detail', const PatientDetailScreen()),
-          _buildItem(context, 'Family Home', const FamilyHomeScreen()),
+          _buildItem(context, 'Family Home', const CustomerFamilyHomeScreen()),
 
           _buildSectionHeader('4. Quản Lý Tài Liệu (Documents)'),
           _buildItem(context, 'Document List', const DocumentListScreen()),
@@ -139,3 +139,4 @@ class DevMenuScreen extends StatelessWidget {
     );
   }
 }
+

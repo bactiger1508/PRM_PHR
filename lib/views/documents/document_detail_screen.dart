@@ -1,8 +1,149 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-class DocumentDetailScreen extends StatelessWidget {
+class DocumentDetailScreen extends StatefulWidget {
   const DocumentDetailScreen({super.key});
+
+  @override
+  State<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
+}
+
+class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
+  bool _isDeleted = false;
+
+  void _showOptionsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.edit, color: AppColors.primary),
+                ),
+                title: const Text('Chỉnh sửa tài liệu', style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('Cập nhật thông tin tài liệu', style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Mở trang chỉnh sửa tài liệu...'),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                },
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.delete_outline, color: Colors.red[600]),
+                ),
+                title: Text(
+                  _isDeleted ? 'Khôi phục tài liệu' : 'Xóa tài liệu',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: _isDeleted ? Colors.green[700] : Colors.red[600],
+                  ),
+                ),
+                subtitle: Text(
+                  _isDeleted ? 'Đưa tài liệu trở lại danh sách' : 'Xóa mềm - có thể khôi phục sau',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showDeleteConfirmDialog(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              _isDeleted ? Icons.restore : Icons.delete_outline,
+              color: _isDeleted ? Colors.green[600] : Colors.red[600],
+            ),
+            const SizedBox(width: 8),
+            Text(
+              _isDeleted ? 'Khôi phục?' : 'Xóa tài liệu?',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Text(
+          _isDeleted
+              ? 'Tài liệu sẽ được đưa trở lại danh sách tài liệu của bạn.'
+              : 'Tài liệu sẽ được chuyển vào thùng rác. Bạn có thể khôi phục lại sau.',
+          style: const TextStyle(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() => _isDeleted = !_isDeleted);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(_isDeleted ? 'Đã xóa tài liệu (có thể khôi phục)' : 'Đã khôi phục tài liệu'),
+                  backgroundColor: _isDeleted ? Colors.orange : Colors.green,
+                  action: SnackBarAction(
+                    label: 'Hoàn tác',
+                    textColor: Colors.white,
+                    onPressed: () {
+                      setState(() => _isDeleted = !_isDeleted);
+                    },
+                  ),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _isDeleted ? Colors.green[600] : Colors.red[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(_isDeleted ? 'Khôi phục' : 'Xóa'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +174,38 @@ class DocumentDetailScreen extends StatelessWidget {
               ),
             ),
 
+            // Deleted banner
+            if (_isDeleted)
+              Container(
+                color: Colors.red[50],
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline, color: Colors.red[600], size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tài liệu đã bị xóa. Bạn có thể khôi phục qua menu.',
+                        style: TextStyle(color: Colors.red[700], fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _isDeleted = false);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Đã khôi phục tài liệu'), backgroundColor: Colors.green),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red[700],
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: const Text('Khôi phục', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ),
+
             // App Bar
             Container(
               color: Colors.white,
@@ -62,7 +235,7 @@ class DocumentDetailScreen extends StatelessWidget {
                       Icons.more_vert,
                       color: AppColors.textPrimary,
                     ),
-                    onPressed: () {},
+                    onPressed: () => _showOptionsMenu(context),
                   ),
                 ],
               ),
@@ -342,41 +515,17 @@ class DocumentDetailScreen extends StatelessWidget {
                       ),
                     ),
 
-                    // Download Section
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                      child: Column(
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.download),
-                            label: const Text('Tải xuống tài liệu (PDF)'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              minimumSize: const Size(double.infinity, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              elevation: 4,
-                              shadowColor: AppColors.primary.withValues(
-                                alpha: 0.3,
-                              ),
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                    // ID Section
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      child: Center(
+                        child: Text(
+                          'ID Tài liệu: PHR-2024-0520-XN01',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textLight,
                           ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'ID Tài liệu: PHR-2024-0520-XN01',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textLight,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ],

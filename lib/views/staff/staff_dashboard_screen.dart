@@ -1,5 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
+import 'create_patient_screen.dart';
+import 'patient_list_screen.dart';
+import 'create_medical_exam_screen.dart';
+import '../auth/personal_settings_screen.dart';
+import '../documents/document_list_screen.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
 class StaffDashboardScreen extends StatefulWidget {
   const StaffDashboardScreen({super.key});
@@ -9,274 +19,69 @@ class StaffDashboardScreen extends StatefulWidget {
 }
 
 class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
-  int _selectedIndex = 0; // "Trang chủ"
+  int _selectedIndex = 0;
+  String? avatarCurrentUser = AuthViewModel.instance.currentUser?.avatar;
+  final StaffManagementViewModel _staffViewModel = StaffManagementViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _staffViewModel.addListener(_onViewModelChanged);
+    _loadInitialData();
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadInitialData() async {
+    _staffViewModel.loadStats();
+    _staffViewModel.loadRecentDocuments();
+  }
+
+  @override
+  void dispose() {
+    _staffViewModel.removeListener(_onViewModelChanged);
+    _staffViewModel.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        titleSpacing: 0,
-        toolbarHeight: 72,
-        title: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.2),
-                  ),
-                  image: const DecorationImage(
-                    image: NetworkImage(
-                      'https://ui-avatars.com/api/?name=Nguyen+Van+A&background=e0e7ff&color=156bc1',
-                    ),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Text(
-                    'Chào buổi sáng,',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  Text(
-                    'BS. Nguyễn Văn A',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications_none,
-                    color: AppColors.textSecondary,
-                  ),
-                  onPressed: () {},
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.backgroundLight,
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: AppColors.border, height: 1),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: IndexedStack(
+          index: _selectedIndex,
           children: [
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm bệnh nhân (Tên, Mã Y Tế)...',
-                  hintStyle: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textLight,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.textLight,
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 0,
-                    horizontal: 16,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-            ),
-
-            // Statistics Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.description,
-                      iconBgColor: AppColors.primary.withValues(alpha: 0.1),
-                      iconColor: AppColors.primary,
-                      title: 'Hồ sơ hôm nay',
-                      value: '24',
-                      badgeText: '+12%',
-                      badgeColor: Colors.green[600]!,
-                      badgeBgColor: Colors.green[50]!,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      icon: Icons.sync,
-                      iconBgColor: Colors.amber[50]!,
-                      iconColor: Colors.amber[500]!,
-                      title: 'Chờ đồng bộ',
-                      value: '05',
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Drafts / Chờ đồng bộ
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Nháp / Chờ đồng bộ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                        ),
-                        child: const Text(
-                          'Xem tất cả',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDraftItem(
-                    'Trần Thị Bích Ngọc',
-                    '28 tuổi',
-                    'BN-2024-0012',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDraftItem('Lê Văn Hùng', '45 tuổi', 'BN-2024-0015'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Recent Profiles
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Hồ sơ gần đây',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border, width: 0.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        _buildRecentItem(
-                          'Phạm Minh Tuấn',
-                          '32 tuổi • BN-2024-0009',
-                          '10p trước',
-                        ),
-                        const Divider(height: 1, color: AppColors.border),
-                        _buildRecentItem(
-                          'Nguyễn Kim Chi',
-                          '19 tuổi • BN-2024-0005',
-                          '35p trước',
-                        ),
-                        const Divider(height: 1, color: AppColors.border),
-                        _buildRecentItem(
-                          'Hoàng Anh Đức',
-                          '54 tuổi • BN-2024-0001',
-                          '1h trước',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
+            _buildHomePage(context),
+            const PatientListScreen(embedded: true),
+            const DocumentListScreen(embedded: true),
+            const PersonalSettingsScreen(embedded: true),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: SizedBox(
+        width: 64,
+        height: 64,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const CreateMedicalExamScreen(),
+              ),
+            );
+          },
+          backgroundColor: AppColors.primary,
+          elevation: 4,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, color: Colors.white, size: 32),
+        ),
       ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
@@ -292,11 +97,15 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             activeIcon: Icon(Icons.home),
             label: 'Trang chủ',
           ),
-
           BottomNavigationBarItem(
             icon: Icon(Icons.group_outlined),
             activeIcon: Icon(Icons.group),
             label: 'Bệnh nhân',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.description_outlined),
+            activeIcon: Icon(Icons.description),
+            label: 'Tài liệu',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
@@ -304,6 +113,347 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             label: 'Cá nhân',
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildHomePage(BuildContext context) {
+    final isLoading = _staffViewModel.isLoading;
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final stats = _staffViewModel.stats;
+    final recentPatientsList = _staffViewModel.recentPatients;
+    final formatter = NumberFormat('#,###', 'en_US');
+    final String documentsToday = stats != null ? formatter.format(stats.documentToday) : '0';
+
+    final percentFormatter = NumberFormat.percentPattern('en_US');
+
+    final double ratio = (stats != null && stats.totalDocuments > 0)
+        ? (stats.documentToday / stats.totalDocuments)
+        : 0.0;
+
+    final String percentText = percentFormatter.format(ratio);
+
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // AppBar Style Header for Home
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.2),
+                    ),
+                    image: (avatarCurrentUser != null)
+                        ? DecorationImage(
+                      image: FileImage(File(avatarCurrentUser!)),
+                      fit: BoxFit.cover,
+                    )
+                        : null,
+                  ),
+                  child: (avatarCurrentUser == null)
+                      ? const Icon(Icons.person, color: AppColors.primary)
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Chào buổi sáng,',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    Text(
+                      AuthViewModel.instance.currentUser?.fullName ??
+                          'Nhân viên',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                const Icon(
+                  Icons.notifications_none,
+                  color: AppColors.textSecondary,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: 'Tìm kiếm bệnh nhân (Tên, Mã Y Tế)...',
+                hintStyle: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textLight,
+                ),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppColors.textLight,
+                ),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 0,
+                  horizontal: 16,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+
+          // Quick Actions
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Thao tác nhanh',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildQuickAction(
+                        icon: Icons.person_add,
+                        label: 'Tạo hồ sơ\nBệnh nhân',
+                        color: AppColors.primary,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const CreatePatientScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildQuickAction(
+                        icon: Icons.assignment_add,
+                        label: 'Tạo Đơn\nKhám',
+                        color: Colors.blue[600]!,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const CreateMedicalExamScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildQuickAction(
+                        icon: Icons.group,
+                        label: 'Danh sách\nBệnh nhân',
+                        color: Colors.orange,
+                        onTap: () => setState(() => _selectedIndex = 1),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildQuickAction(
+                        icon: Icons.folder_open,
+                        label: 'Tài liệu\nY tế',
+                        color: Colors.teal,
+                        onTap: () {
+                          setState(() => _selectedIndex = 2);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Statistics Grid
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.description,
+                    iconBgColor: AppColors.primary.withValues(alpha: 0.1),
+                    iconColor: AppColors.primary,
+                    title: 'Hồ sơ hôm nay',
+                    value: documentsToday,
+                    badgeText: percentText,
+                    badgeColor: Colors.green[600]!,
+                    badgeBgColor: Colors.green[50]!,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    icon: Icons.sync,
+                    iconBgColor: Colors.amber[50]!,
+                    iconColor: Colors.amber[500]!,
+                    title: 'Chờ đồng bộ',
+                    value: '05',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Recent Profiles
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Hồ sơ gần đây',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border, width: 0.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: recentPatientsList.isEmpty
+                      ? const Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(
+                      child: Text(
+                        'Chưa có hồ sơ nào gần đây',
+                        style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                      ),
+                    ),
+                  )
+                      : Column(
+                    children: List.generate(recentPatientsList.length, (index) {
+                      final patient = recentPatientsList[index];
+
+                      final String fullName = patient['full_name'] ?? 'Chưa cập nhật tên';
+                      final String medicalCode = patient['medical_code'] ?? 'Không có mã';
+                      final String? dob = patient['dob'];
+                      final dynamic createdAt = patient['created_at'];
+
+                      final String subtitle = '${_calculateAge(dob)} • $medicalCode';
+
+                      final String timeAgo = _getTimeAgo(createdAt);
+
+                      return Column(
+                        children: [
+                          _buildRecentItem(
+                            fullName,
+                            subtitle,
+                            timeAgo,
+                          ),
+                          if (index < recentPatientsList.length - 1)
+                            const Divider(height: 1, color: Colors.black12),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAction({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border, width: 0.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -391,80 +541,6 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
     );
   }
 
-  Widget _buildDraftItem(String name, String age, String code) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: const Border(left: BorderSide(color: Colors.amber, width: 4)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Text(
-                    age,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Mã: $code',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.sync, color: AppColors.primary),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.primary.withValues(alpha: 0.05),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildRecentItem(String name, String details, String time) {
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -510,5 +586,46 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         ],
       ),
     );
+  }
+
+  String _calculateAge(String? dob) {
+    if (dob == null || dob.isEmpty) return 'Không rõ tuổi';
+    try {
+      DateTime birthDate = DateFormat('dd/MM/yyyy').parse(dob);
+      DateTime today = DateTime.now();
+      int age = today.year - birthDate.year;
+      if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+        age--;
+      }
+      return '$age tuổi';
+    } catch (e) {
+      return 'Không rõ tuổi';
+    }
+  }
+
+  String _getTimeAgo(dynamic createdAt) {
+    if (createdAt == null) return 'Vừa xong';
+
+    DateTime? createdDate;
+
+    if (createdAt is num) {
+      createdDate = DateTime.fromMillisecondsSinceEpoch(createdAt.toInt());
+    } else if (createdAt is String) {
+      final parsedInt = int.tryParse(createdAt);
+      if (parsedInt != null) {
+        createdDate = DateTime.fromMillisecondsSinceEpoch(parsedInt);
+      } else {
+        createdDate = DateTime.tryParse(createdAt);
+      }
+    }
+
+    if (createdDate == null) return 'Vừa xong';
+
+    final difference = DateTime.now().difference(createdDate);
+
+    if (difference.inDays > 0) return '${difference.inDays} ngày trước';
+    if (difference.inHours > 0) return '${difference.inHours}h trước';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}p trước';
+    return 'Vừa xong';
   }
 }
