@@ -7,6 +7,7 @@ class UserModel extends UserEntity {
     super.phone,
     super.passwordHash,
     super.fullName,
+    super.avatar,
     required super.role,
     super.status,
     super.createdAt,
@@ -20,6 +21,7 @@ class UserModel extends UserEntity {
       phone: json['phone'],
       passwordHash: json['password_hash'],
       fullName: json['full_name'],
+      avatar: json['avatar'],
       role: json['role'],
       status: json['status'] ?? 'ACTIVE',
       createdAt: json['created_at'] != null
@@ -38,6 +40,7 @@ class UserModel extends UserEntity {
       'phone': phone,
       'password_hash': passwordHash,
       'full_name': fullName,
+      'avatar': avatar,
       'role': role,
       'status': status,
       'created_at': createdAt?.millisecondsSinceEpoch,

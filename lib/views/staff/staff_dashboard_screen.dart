@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
 import 'create_patient_screen.dart';
 import 'patient_list_screen.dart';
@@ -17,19 +21,49 @@ class StaffDashboardScreen extends StatefulWidget {
 class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   int _selectedIndex = 0;
   int _documentRefreshKey = 0;
+  String? avatarCurrentUser = AuthViewModel.instance.currentUser?.avatar;
+  final StaffManagementViewModel _staffViewModel = StaffManagementViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _staffViewModel.addListener(_onViewModelChanged);
+    _loadInitialData();
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadInitialData() async {
+    _staffViewModel.loadStats();
+    _staffViewModel.loadRecentDocuments();
+  }
+
+  @override
+  void dispose() {
+    _staffViewModel.removeListener(_onViewModelChanged);
+    _staffViewModel.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _buildHomePage(context),
-          const PatientListScreen(embedded: true),
-          DocumentListScreen(key: ValueKey('doc_list_$_documentRefreshKey'), embedded: true),
-          const PersonalSettingsScreen(embedded: true),
-        ],
+      body: SafeArea(
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: [
+            _buildHomePage(context),
+            const PatientListScreen(embedded: true),
+            DocumentListScreen(
+                key: ValueKey('doc_list_$_documentRefreshKey'), embedded: true),
+            const PersonalSettingsScreen(embedded: true),
+          ],
+        ),
       ),
       floatingActionButton: SizedBox(
         width: 64,
@@ -45,8 +79,8 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             if (result == true) {
               setState(() {
                 _documentRefreshKey++;
-                // Tự động chuyển qua tab Tài liệu nêú muốn
-                _selectedIndex = 2; 
+                // Tự động chuyển qua tab Tài liệu nếu muốn
+                _selectedIndex = 2;
               });
             }
           },
@@ -93,6 +127,25 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   }
 
   Widget _buildHomePage(BuildContext context) {
+    final isLoading = _staffViewModel.isLoading;
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    final stats = _staffViewModel.stats;
+    final recentPatientsList = _staffViewModel.recentPatients;
+    final formatter = NumberFormat('#,###', 'en_US');
+    final String documentsToday =
+        stats != null ? formatter.format(stats.documentToday) : '0';
+
+    final percentFormatter = NumberFormat.percentPattern('en_US');
+
+    final double ratio = (stats != null && stats.totalDocuments > 0)
+        ? (stats.documentToday / stats.totalDocuments)
+        : 0.0;
+
+    final String percentText = percentFormatter.format(ratio);
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,8 +165,16 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                     border: Border.all(
                       color: AppColors.primary.withValues(alpha: 0.2),
                     ),
+                    image: (avatarCurrentUser != null)
+                        ? DecorationImage(
+                            image: FileImage(File(avatarCurrentUser!)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: const Icon(Icons.person, color: AppColors.primary),
+                  child: (avatarCurrentUser == null)
+                      ? const Icon(Icons.person, color: AppColors.primary)
+                      : null,
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -128,7 +189,8 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                       ),
                     ),
                     Text(
-                      AuthViewModel.instance.currentUser?.fullName ?? 'Nhân viên',
+                      AuthViewModel.instance.currentUser?.fullName ??
+                          'Nhân viên',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -138,7 +200,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                   ],
                 ),
                 const Spacer(),
-                const Icon(Icons.notifications_none, color: AppColors.textSecondary),
+                const Icon(
+                  Icons.notifications_none,
+                  color: AppColors.textSecondary,
+                ),
               ],
             ),
           ),
@@ -259,8 +324,8 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                       iconBgColor: AppColors.primary.withValues(alpha: 0.1),
                       iconColor: AppColors.primary,
                       title: 'Hồ sơ hôm nay',
-                      value: '24',
-                      badgeText: '+12%',
+                      value: documentsToday,
+                      badgeText: percentText,
                       badgeColor: Colors.green[600]!,
                       badgeBgColor: Colors.green[50]!,
                     ),
@@ -308,27 +373,49 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                         ),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        _buildRecentItem(
-                          'Phạm Minh Tuấn',
-                          '32 tuổi • BN-2024-0009',
-                          '10p trước',
+                  child: recentPatientsList.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(24.0),
+                          child: Center(
+                            child: Text(
+                              'Chưa có hồ sơ nào gần đây',
+                              style: TextStyle(
+                                  color: Colors.grey,
+                                  fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                        )
+                      : Column(
+                          children:
+                              List.generate(recentPatientsList.length, (index) {
+                            final patient = recentPatientsList[index];
+
+                            final String fullName =
+                                patient['full_name'] ?? 'Chưa cập nhật tên';
+                            final String medicalCode =
+                                patient['medical_code'] ?? 'Không có mã';
+                            final String? dob = patient['dob'];
+                            final dynamic createdAt = patient['created_at'];
+
+                            final String subtitle =
+                                '${_calculateAge(dob)} • $medicalCode';
+
+                            final String timeAgo = _getTimeAgo(createdAt);
+
+                            return Column(
+                              children: [
+                                _buildRecentItem(
+                                  fullName,
+                                  subtitle,
+                                  timeAgo,
+                                ),
+                                if (index < recentPatientsList.length - 1)
+                                  const Divider(
+                                      height: 1, color: Colors.black12),
+                              ],
+                            );
+                          }),
                         ),
-                        const Divider(height: 1, color: AppColors.border),
-                        _buildRecentItem(
-                          'Nguyễn Kim Chi',
-                          '19 tuổi • BN-2024-0005',
-                          '35p trước',
-                        ),
-                        const Divider(height: 1, color: AppColors.border),
-                        _buildRecentItem(
-                          'Hoàng Anh Đức',
-                          '54 tuổi • BN-2024-0001',
-                          '1h trước',
-                        ),
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -516,5 +603,46 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         ],
       ),
     );
+  }
+  String _calculateAge(String? dob) {
+    if (dob == null || dob.isEmpty) return 'Không rõ tuổi';
+    try {
+      DateTime birthDate = DateFormat('dd/MM/yyyy').parse(dob);
+      DateTime today = DateTime.now();
+      int age = today.year - birthDate.year;
+      if (today.month < birthDate.month ||
+          (today.month == birthDate.month && today.day < birthDate.day)) {
+        age--;
+      }
+      return '$age tuổi';
+    } catch (e) {
+      return 'Không rõ tuổi';
+    }
+  }
+
+  String _getTimeAgo(dynamic createdAt) {
+    if (createdAt == null) return 'Vừa xong';
+
+    DateTime? createdDate;
+
+    if (createdAt is num) {
+      createdDate = DateTime.fromMillisecondsSinceEpoch(createdAt.toInt());
+    } else if (createdAt is String) {
+      final parsedInt = int.tryParse(createdAt);
+      if (parsedInt != null) {
+        createdDate = DateTime.fromMillisecondsSinceEpoch(parsedInt);
+      } else {
+        createdDate = DateTime.tryParse(createdAt);
+      }
+    }
+
+    if (createdDate == null) return 'Vừa xong';
+
+    final difference = DateTime.now().difference(createdDate);
+
+    if (difference.inDays > 0) return '${difference.inDays} ngày trước';
+    if (difference.inHours > 0) return '${difference.inHours}h trước';
+    if (difference.inMinutes > 0) return '${difference.inMinutes}p trước';
+    return 'Vừa xong';
   }
 }

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../domain/entities/user_entity.dart';
+import '../domain/entities/staff_stats.dart';
+import '../data/db/database_helper.dart';
 
 class StaffManagementViewModel extends ChangeNotifier {
   final AuthRepository _authRepo = AuthRepositoryImpl();
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -17,6 +20,12 @@ class StaffManagementViewModel extends ChangeNotifier {
 
   List<UserEntity> _staffs = [];
   List<UserEntity> get staffs => _staffs;
+
+  StaffStats? _stats;
+  StaffStats? get stats => _stats;
+
+  List<Map<String, dynamic>> _recentPatients = [];
+  List<Map<String, dynamic>> get recentPatients => _recentPatients;
 
   Future<void> loadStaffs() async {
     _isLoading = true;
@@ -116,6 +125,46 @@ class StaffManagementViewModel extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> loadStats() async {
+    try {
+      final db = await _dbHelper.database;
+      final now = DateTime.now();
+      final startOfToday =
+          DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+
+      final todayDocs = await db.rawQuery(
+          'SELECT COUNT(*) as count FROM medical_documents WHERE created_at >= ? AND is_deleted = 0',
+          [startOfToday]);
+
+      final totalDocs = await db.rawQuery(
+          'SELECT COUNT(*) as count FROM medical_documents WHERE is_deleted = 0');
+
+      _stats = StaffStats(
+        documentToday: Sqflite.firstIntValue(todayDocs) ?? 0,
+        totalDocuments: Sqflite.firstIntValue(totalDocs) ?? 0,
+      );
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading staff stats: $e');
+    }
+  }
+
+  Future<void> loadRecentDocuments() async {
+    try {
+      final db = await _dbHelper.database;
+      // Get 5 most recent patients from patient_profiles
+      final maps = await db.query(
+        'patient_profiles',
+        orderBy: 'created_at DESC',
+        limit: 5,
+      );
+      _recentPatients = maps;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error loading recent patients: $e');
     }
   }
 }

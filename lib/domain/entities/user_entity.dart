@@ -4,6 +4,7 @@ class UserEntity {
   final String? phone;
   final String? passwordHash;
   final String? fullName;
+  final String? avatar;
   final String role;
   final String status;
   final DateTime? createdAt;
@@ -15,6 +16,7 @@ class UserEntity {
     this.phone,
     this.passwordHash,
     this.fullName,
+    this.avatar,
     required this.role,
     this.status = 'ACTIVE',
     this.createdAt,
