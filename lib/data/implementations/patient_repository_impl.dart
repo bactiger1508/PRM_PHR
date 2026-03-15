@@ -220,4 +220,17 @@ class PatientRepositoryImpl implements PatientRepository {
   Future<DashboardStats> getStats() async {
     return await DatabaseHelper.instance.getDashboardStats();
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 3}) async {
+    final db = await DatabaseHelper.instance.database;
+
+    final List<Map<String, dynamic>> result = await db.query(
+      'patient_profiles',
+      orderBy: 'id DESC',
+      // limit: limit,
+    );
+
+    return result;
+  }
 }
