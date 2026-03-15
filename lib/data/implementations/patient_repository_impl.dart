@@ -258,6 +258,9 @@ class PatientRepositoryImpl implements PatientRepository {
     ''';
 
     return await db.rawQuery(sql, [patientId]);
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 3}) async {
     final db = await DatabaseHelper.instance.database;
 
