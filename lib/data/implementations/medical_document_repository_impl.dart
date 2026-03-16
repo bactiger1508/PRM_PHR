@@ -197,7 +197,42 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
     return count > 0;
   }
 
-  /// Lấy tài liệu do nhân viên tạo
+  /// Cập nhật tài liệu
+  Future<bool> updateDocument(MedicalDocumentEntity doc) async {
+    final db = await _dbHelper.database;
+    final count = await db.update(
+      'medical_documents',
+      {
+        'category_id': doc.categoryId,
+        'title': doc.title,
+        'notes': doc.notes,
+        'record_date': doc.recordDate,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      },
+      where: 'id = ?',
+      whereArgs: [doc.id],
+    );
+    return count > 0;
+  }
+
+  /// Cập nhật tags cho tài liệu
+  Future<void> updateTagsForDocument(int docId, List<String> newTags) async {
+    final db = await _dbHelper.database;
+    
+    // Xóa hết tags cũ của document này
+    await db.delete(
+      'document_tags',
+      where: 'document_id = ?',
+      whereArgs: [docId],
+    );
+
+    // Thêm tags mới
+    for (var tag in newTags) {
+      await addTagToDocument(docId, tag);
+    }
+  }
+
+  /// Lấy tài liệu do nhân viên tạo (Bao gồm cả đã xóa để có thể khôi phục)
   Future<List<MedicalDocumentEntity>> getDocumentsByCreator(int staffId) async {
     final db = await _dbHelper.database;
 
@@ -206,7 +241,7 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
       FROM medical_documents md
       LEFT JOIN document_categories dc ON md.category_id = dc.id
       LEFT JOIN user_accounts ua ON md.created_by = ua.id
-      WHERE md.created_by = ? AND md.is_deleted = 0
+      WHERE md.created_by = ?
       ORDER BY md.created_at DESC
     ''', [staffId]);
 

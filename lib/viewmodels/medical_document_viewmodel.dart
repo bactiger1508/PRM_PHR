@@ -135,6 +135,14 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   Future<void> loadTags() async {
     try {
       _availableTags = await _docRepo.getAllTags();
+      // Nếu DB chưa có tag nào, dùng danh sách mặc định
+      if (_availableTags.isEmpty) {
+        _availableTags = [
+          'Tim mạch', 'Hô hấp', 'Tiêu hóa', 'Thần kinh', 'Xương khớp',
+          'Nội tiết', 'Da liễu', 'Mắt', 'Tai mũi họng', 'Quan trọng',
+          'Sức khỏe định kỳ', 'Nội khoa', 'Ngoại khoa', 'Chẩn đoán hình ảnh',
+        ];
+      }
       notifyListeners();
     } catch (_) {}
   }
@@ -227,6 +235,50 @@ class MedicalDocumentViewModel extends ChangeNotifier {
         return 'application/pdf';
       default:
         return 'application/octet-stream';
+    }
+  }
+
+  /// Cập nhật tài liệu y tế
+  Future<bool> updateDocument({
+    required int docId,
+    required String title,
+    String? notes,
+    int? recordDate,
+  }) async {
+    if (title.isEmpty) {
+      _errorMsg = 'Vui lòng nhập tiêu đề tài liệu.';
+      notifyListeners();
+      return false;
+    }
+
+    _isSaving = true;
+    _errorMsg = null;
+    notifyListeners();
+
+    try {
+      final categoryId = _selectedCategoryIndex + 1;
+
+      final doc = MedicalDocumentEntity(
+        id: docId,
+        patientProfileId: 0, // Not needed for update
+        categoryId: categoryId,
+        title: title,
+        notes: notes,
+        recordDate: recordDate,
+      );
+
+      final success = await _docRepo.updateDocument(doc);
+      if (success) {
+        // Cập nhật lại list tags nếu có thay đổi
+        await _docRepo.updateTagsForDocument(docId, _selectedTags);
+      }
+      return success;
+    } catch (e) {
+      _errorMsg = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isSaving = false;
+      notifyListeners();
     }
   }
 

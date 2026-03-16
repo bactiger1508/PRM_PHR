@@ -3,25 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../viewmodels/medical_document_viewmodel.dart';
-import '../../viewmodels/auth_viewmodel.dart';
 
-class CreateMedicalExamScreen extends StatefulWidget {
-  /// Nếu truyền vào patientId và patientName, sẽ auto-fill bệnh nhân
-  final int? preselectedPatientId;
-  final String? preselectedPatientName;
+import '../../domain/entities/medical_document_entity.dart';
 
-  const CreateMedicalExamScreen({
-    super.key,
-    this.preselectedPatientId,
-    this.preselectedPatientName,
-  });
+class UpdateDocumentScreen extends StatefulWidget {
+  final MedicalDocumentEntity document;
+
+  const UpdateDocumentScreen({super.key, required this.document});
 
   @override
-  State<CreateMedicalExamScreen> createState() =>
-      _CreateMedicalExamScreenState();
+  State<UpdateDocumentScreen> createState() => _UpdateDocumentScreenState();
 }
 
-class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
+class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
   final MedicalDocumentViewModel _viewModel = MedicalDocumentViewModel();
 
   final _titleController = TextEditingController();
@@ -29,17 +23,31 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   final _notesController = TextEditingController();
   final _tagInputController = TextEditingController();
 
-  int? _selectedPatientId;
-  String? _selectedPatientName;
   DateTime? _selectedDate;
 
   @override
   void initState() {
     super.initState();
-    if (widget.preselectedPatientId != null) {
-      _selectedPatientId = widget.preselectedPatientId;
-      _selectedPatientName = widget.preselectedPatientName;
+    
+    // Initialize properties with existing document data
+    _titleController.text = widget.document.title ?? '';
+    if (widget.document.notes != null) {
+      _notesController.text = widget.document.notes!;
     }
+    if (widget.document.recordDate != null) {
+      _selectedDate = DateTime.fromMillisecondsSinceEpoch(widget.document.recordDate!);
+    }
+    
+    // Set category index based on categoryId (1-indexed)
+    if (widget.document.categoryId > 0) {
+      _viewModel.setCategory(widget.document.categoryId - 1);
+    }
+    
+    // Initialize tags
+    for (var tag in widget.document.tags) {
+      _viewModel.addTag(tag);
+    }
+
     _viewModel.loadPatients();
     _viewModel.loadTags();
   }
@@ -81,38 +89,30 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     }
   }
 
-  Future<void> _saveDocument() async {
-    if (_selectedPatientId == null) {
-      _showSnackBar('Vui lòng chọn bệnh nhân.', isError: true);
-      return;
-    }
-
+  Future<void> _updateDocument() async {
     if (_titleController.text.trim().isEmpty) {
       _showSnackBar('Vui lòng nhập tiêu đề tài liệu.', isError: true);
       return;
     }
 
-    final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
-
-    final success = await _viewModel.saveDocument(
-      patientProfileId: _selectedPatientId!,
+    final success = await _viewModel.updateDocument(
+      docId: widget.document.id!,
       title: _titleController.text.trim(),
-      recordDate: _selectedDate?.millisecondsSinceEpoch,
       notes: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
-      createdByStaffId: staffId,
+      recordDate: _selectedDate?.millisecondsSinceEpoch,
     );
 
     if (success) {
-      _showSnackBar('Lưu tài liệu thành công!', isError: false);
-      if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 800));
-        Navigator.pop(context, true);
-      }
+      if (!mounted) return;
+      _showSnackBar('Cập nhật tài liệu thành công!', isError: false);
+      await Future.delayed(const Duration(milliseconds: 800));
+      if (mounted) Navigator.pop(context, true);
     } else {
+      if (!mounted) return;
       _showSnackBar(
-        _viewModel.errorMsg ?? 'Có lỗi xảy ra khi lưu tài liệu.',
+        _viewModel.errorMsg ?? 'Có lỗi xảy ra khi cập nhật tài liệu.',
         isError: true,
       );
     }
@@ -169,172 +169,6 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     }
   }
 
-  void _showPatientPicker() {
-    final searchController = TextEditingController();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            final query = searchController.text.toLowerCase();
-            final filtered = _viewModel.patients.where((p) {
-              final name = (p['full_name'] ?? '').toString().toLowerCase();
-              final code = (p['medical_code'] ?? '').toString().toLowerCase();
-              return name.contains(query) || code.contains(query);
-            }).toList();
-
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.7,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(top: 12),
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.border,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      'Chọn Bệnh Nhân',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: TextField(
-                      controller: searchController,
-                      onChanged: (v) => setModalState(() {}),
-                      decoration: InputDecoration(
-                        hintText: 'Tìm tên hoặc mã y tế...',
-                        hintStyle: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textLight,
-                        ),
-                        prefixIcon: const Icon(Icons.search,
-                            color: AppColors.textLight),
-                        filled: true,
-                        fillColor: AppColors.backgroundLight,
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 0),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        '${filtered.length} bệnh nhân',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textLight,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? const Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.person_off,
-                                    color: AppColors.textLight, size: 48),
-                                SizedBox(height: 12),
-                                Text(
-                                  'Không tìm thấy bệnh nhân',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: filtered.length,
-                            separatorBuilder: (_, __) => const Divider(
-                                height: 1, color: AppColors.border),
-                            itemBuilder: (ctx, index) {
-                              final p = filtered[index];
-                              final name = p['full_name'] ?? 'N/A';
-                              final code = p['medical_code'] ?? '';
-                              final dob = p['dob'] ?? '';
-                              final phone = p['phone'] ?? '';
-
-                              return ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 4, horizontal: 0),
-                                leading: CircleAvatar(
-                                  backgroundColor: AppColors.primary
-                                      .withValues(alpha: 0.1),
-                                  child: Text(
-                                    _getInitials(name),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                                title: Text(
-                                  name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  '$code${dob.isNotEmpty ? ' • $dob' : ''}${phone.isNotEmpty ? ' • $phone' : ''}',
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                                trailing: const Icon(
-                                  Icons.chevron_right,
-                                  color: AppColors.textLight,
-                                ),
-                                onTap: () {
-                                  setState(() {
-                                    _selectedPatientId = p['id'];
-                                    _selectedPatientName = name;
-                                  });
-                                  Navigator.pop(ctx);
-                                },
-                              );
-                            },
-                          ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -349,7 +183,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Thêm Tài liệu Y tế',
+          'Cập nhật Tài liệu',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -364,7 +198,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                 listenable: _viewModel,
                 builder: (context, _) {
                   return ElevatedButton(
-                    onPressed: _viewModel.isSaving ? null : _saveDocument,
+                    onPressed: _viewModel.isSaving ? null : _updateDocument,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -408,9 +242,8 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ========== Chọn Bệnh Nhân ==========
-                _buildPatientSelector(),
-                const SizedBox(height: 20),
+                // Không hiển thị Patient Selector khi Cập nhật
+                const SizedBox(height: 8),
 
                 // ========== LOẠI TÀI LIỆU ==========
                 const Text(
@@ -494,110 +327,6 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   }
 
   // ============ UI Builder Widgets ============
-
-  Widget _buildPatientSelector() {
-    if (_selectedPatientId != null && _selectedPatientName != null) {
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: AppColors.primary.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  _getInitials(_selectedPatientName!),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _selectedPatientName!,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    'Bệnh nhân',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (widget.preselectedPatientId == null)
-              IconButton(
-                icon: const Icon(Icons.swap_horiz,
-                    color: AppColors.primary, size: 20),
-                onPressed: _showPatientPicker,
-              ),
-          ],
-        ),
-      );
-    }
-
-    return InkWell(
-      onTap: _showPatientPicker,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border, width: 1.5),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.person_add,
-                  color: AppColors.primary, size: 20),
-            ),
-            const SizedBox(width: 12),
-            const Text(
-              'Chọn bệnh nhân',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(Icons.arrow_forward_ios,
-                color: AppColors.primary, size: 14),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildDocTypeSelector() {
     return Container(
@@ -1149,12 +878,4 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     );
   }
 
-  // Helper: get initials from name
-  String _getInitials(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length >= 2) {
-      return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-    }
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
-  }
 }

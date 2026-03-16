@@ -20,6 +20,7 @@ class StaffDashboardScreen extends StatefulWidget {
 
 class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   int _selectedIndex = 0;
+  int _documentRefreshKey = 0;
   String? avatarCurrentUser = AuthViewModel.instance.currentUser?.avatar;
   final StaffManagementViewModel _staffViewModel = StaffManagementViewModel();
 
@@ -52,6 +53,14 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          _buildHomePage(context),
+          const PatientListScreen(embedded: true),
+          DocumentListScreen(key: ValueKey('doc_list_$_documentRefreshKey'), embedded: true),
+          const PersonalSettingsScreen(embedded: true),
+        ],
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
@@ -67,13 +76,20 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
         width: 64,
         height: 64,
         child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => const CreateMedicalExamScreen(),
               ),
             );
+            if (result == true) {
+              setState(() {
+                _documentRefreshKey++;
+                // Tự động chuyển qua tab Tài liệu nêú muốn
+                _selectedIndex = 2; 
+              });
+            }
           },
           backgroundColor: AppColors.primary,
           elevation: 4,
