@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:phrprmgroupproject/views/staff/patient_detail_screen.dart';
 import '../theme/app_theme.dart';
-import '../documents/document_list_screen.dart';
 import '../auth/personal_settings_screen.dart';
 import '../auth/system_notification_screen.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/family_member_viewmodel.dart';
+import '../../data/implementations/auth_repository_impl.dart';
+import '../../domain/entities/user_entity.dart';
 import 'add_family_member_screen.dart';
 
 class CustomerFamilyHomeScreen extends StatefulWidget {
@@ -48,7 +49,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
           const PersonalSettingsScreen(embedded: true),
         ],
       ),
-      floatingActionButton: _selectedIndex == 0 
+      floatingActionButton: (_selectedIndex == 0 && (AuthViewModel.instance.currentUser?.isFamilyHead ?? false))
           ? FloatingActionButton(
               onPressed: () async {
                 final result = await Navigator.push(
@@ -124,7 +125,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
               padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'Danh sách thành viên',
                     style: TextStyle(
@@ -135,8 +136,10 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Nhấn vào dấu + để liên kết hồ sơ người thân',
-                    style: TextStyle(
+                    (AuthViewModel.instance.currentUser?.isFamilyHead ?? false)
+                        ? 'Nhấn vào dấu + để liên kết hồ sơ người thân'
+                        : 'Bạn có thể xem hồ sơ của các thành viên trong gia đình',
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -198,6 +201,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                               name: member['full_name'] ?? 'Không tên',
                               relation: member['relationship'] ?? 'N/A',
                               id: member['medical_code'],
+                              patientId: member['id'], // Pass patientId for removal
                               lastUpdate: _formatDate(member['updated_at']),
                               isPrimary: false,
                               email: member['email'],
@@ -238,8 +242,8 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border.withValues(alpha: 0.5), style: BorderStyle.solid),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         children: [
@@ -272,25 +276,17 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
     String? avatar,
     String? email,
     String? phone,
+    int? patientId,
   }) {
+    final bool isCurrentUserHead = AuthViewModel.instance.currentUser?.isFamilyHead ?? false;
+    
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isPrimary ? AppColors.primary : AppColors.border,
-          width: isPrimary ? 2 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isPrimary 
-              ? AppColors.primary.withValues(alpha: 0.1) 
-              : Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        border: isPrimary ? Border.all(color: AppColors.primary.withValues(alpha: 0.3), width: 1.5) : null,
+        boxShadow: isPrimary ? AppTheme.glowingShadow : AppTheme.softShadow,
       ),
       child: Stack(
         clipBehavior: Clip.none,
@@ -325,21 +321,29 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                backgroundImage: (avatar != null && avatar.isNotEmpty)
-                    ? FileImage(File(avatar)) as ImageProvider
-                    : null,
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  image: (avatar != null && avatar.isNotEmpty)
+                      ? DecorationImage(
+                          image: FileImage(File(avatar)),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                alignment: Alignment.center,
                 child: (avatar == null || avatar.isEmpty)
                     ? Text(
-                  name.isNotEmpty ? name[0] : '?',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
-                )
+                        name.isNotEmpty ? name[0] : '?',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
+                      )
                     : null,
               ),
               const SizedBox(width: 16),
@@ -376,8 +380,59 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                             ],
                           ),
                         ),
+                        if (!isPrimary && isCurrentUserHead)
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, color: AppColors.textLight),
+                            onSelected: (value) async {
+                              if (value == 'remove') {
+                                _showRemoveConfirm(context, name, patientId!);
+                              } else if (value == 'transfer') {
+                                _showTransferConfirm(context, name, email);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'transfer',
+                                child: ListTile(
+                                  leading: Icon(Icons.swap_horiz, size: 20),
+                                  title: Text('Chuyển quyền chủ gia đình'),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'remove',
+                                child: ListTile(
+                                  leading: Icon(Icons.person_remove, color: Colors.red, size: 20),
+                                  title: Text('Xóa khỏi gia đình', style: TextStyle(color: Colors.red)),
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
+                    if (isPrimary && isCurrentUserHead) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star, size: 12, color: Colors.amber),
+                            SizedBox(width: 4),
+                            Text(
+                              'Chủ gia đình',
+                              style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     if (id != null) ...[
                       const SizedBox(height: 4),
                       Text(
@@ -431,6 +486,118 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveConfirm(BuildContext context, String name, int patientId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Xác nhận xóa'),
+        content: Text('Bạn có chắc chắn muốn xóa $name khỏi gia đình không?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () async {
+              final headId = AuthViewModel.instance.currentUser?.id;
+              if (headId != null) {
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(context);
+                final success = await _viewModel.removeMember(headId, patientId);
+                
+                if (success) {
+                  navigator.pop();
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(content: Text('Đã xóa $name khỏi gia đình')),
+                  );
+                }
+              }
+            },
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTransferConfirm(BuildContext context, String name, String? email) {
+    if (email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Thành viên này không có tài khoản để chuyển quyền.')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context2) => AlertDialog(
+        title: const Text('Chuyển quyền'),
+        content: Text('Bạn có muốn chuyển quyền Chủ gia đình cho $name không? Sau khi chuyển, bạn sẽ không còn quyền quản lý gia đình.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context2), child: const Text('Hủy')),
+          TextButton(
+            onPressed: () async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context2);
+
+              try {
+                final currentHead = AuthViewModel.instance.currentUser;
+                if (currentHead == null) {
+                  navigator.pop();
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Lỗi: Không tìm thấy thông tin tài khoản hiện tại.')),
+                  );
+                  return;
+                }
+
+                final targetUser = await AuthRepositoryImpl().findByEmail(email);
+                if (targetUser == null || targetUser.id == null) {
+                  navigator.pop();
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Không tìm thấy tài khoản của thành viên này.')),
+                  );
+                  return;
+                }
+
+                final success = await _viewModel.transferHead(currentHead.id!, targetUser.id!);
+                navigator.pop();
+
+                if (success) {
+                  // Update local Auth status
+                  final updatedHead = UserEntity(
+                    id: currentHead.id,
+                    fullName: currentHead.fullName,
+                    phone: currentHead.phone,
+                    email: currentHead.email,
+                    role: currentHead.role,
+                    avatar: currentHead.avatar,
+                    familyId: currentHead.familyId,
+                    isFamilyHead: false,
+                  );
+                  AuthViewModel.instance.refreshCurrentUser(updatedHead);
+                  
+                  if (mounted) {
+                    setState(() {}); // Refresh UI
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(content: Text('Đã chuyển quyền chủ gia đình cho $name')),
+                    );
+                  }
+                } else {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(content: Text('Chuyển quyền thất bại. Vui lòng thử lại.')),
+                  );
+                }
+              } catch (e) {
+                navigator.pop();
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('Đã xảy ra lỗi: ${e.toString()}')),
+                );
+              }
+            },
+            child: const Text('Xác nhận'),
           ),
         ],
       ),

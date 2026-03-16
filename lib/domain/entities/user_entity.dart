@@ -9,7 +9,9 @@ class UserEntity {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? avatar;
-
+  final int? familyId;
+  final bool isFamilyHead;
+ 
   UserEntity({
     this.id,
     this.email,
@@ -21,5 +23,7 @@ class UserEntity {
     this.createdAt,
     this.updatedAt,
     this.avatar,
+    this.familyId,
+    this.isFamilyHead = true,
   });
 }

@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:phrprmgroupproject/viewmodels/user_viewmodel.dart';
 import 'package:path/path.dart' as p;
+import '../../utils/permission_utils.dart';
 
 class PersonalSettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -123,14 +124,17 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
             TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
             ElevatedButton(
               onPressed: () async {
+                final navigator = Navigator.of(context);
                 final repo = PatientRepositoryImpl();
                 final success = await repo.updatePatientProfile(
                   _patientProfile!.id!,
                   dob: dobController.text,
                   phone: phoneController.text,
                 );
+                
+                if (!mounted) return;
                 if (success) {
-                  if (mounted) Navigator.pop(context);
+                  navigator.pop();
                   _loadProfile();
                 }
               },
@@ -297,12 +301,7 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
                       bottom: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: () {
-                          int? id = user?.id;
-                          if(id != null) {
-                            _pickImage(id);
-                          }
-                        },
+                        onTap: () => _showImageSourceActionSheet(context),
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: const BoxDecoration(
@@ -498,14 +497,73 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
     );
   }
 
-  Future<void> _pickImage(int userId) async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+  void _showImageSourceActionSheet(BuildContext context) {
+    final user = AuthViewModel.instance.currentUser;
+    if (user == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Thay đổi ảnh đại diện',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Chụp ảnh mới'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickImage(user.id!, ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Chọn từ thư viện'),
+              onTap: () {
+                Navigator.pop(sheetContext);
+                _pickImage(user.id!, ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(int userId, ImageSource source) async {
+    // Kiểm tra quyền
+    bool hasPermission = false;
+    if (source == ImageSource.camera) {
+      hasPermission = await PermissionUtils.requestCameraPermission(context);
+    } else {
+      hasPermission = await PermissionUtils.requestStoragePermission(context);
+    }
+
+    if (!hasPermission) {
+      return;
+    }
+
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source,
+      imageQuality: 80,
+      maxWidth: 500,
+    );
 
     if (pickedFile != null) {
       try {
         final directory = await getApplicationDocumentsDirectory();
-        final fileName = p.basename(pickedFile.path);
-        final permanentPath = '${directory.path}/$fileName';
+        final fileName = 'avatar_${userId}_${DateTime.now().millisecondsSinceEpoch}${p.extension(pickedFile.path)}';
+        final permanentPath = p.join(directory.path, fileName);
 
         final savedImage = await File(pickedFile.path).copy(permanentPath);
 
@@ -515,6 +573,9 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
 
         if (mounted) {
           setState(() {});
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Đã cập nhật ảnh đại diện!')),
+          );
         }
       } catch (e) {
         if (mounted) {

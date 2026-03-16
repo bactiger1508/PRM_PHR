@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/create_patient_viewmodel.dart';
 import '../theme/app_theme.dart';
 
@@ -55,7 +56,7 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
         titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, _viewModel.isSuccess),
         ),
         title: const Text(
           'Tạo hồ sơ bệnh nhân mới',
@@ -168,7 +169,7 @@ class _CreatePatientScreenState extends State<CreatePatientScreen> {
                                 dob: _dobController.text,
                                 phone: _phoneController.text,
                                 email: _emailController.text,
-                                createdByStaffId: 1,
+                                createdByStaffId: AuthViewModel.instance.currentUser?.id ?? 1,
                               );
                             },
                       icon: const Icon(Icons.save),

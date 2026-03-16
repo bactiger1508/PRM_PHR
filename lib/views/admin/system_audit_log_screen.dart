@@ -38,9 +38,9 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
     });
     try {
       final now = DateTime.now();
-      final yesterday = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+      final fiveDaysAgo = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 5));
       final endOfToday = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
-      _logs = await _repo.getLogs(from: yesterday, to: endOfToday);
+      _logs = await _repo.getLogs(from: fiveDaysAgo, to: endOfToday);
     } catch (_) {
       _logs = [];
     }
@@ -58,9 +58,9 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
       from = _selectedDateRange!.start;
       to = _selectedDateRange!.end.add(const Duration(days: 1));
     } else {
-      // Nếu chỉ lọc role mà không chọn ngày → vẫn lấy hôm nay + hôm qua
+      // Nếu chỉ lọc role mà không chọn ngày → vẫn lấy 5 ngày gần nhất
       final now = DateTime.now();
-      from = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 1));
+      from = DateTime(now.year, now.month, now.day).subtract(const Duration(days: 5));
       to = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
     }
 
@@ -215,7 +215,7 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(Icons.close, size: 16, color: Colors.red),
@@ -297,7 +297,7 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? AppColors.primary.withOpacity(0.1) : AppColors.backgroundLight,
+          color: active ? AppColors.primary.withValues(alpha: 0.1) : AppColors.backgroundLight,
           borderRadius: BorderRadius.circular(8),
           border: active ? Border.all(color: AppColors.primary, width: 1) : null,
         ),
@@ -342,7 +342,7 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
@@ -362,7 +362,7 @@ class _SystemAuditLogScreenState extends State<SystemAuditLogScreen> {
                       Container(
                         margin: const EdgeInsets.only(left: 6),
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(color: Colors.blue.withOpacity(0.1), borderRadius: BorderRadius.circular(4)),
+                        decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
                         child: Text(roleBadge, style: const TextStyle(fontSize: 10, color: Colors.blue, fontWeight: FontWeight.bold)),
                       ),
                     const SizedBox(width: 8),

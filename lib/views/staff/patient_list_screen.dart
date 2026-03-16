@@ -1,29 +1,35 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:phrprmgroupproject/viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
-import 'patient_detail_screen.dart';
+import '../../domain/entities/patient_entity.dart';
 
 class PatientListScreen extends StatefulWidget {
   final bool embedded;
-  const PatientListScreen({super.key, this.embedded = false});
+  final StaffManagementViewModel? viewModel;
+
+  const PatientListScreen({super.key, this.embedded = false, this.viewModel});
 
   @override
   State<PatientListScreen> createState() => _PatientListScreenState();
 }
 
 class _PatientListScreenState extends State<PatientListScreen> {
-  int _selectedIndex = 0; // "Bệnh nhân" initially selected on bottom nav bar
-  final StaffManagementViewModel _staffViewModel = StaffManagementViewModel();
+  late StaffManagementViewModel _staffViewModel;
+  bool _isLocalViewModel = false;
 
   @override
   void initState() {
     super.initState();
+    if (widget.viewModel != null) {
+      _staffViewModel = widget.viewModel!;
+    } else {
+      _staffViewModel = StaffManagementViewModel();
+      _isLocalViewModel = true;
+      _staffViewModel.loadStats();
+      _staffViewModel.loadPatients();
+    }
     _staffViewModel.addListener(_onViewModelChanged);
-    _staffViewModel.loadStats();
-    _staffViewModel.loadPatients();
   }
 
   void _onViewModelChanged() {
@@ -35,14 +41,16 @@ class _PatientListScreenState extends State<PatientListScreen> {
   @override
   void dispose() {
     _staffViewModel.removeListener(_onViewModelChanged);
-    _staffViewModel.dispose();
+    if (_isLocalViewModel) {
+      _staffViewModel.dispose();
+    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final stats = _staffViewModel.stats;
-
+    final patients = _staffViewModel.patients;
     final formatter = NumberFormat('#,###', 'en_US');
 
     final String totalDocuments = stats != null ? formatter.format(stats.totalDocuments) : '0';
@@ -50,18 +58,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
     final String totalPatients = stats != null ? formatter.format(stats.totalPatients) : '0';
     final String patientsThisMonth = stats != null ? '+${formatter.format(stats.patientsThisMonth)} tháng này' : '+0 tháng này';
-    final customersList = _staffViewModel.customers;
-    print(customersList);
 
-    // Extract the main body content into a variable
-    final Widget mainContent = SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Column(
-        children: [
-          // Stats Row
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
+    final Widget mainContent = Column(
+      children: [
+        // Stats Row
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
               children: [
                 Expanded(
                   child: _buildStatCard(
@@ -87,8 +90,13 @@ class _PatientListScreenState extends State<PatientListScreen> {
           ),
 
           // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Container(
+            decoration: BoxDecoration(
+              boxShadow: AppTheme.softShadow,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Tìm kiếm tên hoặc mã y tế...',
@@ -103,75 +111,56 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
+                  vertical: 16,
+                  horizontal: 20,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
                   borderSide: const BorderSide(
                     color: AppColors.primary,
-                    width: 2,
+                    width: 1.5,
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 12),
 
-
-
-          // Patient List
-          ListView(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16.0),
-            children: customersList.isEmpty
-                ? [
-              const Padding(
-                padding: EdgeInsets.all(24.0),
-                child: Center(
-                  child: Text(
-                    'Chưa có khách hàng nào',
-                    style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
-                  ),
-                ),
-              )
-            ]
-                : customersList.map((customer) {
-              final String name = customer.fullName ?? 'Chưa cập nhật tên';
-              final String code = customer.phone ?? 'ID: ${customer.id}';
-              final String avatarPath = customer.avatar ?? '';
-
-              final String avatarUrl = avatarPath.isNotEmpty
-                  ? avatarPath
-                  : 'https://ui-avatars.com/api/?name=${name.replaceAll(' ', '+')}&background=e2e8f0&color=475569';
-
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: _buildPatientCard(
-                  name: name,
-                  code: code,
-                  avatarUrl: avatarUrl,
-                  isOnline: true,
-                  email: customer.email,
-                  phone: customer.phone
-                ),
-              );
-            }).toList(),
+        if (_staffViewModel.isLoading && patients.isEmpty)
+          const Expanded(child: Center(child: CircularProgressIndicator()))
+        else if (_staffViewModel.errorMsg != null && patients.isEmpty)
+          Expanded(child: Center(child: Text(_staffViewModel.errorMsg!)))
+        else if (patients.isEmpty)
+          const Expanded(
+            child: Center(
+              child: Text(
+                'Chưa có hồ sơ bệnh nhân nào',
+                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: patients.length,
+              itemBuilder: (context, index) {
+                return _buildPatientItem(patients[index]);
+              },
+            ),
           ),
-        ],
-      ),
+      ],
     );
 
-    // If embedded, return only the main content without Scaffold's furniture
     if (widget.embedded) {
       return mainContent;
     }
@@ -179,112 +168,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
+        title: const Text('Danh sách Bệnh nhân'),
         backgroundColor: Colors.white,
         elevation: 0,
-        titleSpacing: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
-          onPressed: () {},
-        ),
-        title: const Text(
-          'Danh sách Bệnh nhân',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Row(
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.notifications_none,
-                        color: AppColors.textSecondary,
-                      ),
-                      onPressed: () {},
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppColors.backgroundLight,
-                      ),
-                    ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border),
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        'https://ui-avatars.com/api/?name=Doctor&background=e2e8f0&color=475569',
-                      ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: Container(color: AppColors.border, height: 1),
-        ),
+        foregroundColor: AppColors.textPrimary,
       ),
       body: mainContent,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: widget.embedded ? null : BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textLight,
-        backgroundColor: Colors.white,
-        selectedFontSize: 10,
-        unselectedFontSize: 10,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.group_outlined),
-            activeIcon: Icon(Icons.group),
-            label: 'Bệnh nhân',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_outlined),
-            activeIcon: Icon(Icons.bar_chart),
-            label: 'Báo cáo',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Cá nhân',
-          ),
-        ],
-      ),
     );
   }
 
@@ -299,8 +188,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -308,30 +197,28 @@ class _PatientListScreenState extends State<PatientListScreen> {
           Text(
             title,
             style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+              fontSize: 12,
               color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 32,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Row(
             children: [
-              Icon(trendIcon, size: 14, color: trendColor),
+              Icon(trendIcon, size: 12, color: trendColor),
               const SizedBox(width: 4),
               Text(
                 trendText,
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 10,
                   color: trendColor,
                 ),
               ),
@@ -342,127 +229,45 @@ class _PatientListScreenState extends State<PatientListScreen> {
     );
   }
 
-  Widget _buildPatientCard({
-    required String name,
-    required String code,
-    String? avatarUrl,
-    String? initial,
-    bool isOnline = false,
-    double opacity = 1.0,
-    String? email,
-    String? phone,
-  }) {
-    return Opacity(
-      opacity: opacity,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => PatientDetailScreen(
-                email: email,
-                phone: phone,
-              ),
-            ),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Stack(
-                children: [
-                  if (avatarUrl != null && avatarUrl.isNotEmpty)
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.backgroundLight,
-                      // KIỂM TRA ĐỊNH DẠNG ẢNH Ở ĐÂY:
-                      backgroundImage: avatarUrl.startsWith('http')
-                          ? NetworkImage(avatarUrl) as ImageProvider
-                          : FileImage(File(avatarUrl)),
-                    )
-                  else if (initial != null)
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                      child: Text(
-                        initial,
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                  else
-                    const CircleAvatar(
-                      radius: 28,
-                      backgroundColor: AppColors.backgroundLight,
-                      child: Icon(Icons.person, color: AppColors.textLight),
-                    ),
-
-                  // Chấm xanh online giữ nguyên
-                  if (isOnline)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: Colors.greenAccent[400]!,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          code,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textLight),
-            ],
+  Widget _buildPatientItem(PatientEntity patient) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+          child: Text(
+            patient.fullName.isNotEmpty ? patient.fullName[0].toUpperCase() : '?',
+            style: const TextStyle(
+                color: AppColors.primary, fontWeight: FontWeight.bold),
           ),
         ),
+        title: Text(
+          patient.fullName,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              patient.phone != null && patient.phone!.isNotEmpty
+                  ? patient.phone!
+                  : (patient.medicalCode.isNotEmpty ? patient.medicalCode : 'ID: ${patient.id}'),
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textLight),
+        onTap: () {
+          // Navigate to details
+        },
       ),
     );
   }

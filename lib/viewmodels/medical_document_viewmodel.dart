@@ -1,8 +1,10 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
+import '../utils/permission_utils.dart';
 import '../data/implementations/medical_document_repository_impl.dart';
 import '../domain/entities/medical_document_entity.dart';
+import 'auth_viewmodel.dart';
 
 class MedicalDocumentViewModel extends ChangeNotifier {
   final MedicalDocumentRepositoryImpl _docRepo;
@@ -52,7 +54,12 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   }
 
   /// Chụp ảnh từ camera
-  Future<void> pickFromCamera() async {
+  Future<void> pickFromCamera(BuildContext context) async {
+    final hasPermission = await PermissionUtils.requestCameraPermission(context);
+    if (!hasPermission) {
+      return;
+    }
+
     final picker = ImagePicker();
     final XFile? photo = await picker.pickImage(
       source: ImageSource.camera,
@@ -67,7 +74,12 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   }
 
   /// Chọn ảnh từ thư viện
-  Future<void> pickFromGallery() async {
+  Future<void> pickFromGallery(BuildContext context) async {
+    final hasPermission = await PermissionUtils.requestStoragePermission(context);
+    if (!hasPermission) {
+      return;
+    }
+
     final picker = ImagePicker();
     final List<XFile> images = await picker.pickMultiImage(
       imageQuality: 80,
@@ -106,6 +118,17 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Nạp danh sách file hiện có (dùng cho Cập nhật)
+  void initWithFiles(List<String> filePaths) {
+    _selectedFiles = filePaths.map((path) => File(path)).toList();
+    // Đánh dấu là đã upload xong (1.0) cho các file cũ
+    for (var path in filePaths) {
+      final fileName = path.split(Platform.pathSeparator).last;
+      _uploadProgress[fileName] = 1.0;
+    }
+    notifyListeners();
+  }
+
   /// Simulate upload progress
   void _simulateUpload(String fileName) async {
     _uploadProgress[fileName] = 0.0;
@@ -135,14 +158,8 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   Future<void> loadTags() async {
     try {
       _availableTags = await _docRepo.getAllTags();
-      // Nếu DB chưa có tag nào, dùng danh sách mặc định
-      if (_availableTags.isEmpty) {
-        _availableTags = [
-          'Tim mạch', 'Hô hấp', 'Tiêu hóa', 'Thần kinh', 'Xương khớp',
-          'Nội tiết', 'Da liễu', 'Mắt', 'Tai mũi họng', 'Quan trọng',
-          'Sức khỏe định kỳ', 'Nội khoa', 'Ngoại khoa', 'Chẩn đoán hình ảnh',
-        ];
-      }
+      // Không nạp danh sách mặc định nữa theo yêu cầu
+
       notifyListeners();
     } catch (_) {}
   }
@@ -244,6 +261,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     required String title,
     String? notes,
     int? recordDate,
+    required int performedByUserId,
   }) async {
     if (title.isEmpty) {
       _errorMsg = 'Vui lòng nhập tiêu đề tài liệu.';
@@ -267,10 +285,12 @@ class MedicalDocumentViewModel extends ChangeNotifier {
         recordDate: recordDate,
       );
 
-      final success = await _docRepo.updateDocument(doc);
+      final success = await _docRepo.updateDocument(doc, performedByUserId);
       if (success) {
         // Cập nhật lại list tags nếu có thay đổi
         await _docRepo.updateTagsForDocument(docId, _selectedTags);
+        // Cập nhật lại list files
+        await _docRepo.updateFilesForDocument(docId, _selectedFiles);
       }
       return success;
     } catch (e) {
@@ -279,6 +299,26 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     } finally {
       _isSaving = false;
       notifyListeners();
+    }
+  }
+
+  /// Cập nhật trạng thái tài liệu (DRAFT -> SAVED)
+  Future<bool> updateDocumentStatus(int docId, String newStatus, {int? performedByUserId}) async {
+    final userId = performedByUserId ?? AuthViewModel.instance.currentUser?.id ?? 0;
+    try {
+      final result = await _docRepo.updateDocumentStatus(docId, newStatus, userId);
+      if (result) {
+        // Cập nhật local list nếu có
+        final index = _documents.indexWhere((d) => d.id == docId);
+        if (index != -1) {
+          notifyListeners();
+        }
+      }
+      return result;
+    } catch (e) {
+      _errorMsg = 'Không thể cập nhật trạng thái tài liệu.';
+      notifyListeners();
+      return false;
     }
   }
 
@@ -294,8 +334,9 @@ class MedicalDocumentViewModel extends ChangeNotifier {
 
   /// Xóa mềm document (có thể khôi phục)
   Future<bool> softDeleteDocument(int docId) async {
+    final performedByUserId = AuthViewModel.instance.currentUser?.id ?? 0;
     try {
-      final result = await _docRepo.deleteDocument(docId);
+      final result = await _docRepo.deleteDocument(docId, performedByUserId);
       if (result) {
         _documents.removeWhere((d) => d.id == docId);
         notifyListeners();
@@ -310,8 +351,9 @@ class MedicalDocumentViewModel extends ChangeNotifier {
 
   /// Khôi phục document đã xóa mềm
   Future<bool> restoreDocument(int docId) async {
+    final performedByUserId = AuthViewModel.instance.currentUser?.id ?? 0;
     try {
-      final result = await _docRepo.restoreDocument(docId);
+      final result = await _docRepo.restoreDocument(docId, performedByUserId);
       if (result) {
         notifyListeners();
       }
@@ -338,19 +380,40 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     }
   }
 
-  /// Xóa document
-  Future<bool> deleteDocument(int docId) async {
+  /// Xóa vĩnh viễn tài liệu (Xóa DB + File vật lý)
+  Future<bool> hardDeleteDocument(int docId) async {
+    final performedByUserId = AuthViewModel.instance.currentUser?.id ?? 0;
     try {
-      final result = await _docRepo.deleteDocument(docId);
+      final result = await _docRepo.hardDeleteDocument(docId, performedByUserId);
       if (result) {
         _documents.removeWhere((d) => d.id == docId);
         notifyListeners();
       }
       return result;
     } catch (e) {
-      _errorMsg = 'Không thể xóa tài liệu.';
+      _errorMsg = 'Không thể xóa vĩnh viễn tài liệu.';
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Dọn sạch thùng rác cho nhân viên
+  Future<bool> clearTrash(int staffId) async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final result = await _docRepo.clearTrash(staffId);
+      if (result) {
+        _documents.removeWhere((d) => d.status == 'DELETED' || d.isDeleted == 1);
+        notifyListeners();
+      }
+      return result;
+    } catch (e) {
+      _errorMsg = 'Không thể dọn sạch thùng rác.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
 import 'package:phrprmgroupproject/domain/entities/patient_entity.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../theme/app_theme.dart';
 import 'create_medical_exam_screen.dart';
 
@@ -18,8 +19,6 @@ class PatientDetailScreen extends StatefulWidget {
 class _PatientDetailScreenState extends State<PatientDetailScreen> {
   int _selectedTab = 1; // Mặc định mở tab "Tài liệu" như trong ảnh
 
-  bool _isLoading = true;
-  bool _isLoadingDocs = true;
   PatientEntity? _patientProfile;
   List<Map<String, dynamic>> _documents = [];
   final _patientRepository = PatientRepositoryImpl();
@@ -40,17 +39,14 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       if (mounted) {
         setState(() {
           _patientProfile = data;
-          _isLoading = false;
         });
 
         if (data != null && data.id != null) {
           _loadDocuments(data.id!);
-        } else {
-          setState(() => _isLoadingDocs = false);
         }
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
+      // ignore
     }
   }
 
@@ -60,22 +56,22 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       if (mounted) {
         setState(() {
           _documents = docs;
-          _isLoadingDocs = false;
         });
       }
     } catch (e) {
-      if (mounted) setState(() => _isLoadingDocs = false);
+      // ignore
     }
   }
 
   String _formatDocDate(dynamic createdAt) {
     if (createdAt == null) return 'Chưa rõ';
     DateTime? d;
-    if (createdAt is num)
+    if (createdAt is num) {
       d = DateTime.fromMillisecondsSinceEpoch(createdAt.toInt());
-    else if (createdAt is String)
+    } else if (createdAt is String) {
       d = DateTime.tryParse(createdAt) ??
           DateTime.fromMillisecondsSinceEpoch(int.tryParse(createdAt) ?? 0);
+    }
     if (d == null) return 'Chưa rõ';
     return DateFormat('dd/MM/yyyy').format(d);
   }
@@ -159,9 +155,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                       child: Center(
                         child: Text(
                           _patientProfile!.fullName
-                                  ?.substring(0, 1)
-                                  .toUpperCase() ??
-                              'N',
+                                  .substring(0, 1)
+                                  .toUpperCase(),
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -175,8 +170,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _patientProfile!.fullName ?? 'Chưa có tên',
+                           Text(
+                            _patientProfile!.fullName,
                             style: const TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -191,8 +186,8 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                               color: AppColors.textSecondary,
                             ),
                           ),
-                          Text(
-                            'Mã Y Tế: ${_patientProfile!.medicalCode ?? 'Chưa có'}',
+                           Text(
+                            'Mã Y Tế: ${_patientProfile!.medicalCode}',
                             style: const TextStyle(
                               fontSize: 13,
                               color: AppColors.textSecondary,
@@ -206,35 +201,36 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               ),
 
               // Add Document Button
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const CreateMedicalExamScreen(
-                          preselectedPatientId: 1,
-                          // TODO: Use actual patient ID
-                          preselectedPatientName: 'Nguyễn Văn An',
+              if (AuthViewModel.instance.currentUser?.role != 'CUSTOMER')
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const CreateMedicalExamScreen(
+                            preselectedPatientId: 1,
+                            // TODO: Use actual patient ID
+                            preselectedPatientName: 'Nguyễn Văn An',
+                          ),
                         ),
+                      );
+                    },
+                    icon: const Icon(Icons.add, size: 20),
+                    label: const Text('Tạo đơn khám'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 20),
-                  label: const Text('Tạo đơn khám'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      elevation: 0,
                     ),
-                    elevation: 0,
                   ),
                 ),
-              ),
 
               // Navigation Tabs
               Container(
@@ -453,7 +449,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 type: 'Hồ sơ y tế • $categoryName',
                 tags: [categoryName, status],
               );
-            }).toList(),
+            }),
         ],
       ),
     );

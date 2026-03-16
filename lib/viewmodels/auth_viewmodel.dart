@@ -51,7 +51,7 @@ class AuthViewModel extends ChangeNotifier {
           await prefs.setBool('isLoggedIn', true);
           await prefs.setBool('isCustomer', isCustomer);
           await prefs.setInt('userId', user.id!);
-          await prefs.setString('userRole', user.role ?? '');
+          await prefs.setString('userRole', user.role);
         }
       }
       return user;
@@ -118,8 +118,15 @@ class AuthViewModel extends ChangeNotifier {
         email: _currentUser!.email,
         role: _currentUser!.role,
         avatar: newAvatarPath,
+        familyId: _currentUser!.familyId,
+        isFamilyHead: _currentUser!.isFamilyHead,
       );
       notifyListeners();
     }
+  }
+
+  void refreshCurrentUser(UserEntity user) {
+    _currentUser = user;
+    notifyListeners();
   }
 }

@@ -25,7 +25,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 6,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -55,6 +55,25 @@ class DatabaseHelper {
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
     }
+    if (oldVersion < 5) {
+      await db.execute(DBSchema.createSystemNotificationsTable);
+    }
+    if (oldVersion < 6) {
+      // Add Family ID and Head columns
+      await db.execute('ALTER TABLE user_accounts ADD COLUMN family_id INTEGER');
+      await db.execute('ALTER TABLE user_accounts ADD COLUMN is_family_head INTEGER DEFAULT 1');
+      await db.execute('ALTER TABLE patient_profiles ADD COLUMN family_id INTEGER');
+      
+      // Initialize existing data: each user is their own family head
+      await db.execute('UPDATE user_accounts SET family_id = id, is_family_head = 1');
+      
+      // Link existing patient profiles to their creators' family
+      await db.execute('''
+        UPDATE patient_profiles 
+        SET family_id = (SELECT family_id FROM user_accounts WHERE id = patient_profiles.created_by)
+        WHERE created_by IS NOT NULL
+      ''');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -76,9 +95,10 @@ class DatabaseHelper {
     await db.execute(DBSchema.createFilesTable);
     await db.execute(DBSchema.createDocumentTagsTable);
 
-    // 6. Logs & Rules
+    // 6. Logs & Rules & Notifications
     await db.execute(DBSchema.createAuditLogsTable);
     await db.execute(DBSchema.createConfigRulesTable);
+    await db.execute(DBSchema.createSystemNotificationsTable);
 
     // 7. OTP Codes
     await db.execute(DBSchema.createOtpCodesTable);

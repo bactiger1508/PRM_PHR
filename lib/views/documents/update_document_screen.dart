@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
 import '../../viewmodels/medical_document_viewmodel.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 
 import '../../domain/entities/medical_document_entity.dart';
 
@@ -46,6 +47,12 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
     // Initialize tags
     for (var tag in widget.document.tags) {
       _viewModel.addTag(tag);
+    }
+
+    // Initialize files if they exist
+    if (widget.document.files.isNotEmpty) {
+      final paths = widget.document.files.map((f) => f.filePath).toList();
+      _viewModel.initWithFiles(paths);
     }
 
     _viewModel.loadPatients();
@@ -95,6 +102,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
       return;
     }
 
+    final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
     final success = await _viewModel.updateDocument(
       docId: widget.document.id!,
       title: _titleController.text.trim(),
@@ -102,6 +110,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
           ? null
           : _notesController.text.trim(),
       recordDate: _selectedDate?.millisecondsSinceEpoch,
+      performedByUserId: staffId,
     );
 
     if (success) {
@@ -267,7 +276,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
                         icon: Icons.camera_alt,
                         label: 'Chụp ảnh',
                         isPrimary: true,
-                        onTap: _viewModel.pickFromCamera,
+                        onTap: () => _viewModel.pickFromCamera(context),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -276,7 +285,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
                         icon: Icons.image,
                         label: 'Từ thư viện',
                         isPrimary: false,
-                        onTap: _viewModel.pickFromGallery,
+                        onTap: () => _viewModel.pickFromGallery(context),
                       ),
                     ),
                   ],
@@ -473,7 +482,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
                     child: Image.file(
                       file,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, error, stackTrace) => Container(
                         color: AppColors.backgroundLight,
                         child: const Icon(Icons.description,
                             color: AppColors.primary, size: 18),
@@ -641,7 +650,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     itemCount: filteredSuggestions.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (context, index) =>
                         const Divider(height: 1, color: AppColors.border),
                     itemBuilder: (context, index) {
                       final tag = filteredSuggestions[index];

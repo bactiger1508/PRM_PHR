@@ -6,6 +6,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/medical_document_viewmodel.dart';
 import '../../domain/entities/medical_document_entity.dart';
 import 'widgets/document_filter_bar.dart';
+import 'trash_screen.dart';
 
 class DocumentListScreen extends StatefulWidget {
   final bool embedded;
@@ -24,7 +25,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   String _selectedTimeFilter = 'Tất cả';
 
   final List<String> _categories = ['Tất cả', 'Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán', 'Khác'];
-  final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED', 'DELETED'];
+  final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED'];
   final List<String> _timeFilters = ['Tất cả', '7 ngày qua', '30 ngày qua', '3 tháng qua', '6 tháng qua', '1 năm qua'];
 
   @override
@@ -171,19 +172,14 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
               return Column(
                 children: [
                   _buildMonthHeader(entry.key),
-                  Container(
-                    color: Colors.white,
-                    child: Column(
-                      children: entry.value.map((doc) {
-                        final isLast = doc == entry.value.last;
-                        return Column(
-                          children: [
-                            _buildRealDocItem(context, doc),
-                            if (!isLast) const Divider(height: 1, color: AppColors.border),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: entry.value.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return _buildRealDocItem(context, entry.value[index]);
+                    },
                   ),
                 ],
               );
@@ -207,6 +203,17 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.textPrimary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TrashScreen()),
+              ).then((_) => _loadDocuments());
+            },
+          ),
+        ],
       ),
       body: body,
       bottomNavigationBar: null,
@@ -313,81 +320,89 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     required List<Map<String, dynamic>> tags,
     String status = 'SAVED',
   }) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DocumentDetailScreen(document: doc)),
-        ).then((_) {
-          // Refresh list when returning from detail screen in case document was soft deleted
-          _loadDocuments();
-        });
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(12),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => DocumentDetailScreen(document: doc)),
+          ).then((_) {
+            _loadDocuments();
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
               ),
-              child: Icon(icon, color: iconColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: tags.map((t) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: t['color'],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          t['name'],
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: t['textColor'],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: tags.map((t) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
+                          decoration: BoxDecoration(
+                            color: t['color'],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            t['name'],
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: t['textColor'],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.chevron_right, color: AppColors.textLight),
-          ],
+              const Icon(Icons.chevron_right, color: AppColors.textLight),
+            ],
+          ),
         ),
       ),
     );

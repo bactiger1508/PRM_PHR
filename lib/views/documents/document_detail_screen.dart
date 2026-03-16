@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
@@ -17,11 +18,13 @@ class DocumentDetailScreen extends StatefulWidget {
 
 class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   late bool _isDeleted;
+  late bool _isDraft;
 
   @override
   void initState() {
     super.initState();
     _isDeleted = widget.document.status == 'DELETED';
+    _isDraft = widget.document.status == 'DRAFT';
   }
 
   void _showOptionsMenu(BuildContext context) {
@@ -144,6 +147,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
               
               final docViewModel = MedicalDocumentViewModel();
               bool success = false;
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(context);
               
               if (isCurrentlyDeleted) {
                 success = await docViewModel.restoreDocument(docId);
@@ -151,20 +156,18 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 success = await docViewModel.softDeleteDocument(docId);
               }
 
+              if (!mounted) return;
               if (success) {
-                if (!mounted) return;
                 setState(() => _isDeleted = !isCurrentlyDeleted);
                 final msg = isCurrentlyDeleted ? 'Đã khôi phục tài liệu' : 'Đã xóa tài liệu (có thể khôi phục)';
                 final color = isCurrentlyDeleted ? Colors.green : Colors.orange;
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text(msg), backgroundColor: color),
                 );
-                // Pop về list để reload
-                Navigator.pop(context, true);
+                navigator.pop(true);
               } else {
-                if (!mounted) return;
                 final errMsg = docViewModel.errorMsg ?? 'Có lỗi xảy ra';
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   SnackBar(content: Text(errMsg), backgroundColor: Colors.red),
                 );
               }
@@ -229,15 +232,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       onPressed: () async {
                         final docViewModel = MedicalDocumentViewModel();
                         final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
                         final success = await docViewModel.restoreDocument(widget.document.id!);
                         
-                        if (success && mounted) {
+                        if (!mounted) return;
+                        if (success) {
                           setState(() => _isDeleted = false);
                           scaffoldMessenger.showSnackBar(
                             const SnackBar(content: Text('Đã khôi phục tài liệu'), backgroundColor: Colors.green),
                           );
-                          Navigator.pop(context, true);
-                        } else if (mounted && docViewModel.errorMsg != null) {
+                          navigator.pop(true);
+                        } else if (docViewModel.errorMsg != null) {
                            scaffoldMessenger.showSnackBar(
                             SnackBar(content: Text(docViewModel.errorMsg!), backgroundColor: Colors.red),
                           );
@@ -248,6 +253,54 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                       ),
                       child: const Text('Khôi phục', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Draft banner
+            if (_isDraft)
+              Container(
+                color: Colors.orange[50],
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.drafts_outlined, color: Colors.orange[700], size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Bản nháp — chưa được lưu chính thức.',
+                        style: TextStyle(color: Colors.orange[800], fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final docViewModel = MedicalDocumentViewModel();
+                        final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
+                        final success = await docViewModel.updateDocumentStatus(widget.document.id!, 'SAVED', performedByUserId: staffId);
+                        
+                        if (!mounted) return;
+                        if (success) {
+                          setState(() => _isDraft = false);
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(
+                              content: Text('Đã lưu chính thức!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.save, size: 16),
+                      label: const Text('Lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange[700],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: Size.zero,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
                     ),
                   ],
                 ),
@@ -270,11 +323,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                   ),
-                  // Authorization check: only show options menu if user is creator
+                  // Authorization check: only show options menu if user is creator AND not CUSTOMER
                   Builder(
                     builder: (context) {
-                      final isCreator = AuthViewModel.instance.currentUser?.id == widget.document.createdBy;
-                      if (isCreator) {
+                      final currentUser = AuthViewModel.instance.currentUser;
+                      final isCustomer = currentUser?.role == 'CUSTOMER';
+                      final isCreator = currentUser?.id == widget.document.createdBy;
+                      
+                      if (isCreator && !isCustomer) {
                         return IconButton(
                           icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
                           onPressed: () => _showOptionsMenu(context),
@@ -315,40 +371,47 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                       borderRadius: const BorderRadius.vertical(
                                         top: Radius.circular(12),
                                       ),
-                                      image: const DecorationImage(
-                                        image: NetworkImage(
-                                          'https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop',
-                                        ), // Placeholder med doc
-                                        fit: BoxFit.cover,
-                                        colorFilter: ColorFilter.mode(
-                                          Colors.black12,
-                                          BlendMode.darken,
-                                        ),
-                                      ),
+                                      image: widget.document.files.isNotEmpty &&
+                                              File(widget.document.files.first.filePath)
+                                                  .existsSync()
+                                          ? DecorationImage(
+                                              image: FileImage(File(
+                                                  widget.document.files.first.filePath)),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : const DecorationImage(
+                                              image: NetworkImage(
+                                                'https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop',
+                                              ),
+                                              fit: BoxFit.cover,
+                                              colorFilter: ColorFilter.mode(
+                                                Colors.black12,
+                                                BlendMode.darken,
+                                              ),
+                                            ),
                                     ),
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.9),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.1,
-                                        ),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
+                                if (widget.document.files.isNotEmpty &&
+                                    File(widget.document.files.first.filePath)
+                                        .existsSync())
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 12,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black54,
+                                        borderRadius: BorderRadius.circular(4),
                                       ),
-                                    ],
+                                      child: const Text(
+                                        'Ảnh thực tế',
+                                        style: TextStyle(
+                                            color: Colors.white, fontSize: 10),
+                                      ),
+                                    ),
                                   ),
-                                  child: const Icon(
-                                    Icons.zoom_in,
-                                    color: AppColors.primary,
-                                    size: 28,
-                                  ),
-                                ),
                               ],
                             ),
 
@@ -367,50 +430,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                                       ),
                                       SizedBox(width: 8),
                                       Text(
-                                        'Xem trước tài liệu',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
                                         'Chế độ chỉ đọc',
                                         style: TextStyle(
                                           fontSize: 14,
+                                          fontWeight: FontWeight.bold,
                                           color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () {},
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 8,
-                                          ),
-                                          minimumSize: Size.zero,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          elevation: 0,
-                                        ),
-                                        child: const Text(
-                                          'Phóng to',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
                                         ),
                                       ),
                                     ],

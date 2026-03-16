@@ -33,13 +33,16 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
 
   void _onViewModelChanged() {
     if (mounted) {
-      setState(() {});
+      setState(() {
+        avatarCurrentUser = AuthViewModel.instance.currentUser?.avatar;
+      });
     }
   }
 
   Future<void> _loadInitialData() async {
     _staffViewModel.loadStats();
     _staffViewModel.loadRecentDocuments();
+    _staffViewModel.loadPatients();
   }
 
   @override
@@ -51,44 +54,47 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = AuthViewModel.instance.currentUser;
+    final bool isCustomer = user?.role == 'CUSTOMER';
+
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          _buildHomePage(context),
-          const PatientListScreen(embedded: true),
-          DocumentListScreen(key: ValueKey('doc_list_$_documentRefreshKey'), embedded: true),
-          const PersonalSettingsScreen(embedded: true),
-        ],
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
           children: [
             _buildHomePage(context),
-            const PatientListScreen(embedded: true),
-            const DocumentListScreen(embedded: true),
+            PatientListScreen(embedded: true, viewModel: _staffViewModel),
+            DocumentListScreen(key: ValueKey('doc_list_$_documentRefreshKey'), embedded: true),
             const PersonalSettingsScreen(embedded: true),
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
+      floatingActionButton: isCustomer ? null : SizedBox(
         width: 64,
         height: 64,
         child: FloatingActionButton(
           onPressed: () async {
+            Widget targetScreen;
+            if (_selectedIndex == 1) {
+              targetScreen = const CreatePatientScreen();
+            } else {
+              targetScreen = const CreateMedicalExamScreen();
+            }
+
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (context) => const CreateMedicalExamScreen(),
-              ),
+              MaterialPageRoute(builder: (context) => targetScreen),
             );
+            
             if (result == true) {
               setState(() {
                 _documentRefreshKey++;
-                // Tự động chuyển qua tab Tài liệu nêú muốn
-                _selectedIndex = 2; 
+                if (_selectedIndex != 1 && _selectedIndex != 2) {
+                   _selectedIndex = 2; // Chuyển qua tab Tài liệu nếu tạo đơn khám từ Home
+                }
               });
+              _loadInitialData(); // Điều này đã bao gồm loadPatients()
             }
           },
           backgroundColor: AppColors.primary,
@@ -134,6 +140,8 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   }
 
   Widget _buildHomePage(BuildContext context) {
+    final user = AuthViewModel.instance.currentUser;
+    final bool isCustomer = user?.role == 'CUSTOMER';
     final isLoading = _staffViewModel.isLoading;
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -215,33 +223,47 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             ),
           ),
           const Divider(height: 1, color: AppColors.border),
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Tìm kiếm bệnh nhân (Tên, Mã Y Tế)...',
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textLight,
+            // Search Bar
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  boxShadow: AppTheme.softShadow,
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                prefixIcon: const Icon(
-                  Icons.search,
-                  color: AppColors.textLight,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Tìm kiếm bệnh nhân (Tên, Mã Y Tế)...',
+                    hintStyle: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textLight,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: AppColors.textLight,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 20,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
 
           // Quick Actions
           Padding(
@@ -260,39 +282,41 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(
-                      child: _buildQuickAction(
-                        icon: Icons.person_add,
-                        label: 'Tạo hồ sơ\nBệnh nhân',
-                        color: AppColors.primary,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CreatePatientScreen(),
-                            ),
-                          );
-                        },
+                    if (!isCustomer) ...[
+                      Expanded(
+                        child: _buildQuickAction(
+                          icon: Icons.person_add,
+                          label: 'Tạo hồ sơ\nBệnh nhân',
+                          color: AppColors.primary,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreatePatientScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildQuickAction(
-                        icon: Icons.assignment_add,
-                        label: 'Tạo Đơn\nKhám',
-                        color: Colors.blue[600]!,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const CreateMedicalExamScreen(),
-                            ),
-                          );
-                        },
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickAction(
+                          icon: Icons.assignment_add,
+                          label: 'Tạo Đơn\nKhám',
+                          color: Colors.blue[600]!,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const CreateMedicalExamScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 12),
+                    ],
                     Expanded(
                       child: _buildQuickAction(
                         icon: Icons.group,
@@ -322,31 +346,15 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
           // Statistics Grid
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.description,
-                    iconBgColor: AppColors.primary.withValues(alpha: 0.1),
-                    iconColor: AppColors.primary,
-                    title: 'Hồ sơ hôm nay',
-                    value: documentsToday,
-                    badgeText: percentText,
-                    badgeColor: Colors.green[600]!,
-                    badgeBgColor: Colors.green[50]!,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatCard(
-                    icon: Icons.sync,
-                    iconBgColor: Colors.amber[50]!,
-                    iconColor: Colors.amber[500]!,
-                    title: 'Chờ đồng bộ',
-                    value: '05',
-                  ),
-                ),
-              ],
+            child: _buildStatCard(
+              icon: Icons.description,
+              iconBgColor: AppColors.primary.withValues(alpha: 0.1),
+              iconColor: AppColors.primary,
+              title: 'Hồ sơ tài liệu hôm nay',
+              value: documentsToday,
+              badgeText: percentText,
+              badgeColor: AppColors.primary,
+              badgeBgColor: AppColors.primary.withValues(alpha: 0.1),
             ),
           ),
           const SizedBox(height: 24),
@@ -369,15 +377,8 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.border, width: 0.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: AppTheme.softShadow,
                   ),
                   child: recentPatientsList.isEmpty
                       ? const Padding(
@@ -433,39 +434,34 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 0.5),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppTheme.softShadow,
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: Icon(icon, color: color, size: 26),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               label,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
+                height: 1.2,
               ),
             ),
           ],
@@ -485,18 +481,11 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
     Color? badgeBgColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border, width: 0.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,13 +552,13 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              color: AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person, color: AppColors.textLight),
+            child: const Icon(Icons.person, color: AppColors.primary),
           ),
           const SizedBox(width: 16),
           Expanded(

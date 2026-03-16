@@ -154,25 +154,25 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
               onTap: () => _showStaffDetails(staff),
               child: Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border, width: 0.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border, width: 0.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                 child: Row(
                   children: [
                     Container(
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -212,8 +212,8 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                 ),
                                 decoration: BoxDecoration(
                                   color: staff.role == 'ADMIN'
-                                      ? Colors.purple.withOpacity(0.1)
-                                      : Colors.blue.withOpacity(0.1),
+                                      ? Colors.purple.withValues(alpha: 0.1)
+                                      : Colors.blue.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -453,7 +453,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(12),
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     child: Text(
                       widget.viewModel.errorMsg!,
                       style: const TextStyle(color: Colors.red),
@@ -516,7 +516,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(
@@ -698,7 +698,7 @@ class _EditStaffBottomSheetState extends State<EditStaffBottomSheet> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedStatus,
+              initialValue: _selectedStatus,
               decoration: InputDecoration(
                 labelText: 'Trạng thái',
                 filled: true,

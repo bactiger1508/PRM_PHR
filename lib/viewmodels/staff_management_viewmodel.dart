@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:phrprmgroupproject/data/db/database_helper.dart';
 import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
 import 'package:phrprmgroupproject/data/interfaces/patient_repository.dart';
+import '../domain/entities/patient_entity.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../domain/entities/user_entity.dart';
@@ -25,8 +26,8 @@ class StaffManagementViewModel extends ChangeNotifier {
   DashboardStats? _stats;
   DashboardStats? get stats => _stats;
 
-  List<UserEntity> _customers = [];
-  List<UserEntity> get customers => _customers;
+  List<PatientEntity> _patients = [];
+  List<PatientEntity> get patients => _patients;
   List<Map<String, dynamic>> _recentPatients = [];
   List<Map<String, dynamic>> get recentPatients => _recentPatients;
 
@@ -138,7 +139,7 @@ class StaffManagementViewModel extends ChangeNotifier {
     try {
       _stats = await _patientRepository.getStats();
     } catch (e) {
-      print('Lỗi tải thống kê: $e');
+      debugPrint('Lỗi tải thống kê: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -150,10 +151,9 @@ class StaffManagementViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _customers = await _patientRepository.getAllCustomers();
-      print('customer: ${_customers}');
+      _patients = await _patientRepository.getAllPatients();
     } catch (e) {
-      print('Lỗi tải danh sách khách hàng: $e');
+      _errorMsg = 'Không thể tải danh sách bệnh nhân';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -166,9 +166,8 @@ class StaffManagementViewModel extends ChangeNotifier {
 
     try {
       _recentPatients = await _patientRepository.getRecentPatients(limit: 3);
-      print('Hồ sơ gần đây ${_recentPatients}');
     } catch (e) {
-      print('Lỗi tải dữ liệu tài liệu: $e');
+      // Ignored
     } finally {
       _isLoading = false;
       notifyListeners();

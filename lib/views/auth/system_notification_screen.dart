@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_theme.dart';
+import '../../viewmodels/system_notification_viewmodel.dart';
 
 class SystemNotificationScreen extends StatefulWidget {
   final bool embedded;
@@ -13,58 +15,109 @@ class SystemNotificationScreen extends StatefulWidget {
 class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
   int _selectedTab = 0; // 0: Tất cả, 1: Chưa đọc, 2: Quan trọng
   int _selectedIndex = 2; // Bottom nav index
+  
+  final SystemNotificationViewModel _viewModel = SystemNotificationViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel.addListener(_onViewModelChanged);
+    _viewModel.loadUserNotifications();
+  }
+
+  @override
+  void dispose() {
+    _viewModel.removeListener(_onViewModelChanged);
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) setState(() {});
+  }
+
+  String _formatTimeAgo(DateTime date) {
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays > 0) {
+      if (diff.inDays < 7) return '${diff.inDays} ngày trước';
+      return DateFormat('dd/MM/yyyy HH:mm').format(date);
+    } else if (diff.inHours > 0) {
+      return '${diff.inHours} giờ trước';
+    } else if (diff.inMinutes > 0) {
+      return '${diff.inMinutes} phút trước';
+    } else {
+      return 'Vừa xong';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final allNotifs = _viewModel.notifications;
+    final unreadNotifs = _viewModel.unreadNotifications;
+    final importantNotifs = allNotifs.where((n) => n.type == 'SECURITY' || n.type == 'WARNING').toList();
+
+    var displayList = allNotifs;
+    if (_selectedTab == 1) displayList = unreadNotifs;
+    if (_selectedTab == 2) displayList = importantNotifs;
+
     final Widget mainContent = Column(
       children: [
         Container(
           color: Colors.white,
           child: Row(
             children: [
-              _buildTabItem(title: 'Tất cả', index: 0),
-              _buildTabItem(title: 'Chưa đọc', index: 1),
-              _buildTabItem(title: 'Quan trọng', index: 2),
+              _buildTabItem(title: 'Tất cả', index: 0, count: allNotifs.length),
+              _buildTabItem(title: 'Chưa đọc', index: 1, count: unreadNotifs.length),
+              _buildTabItem(title: 'Quan trọng', index: 2, count: importantNotifs.length),
             ],
           ),
         ),
         const Divider(height: 1, color: AppColors.border),
-        Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildNotificationItem(
-                  icon: Icons.science_outlined,
-                  iconColor: AppColors.primary,
-                  iconBgColor: AppColors.primary.withValues(alpha: 0.1),
-                  title: 'Kết quả xét nghiệm mới',
-                  message:
-                      'Kết quả xét nghiệm máu của bạn đã có. Vui lòng kiểm tra chi tiết trong mục hồ sơ y tế.',
-                  time: '10 phút trước',
-                  isUnread: true,
-                  bgColor: AppColors.primary.withValues(alpha: 0.05),
-                ),
-                Container(
-                  height: 1,
-                  color: AppColors.border.withValues(alpha: 0.5),
-                ),
-                _buildNotificationItem(
-                  icon: Icons.sync_rounded,
-                  iconColor: Colors.green[600]!,
-                  iconBgColor: Colors.green[50]!,
-                  title: 'Đồng bộ dữ liệu thành công',
-                  message:
-                      'Dữ liệu sức khỏe từ Apple Watch của bạn đã được cập nhật hoàn tất vào hệ thống.',
-                  time: '1 giờ trước',
-                ),
-                Container(
-                  height: 1,
-                  color: AppColors.border.withValues(alpha: 0.5),
-                ),
-              ],
+        if (_viewModel.isLoading)
+          const Expanded(child: Center(child: CircularProgressIndicator()))
+        else if (displayList.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.notifications_off_outlined, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  Text('Không có thông báo nào', style: TextStyle(color: Colors.grey[600])),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.separated(
+              itemCount: displayList.length,
+              separatorBuilder: (context, index) => Container(
+                height: 1,
+                color: AppColors.border.withValues(alpha: 0.5),
+              ),
+              itemBuilder: (context, index) {
+                final notif = displayList[index];
+                return GestureDetector(
+                  onTap: () {
+                    if (!notif.isRead && notif.id != null) {
+                      _viewModel.markAsRead(notif.id!);
+                    }
+                  },
+                  child: _buildNotificationItem(
+                    icon: notif.iconData,
+                    iconColor: notif.iconColor,
+                    iconBgColor: notif.iconColor.withValues(alpha: 0.1),
+                    title: notif.title,
+                    message: notif.message,
+                    time: _formatTimeAgo(notif.createdAt),
+                    isUnread: !notif.isRead,
+                    bgColor: notif.isRead ? Colors.white : AppColors.primary.withValues(alpha: 0.05),
+                  ),
+                );
+              },
             ),
           ),
-        ),
       ],
     );
 
@@ -84,6 +137,13 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
             ),
           ),
           centerTitle: true,
+          actions: [
+            if (_viewModel.unreadCount > 0)
+              TextButton(
+                onPressed: () => _viewModel.markAllAsRead(),
+                child: const Text('Đọc tất cả'),
+              )
+          ],
         ),
         body: mainContent,
       );
@@ -109,6 +169,11 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
         ),
         centerTitle: true,
         actions: [
+          if (_viewModel.unreadCount > 0)
+            TextButton(
+              onPressed: () => _viewModel.markAllAsRead(),
+              child: const Text('Đọc tất cả'),
+            ),
           IconButton(
             icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
             onPressed: () {},
@@ -149,7 +214,7 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
     );
   }
 
-  Widget _buildTabItem({required String title, required int index}) {
+  Widget _buildTabItem({required String title, required int index, required int count}) {
     final isSelected = _selectedTab == index;
     return Expanded(
       child: GestureDetector(
@@ -164,14 +229,32 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
             ),
           ),
           padding: const EdgeInsets.symmetric(vertical: 14),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                ),
+              ),
+              if (count > 0 && index == 1) // Chỉ hiện số cho tab "Chưa đọc" nếu thích
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  margin: const EdgeInsets.only(left: 4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    count > 9 ? '9+' : count.toString(),
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -261,15 +344,9 @@ class _SystemNotificationScreenState extends State<SystemNotificationScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          IconButton(
-            onPressed: () {},
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: const Icon(Icons.close, color: AppColors.textLight, size: 20),
-          ),
         ],
       ),
     );
   }
 }
+

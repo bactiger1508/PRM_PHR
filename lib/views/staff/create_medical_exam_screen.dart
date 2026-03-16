@@ -94,6 +94,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
 
     final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
 
+    final navigator = Navigator.of(context);
     final success = await _viewModel.saveDocument(
       patientProfileId: _selectedPatientId!,
       title: _titleController.text.trim(),
@@ -103,12 +104,11 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
           : _notesController.text.trim(),
       createdByStaffId: staffId,
     );
-
     if (success) {
       _showSnackBar('Lưu tài liệu thành công!', isError: false);
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 800));
-        Navigator.pop(context, true);
+        navigator.pop(true);
       }
     } else {
       _showSnackBar(
@@ -274,7 +274,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 16),
                             itemCount: filtered.length,
-                            separatorBuilder: (_, __) => const Divider(
+                            separatorBuilder: (context, index) => const Divider(
                                 height: 1, color: AppColors.border),
                             itemBuilder: (ctx, index) {
                               final p = filtered[index];
@@ -336,9 +336,66 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     );
   }
 
+  Future<void> _saveDraft() async {
+    // Chỉ auto-save nếu đã có dữ liệu đáng lưu (tiêu đề hoặc file)
+    if (_titleController.text.trim().isEmpty && _viewModel.selectedFiles.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
+    final patientId = _selectedPatientId;
+
+    if (patientId == null) {
+      // Không đủ thông tin để lưu draft (thiếu bệnh nhân)
+      Navigator.pop(context);
+      return;
+    }
+
+    final success = await _viewModel.saveDocument(
+      patientProfileId: patientId,
+      title: _titleController.text.trim().isEmpty
+          ? 'Bản nháp - ${DateTime.now().toString().substring(0, 16)}'
+          : _titleController.text.trim(),
+      recordDate: _selectedDate?.millisecondsSinceEpoch,
+      notes: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+      createdByStaffId: staffId,
+      status: 'DRAFT',
+    );
+
+    if (mounted) {
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.drafts_outlined, color: Colors.white, size: 20),
+                SizedBox(width: 8),
+                Text('Đã lưu bản nháp'),
+              ],
+            ),
+            backgroundColor: Colors.orange[700],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+      }
+      Navigator.pop(context, success);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _saveDraft();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -346,7 +403,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
         titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _saveDraft,
         ),
         title: const Text(
           'Thêm Tài liệu Y tế',
@@ -434,7 +491,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                         icon: Icons.camera_alt,
                         label: 'Chụp ảnh',
                         isPrimary: true,
-                        onTap: _viewModel.pickFromCamera,
+                        onTap: () => _viewModel.pickFromCamera(context),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -443,7 +500,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                         icon: Icons.image,
                         label: 'Từ thư viện',
                         isPrimary: false,
-                        onTap: _viewModel.pickFromGallery,
+                        onTap: () => _viewModel.pickFromGallery(context),
                       ),
                     ),
                   ],
@@ -490,7 +547,8 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
           );
         },
       ),
-    );
+    ),  // end of Scaffold
+    );  // end of PopScope
   }
 
   // ============ UI Builder Widgets ============
@@ -744,7 +802,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                     child: Image.file(
                       file,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, error, stackTrace) => Container(
                         color: AppColors.backgroundLight,
                         child: const Icon(Icons.description,
                             color: AppColors.primary, size: 18),
@@ -912,7 +970,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     itemCount: filteredSuggestions.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (context, index) =>
                         const Divider(height: 1, color: AppColors.border),
                     itemBuilder: (context, index) {
                       final tag = filteredSuggestions[index];
