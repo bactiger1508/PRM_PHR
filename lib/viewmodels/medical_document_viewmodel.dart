@@ -3,14 +3,18 @@ import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import '../utils/permission_utils.dart';
 import '../data/implementations/medical_document_repository_impl.dart';
+import '../data/implementations/category_repository_impl.dart';
 import '../domain/entities/medical_document_entity.dart';
+import '../domain/entities/category_entity.dart';
 import 'auth_viewmodel.dart';
 
 class MedicalDocumentViewModel extends ChangeNotifier {
   final MedicalDocumentRepositoryImpl _docRepo;
 
-  MedicalDocumentViewModel({MedicalDocumentRepositoryImpl? docRepo})
-      : _docRepo = docRepo ?? MedicalDocumentRepositoryImpl();
+  MedicalDocumentViewModel({
+    MedicalDocumentRepositoryImpl? docRepo,
+    CategoryRepositoryImpl? categoryRepo,
+  })  : _docRepo = docRepo ?? MedicalDocumentRepositoryImpl();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -25,7 +29,10 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   int _selectedCategoryIndex = 0;
   int get selectedCategoryIndex => _selectedCategoryIndex;
 
-  final List<String> categoryNames = ['Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán'];
+  List<CategoryEntity> _categories = [];
+  List<CategoryEntity> get categories => _categories;
+
+  List<String> get categoryNames => _categories.map((c) => c.name).toList();
 
   List<File> _selectedFiles = [];
   List<File> get selectedFiles => _selectedFiles;
@@ -51,6 +58,29 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   void setCategory(int index) {
     _selectedCategoryIndex = index;
     notifyListeners();
+  }
+
+  /// Load categories from repository
+  Future<void> loadCategories() async {
+    try {
+      final categoryMaps = await _docRepo.getDocumentCategories();
+      if (categoryMaps.isNotEmpty) {
+        _categories = categoryMaps.map((c) => CategoryEntity(
+          id: c['id'],
+          name: c['name'],
+        )).toList();
+      } else {
+         // Fallback default if empty
+         _categories = [
+           CategoryEntity(id: 1, name: 'Xét nghiệm'),
+           CategoryEntity(id: 2, name: 'Đơn thuốc'),
+           CategoryEntity(id: 3, name: 'Chẩn đoán'),
+         ];
+      }
+      notifyListeners();
+    } catch (e) {
+      _errorMsg = 'Không thể tải danh mục tài liệu.';
+    }
   }
 
   /// Chụp ảnh từ camera
@@ -158,10 +188,11 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   Future<void> loadTags() async {
     try {
       _availableTags = await _docRepo.getAllTags();
-      // Không nạp danh sách mặc định nữa theo yêu cầu
-
       notifyListeners();
-    } catch (_) {}
+    } catch (e) {
+      _errorMsg = 'Không thể tải danh sách nhãn tag.';
+      notifyListeners();
+    }
   }
 
   /// Load documents theo patient
@@ -199,8 +230,11 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // categoryId từ DB: 1-indexed (1: Xét nghiệm, 2: Đơn thuốc, 3: Chẩn đoán)
-      final categoryId = _selectedCategoryIndex + 1;
+      // Get categoryId from loaded categories
+      int categoryId = 1; // Default
+      if (_categories.isNotEmpty && _selectedCategoryIndex < _categories.length) {
+        categoryId = _categories[_selectedCategoryIndex].id!;
+      }
 
       final doc = MedicalDocumentEntity(
         patientProfileId: patientProfileId,
@@ -229,6 +263,9 @@ class MedicalDocumentViewModel extends ChangeNotifier {
         await _docRepo.addTagToDocument(docId, tag);
       }
 
+      // Reload list if needed or at least notify listeners that data has changed
+      // (Though the dashboard usually reloads its own list)
+      
       return true;
     } catch (e) {
       _errorMsg = e.toString().replaceAll('Exception: ', '');
@@ -274,7 +311,10 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final categoryId = _selectedCategoryIndex + 1;
+      int categoryId = 1;
+      if (_categories.isNotEmpty && _selectedCategoryIndex < _categories.length) {
+        categoryId = _categories[_selectedCategoryIndex].id!;
+      }
 
       final doc = MedicalDocumentEntity(
         id: docId,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:phrprmgroupproject/viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
 import '../../domain/entities/patient_entity.dart';
+import 'patient_detail_screen.dart';
 
 class PatientListScreen extends StatefulWidget {
   final bool embedded;
@@ -50,7 +51,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
   @override
   Widget build(BuildContext context) {
     final stats = _staffViewModel.stats;
-    final patients = _staffViewModel.patients;
+    final patients = _staffViewModel.filteredPatients;
     final formatter = NumberFormat('#,###', 'en_US');
 
     final String totalDocuments = stats != null ? formatter.format(stats.totalDocuments) : '0';
@@ -94,40 +95,26 @@ class _PatientListScreenState extends State<PatientListScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Container(
             decoration: BoxDecoration(
-              boxShadow: AppTheme.softShadow,
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF00897B), width: 1.5),
             ),
             child: TextField(
-              decoration: InputDecoration(
+              onChanged: _staffViewModel.setSearchQuery,
+              decoration: const InputDecoration(
                 hintText: 'Tìm kiếm tên hoặc mã y tế...',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   fontSize: 14,
                   color: AppColors.textLight,
                 ),
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search,
                   color: AppColors.textLight,
                 ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 16,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: 12,
                   horizontal: 20,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 1.5,
-                  ),
                 ),
               ),
             ),
@@ -266,7 +253,18 @@ class _PatientListScreenState extends State<PatientListScreen> {
         ),
         trailing: const Icon(Icons.chevron_right, color: AppColors.textLight),
         onTap: () {
-          // Navigate to details
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PatientDetailScreen(
+                email: patient.email,
+                phone: patient.phone,
+              ),
+            ),
+          ).then((_) {
+             _staffViewModel.loadPatients();
+             _staffViewModel.loadStats();
+          });
         },
       ),
     );

@@ -33,6 +33,9 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   String? _selectedPatientName;
   DateTime? _selectedDate;
 
+  bool _isSavingDraft = false;
+  bool _canPopNow = false;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +45,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     }
     _viewModel.loadPatients();
     _viewModel.loadTags();
+    _viewModel.loadCategories();
   }
 
   @override
@@ -108,6 +112,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
       _showSnackBar('Lưu tài liệu thành công!', isError: false);
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 800));
+        _canPopNow = true;
         navigator.pop(true);
       }
     } else {
@@ -336,54 +341,68 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     );
   }
 
-  Future<void> _saveDraft() async {
-    // Chỉ auto-save nếu đã có dữ liệu đáng lưu (tiêu đề hoặc file)
-    if (_titleController.text.trim().isEmpty && _viewModel.selectedFiles.isEmpty) {
-      Navigator.pop(context);
-      return;
-    }
+  Future<void> _handleBackNavigation() async {
+    if (_isSavingDraft || _canPopNow) return;
+    _isSavingDraft = true;
 
-    final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
-    final patientId = _selectedPatientId;
+    try {
+      // Chỉ auto-save nếu đã có dữ liệu đáng lưu (tiêu đề hoặc file hoặc ghi chú)
+      final hasData = _titleController.text.trim().isNotEmpty || 
+                      _viewModel.selectedFiles.isNotEmpty ||
+                      _notesController.text.trim().isNotEmpty;
 
-    if (patientId == null) {
-      // Không đủ thông tin để lưu draft (thiếu bệnh nhân)
-      Navigator.pop(context);
-      return;
-    }
-
-    final success = await _viewModel.saveDocument(
-      patientProfileId: patientId,
-      title: _titleController.text.trim().isEmpty
-          ? 'Bản nháp - ${DateTime.now().toString().substring(0, 16)}'
-          : _titleController.text.trim(),
-      recordDate: _selectedDate?.millisecondsSinceEpoch,
-      notes: _notesController.text.trim().isEmpty
-          ? null
-          : _notesController.text.trim(),
-      createdByStaffId: staffId,
-      status: 'DRAFT',
-    );
-
-    if (mounted) {
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.drafts_outlined, color: Colors.white, size: 20),
-                SizedBox(width: 8),
-                Text('Đã lưu bản nháp'),
-              ],
-            ),
-            backgroundColor: Colors.orange[700],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+      if (!hasData) {
+        _canPopNow = true;
+        if (mounted) Navigator.pop(context);
+        return;
       }
-      Navigator.pop(context, success);
+
+      final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
+      final patientId = _selectedPatientId;
+
+      if (patientId == null) {
+        // Không đủ thông tin để lưu draft (thiếu bệnh nhân)
+        _canPopNow = true;
+        if (mounted) Navigator.pop(context);
+        return;
+      }
+
+      final success = await _viewModel.saveDocument(
+        patientProfileId: patientId,
+        title: _titleController.text.trim().isEmpty
+            ? 'Bản nháp - ${DateTime.now().toString().substring(0, 16)}'
+            : _titleController.text.trim(),
+        recordDate: _selectedDate?.millisecondsSinceEpoch,
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+        createdByStaffId: staffId,
+        status: 'DRAFT',
+      );
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.drafts_outlined, color: Colors.white, size: 20),
+                  SizedBox(width: 8),
+                  Text('Đã lưu bản nháp'),
+                ],
+              ),
+              backgroundColor: Colors.orange[700],
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        }
+        _canPopNow = true;
+        Navigator.pop(context, success);
+      }
+    } finally {
+      _isSavingDraft = false;
     }
   }
 
@@ -393,7 +412,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        await _saveDraft();
+        await _handleBackNavigation();
       },
       child: Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -403,7 +422,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
         titleSpacing: 0,
         leading: IconButton(
           icon: const Icon(Icons.close, color: AppColors.textPrimary),
-          onPressed: _saveDraft,
+          onPressed: _handleBackNavigation,
         ),
         title: const Text(
           'Thêm Tài liệu Y tế',
@@ -596,7 +615,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Bệnh nhân',
                     style: TextStyle(
                       fontSize: 12,
@@ -658,51 +677,54 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   }
 
   Widget _buildDocTypeSelector() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children:
-            _viewModel.categoryNames.asMap().entries.map((entry) {
-          final index = entry.key;
-          final text = entry.value;
+    final names = _viewModel.categoryNames;
+    if (names.isEmpty) {
+        return const Center(child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(),
+        ));
+    }
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: names.length,
+        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final text = names[index];
           final isSelected = _viewModel.selectedCategoryIndex == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => _viewModel.setCategory(index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                  ),
+          return GestureDetector(
+            onTap: () => _viewModel.setCategory(index),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: isSelected ? Colors.white : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
+                border: isSelected ? Border.all(color: AppColors.primary.withValues(alpha: 0.5)) : null,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? AppColors.primary
+                      : AppColors.textSecondary,
                 ),
               ),
             ),
           );
-        }).toList(),
+        },
       ),
     );
   }

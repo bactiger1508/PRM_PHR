@@ -23,15 +23,15 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   String _selectedCategory = 'Tất cả';
   String _selectedStatus = 'Tất cả';
   String _selectedTimeFilter = 'Tất cả';
+  String _selectedTag = 'Tất cả';
 
-  final List<String> _categories = ['Tất cả', 'Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán', 'Khác'];
   final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED'];
   final List<String> _timeFilters = ['Tất cả', '7 ngày qua', '30 ngày qua', '3 tháng qua', '6 tháng qua', '1 năm qua'];
 
   @override
   void initState() {
     super.initState();
-    _loadDocuments();
+    _loadInitialData();
     _viewModel.addListener(_onViewModelChanged);
   }
 
@@ -45,6 +45,12 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _loadInitialData() async {
+    await _viewModel.loadCategories();
+    await _viewModel.loadTags();
+    await _loadDocuments();
+  }
+
   Future<void> _loadDocuments() async {
     final staffId = AuthViewModel.instance.currentUser?.id;
     if (staffId != null) {
@@ -53,17 +59,21 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   }
 
   List<MedicalDocumentEntity> _getFilteredDocuments() {
-    return _viewModel.documents.where((doc) {
+    final docs = _viewModel.documents;
+    return docs.where((doc) {
       // Filter by Category
       if (_selectedCategory != 'Tất cả' && doc.categoryName != _selectedCategory) {
         return false;
       }
       // Filter by Status
       if (_selectedStatus == 'Tất cả') {
-        // Mặc định ẩn các tài liệu đã xóa (DELETED) khi xem 'Tất cả'
         if (doc.status == 'DELETED') return false;
       } else {
         if (doc.status != _selectedStatus) return false;
+      }
+      // Filter by Tag
+      if (_selectedTag != 'Tất cả' && !doc.tags.contains(_selectedTag)) {
+        return false;
       }
       // Filter by Time
       if (_selectedTimeFilter != 'Tất cả') {
@@ -113,6 +123,16 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   Widget build(BuildContext context) {
     final filteredDocs = _getFilteredDocuments();
     final groupedDocs = _groupDocumentsByMonth(filteredDocs);
+    final displayedCategories = ['Tất cả', ..._viewModel.categoryNames];
+    final displayedTags = ['Tất cả', ..._viewModel.availableTags];
+
+    // Ensure selected items are still valid if lists changed
+    if (!displayedCategories.contains(_selectedCategory)) {
+      _selectedCategory = 'Tất cả';
+    }
+    if (!displayedTags.contains(_selectedTag)) {
+      _selectedTag = 'Tất cả';
+    }
 
     final body = _viewModel.isLoading
       ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -121,17 +141,19 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Reusable Filter Bar Widget
           DocumentFilterBar(
             selectedCategory: _selectedCategory,
             selectedStatus: _selectedStatus,
             selectedTimeFilter: _selectedTimeFilter,
-            categories: _categories,
+            selectedTag: _selectedTag,
+            categories: displayedCategories,
             statuses: _statuses,
             timeFilters: _timeFilters,
+            availableTags: displayedTags,
             onCategoryChanged: (val) => setState(() => _selectedCategory = val),
             onStatusChanged: (val) => setState(() => _selectedStatus = val),
             onTimeFilterChanged: (val) => setState(() => _selectedTimeFilter = val),
+            onTagChanged: (val) => setState(() => _selectedTag = val),
           ),
           
           Padding(
@@ -236,27 +258,10 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
   }
 
   Widget _buildRealDocItem(BuildContext context, MedicalDocumentEntity doc) {
-    IconData icon;
-    Color iconBgColor;
-    Color iconColor;
-
-    if (doc.categoryId == 1) { // Xét nghiệm
-      icon = Icons.science;
-      iconBgColor = Colors.purple[50]!;
-      iconColor = Colors.purple[600]!;
-    } else if (doc.categoryId == 2) { // Đơn thuốc
-      icon = Icons.medication;
-      iconBgColor = Colors.blue[50]!;
-      iconColor = Colors.blue[600]!;
-    } else if (doc.categoryId == 3) { // Chẩn đoán
-      icon = Icons.masks;
-      iconBgColor = Colors.orange[50]!;
-      iconColor = Colors.orange[600]!;
-    } else { // Khác
-      icon = Icons.description;
-      iconBgColor = Colors.grey[200]!;
-      iconColor = Colors.grey[800]!;
-    }
+    // Simplify: use only one icon and one primary color style
+    const icon = Icons.description;
+    final iconBgColor = AppColors.primary.withValues(alpha: 0.1);
+    const iconColor = AppColors.primary;
 
     final dateStr = doc.recordDate != null
         ? DateFormat('dd MMM, yyyy').format(DateTime.fromMillisecondsSinceEpoch(doc.recordDate!))
@@ -269,8 +274,8 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     if (doc.categoryName != null) {
       tagsData.add({
         'name': doc.categoryName!,
-        'color': iconBgColor,
-        'textColor': iconColor,
+        'color': AppColors.backgroundLight,
+        'textColor': AppColors.textSecondary,
       });
     }
     if (doc.status == 'SAVED') {

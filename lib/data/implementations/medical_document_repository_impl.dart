@@ -112,10 +112,12 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
     final db = await _dbHelper.database;
 
     final docs = await db.rawQuery('''
-      SELECT md.*, dc.name as category_name, ua.full_name as created_by_name
+      SELECT md.*, dc.name as category_name, ua.full_name as created_by_name,
+             pp.full_name as patient_name, pp.medical_code
       FROM medical_documents md
       LEFT JOIN document_categories dc ON md.category_id = dc.id
       LEFT JOIN user_accounts ua ON md.created_by = ua.id
+      LEFT JOIN patient_profiles pp ON md.patient_profile_id = pp.id
       WHERE md.patient_profile_id = ? AND md.is_deleted = 0
       ORDER BY md.created_at DESC
     ''', [patientProfileId]);
@@ -418,10 +420,12 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
     final db = await _dbHelper.database;
 
     final docs = await db.rawQuery('''
-      SELECT md.*, dc.name as category_name, ua.full_name as created_by_name
+      SELECT md.*, dc.name as category_name, ua.full_name as created_by_name,
+             pp.full_name as patient_name, pp.medical_code
       FROM medical_documents md
       LEFT JOIN document_categories dc ON md.category_id = dc.id
       LEFT JOIN user_accounts ua ON md.created_by = ua.id
+      LEFT JOIN patient_profiles pp ON md.patient_profile_id = pp.id
       WHERE md.created_by = ?
       ORDER BY md.created_at DESC
     ''', [staffId]);

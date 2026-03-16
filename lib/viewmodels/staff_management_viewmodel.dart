@@ -3,6 +3,7 @@ import 'package:phrprmgroupproject/data/db/database_helper.dart';
 import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
 import 'package:phrprmgroupproject/data/interfaces/patient_repository.dart';
 import '../domain/entities/patient_entity.dart';
+import '../core/utils/string_utils.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../domain/entities/user_entity.dart';
@@ -30,6 +31,28 @@ class StaffManagementViewModel extends ChangeNotifier {
   List<PatientEntity> get patients => _patients;
   List<Map<String, dynamic>> _recentPatients = [];
   List<Map<String, dynamic>> get recentPatients => _recentPatients;
+
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+
+  List<PatientEntity> get filteredPatients {
+    if (_searchQuery.isEmpty) return _patients;
+    final normalizedQuery = StringUtils.removeDiacritics(_searchQuery.toLowerCase());
+    return _patients.where((p) {
+      final nameNormalized = StringUtils.removeDiacritics(p.fullName.toLowerCase());
+      final codeNormalized = StringUtils.removeDiacritics(p.medicalCode.toLowerCase());
+      final phoneNormalized = p.phone != null ? StringUtils.removeDiacritics(p.phone!.toLowerCase()) : '';
+      
+      return nameNormalized.contains(normalizedQuery) || 
+             codeNormalized.contains(normalizedQuery) || 
+             phoneNormalized.contains(normalizedQuery);
+    }).toList();
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    notifyListeners();
+  }
 
   Future<void> loadStaffs() async {
     _isLoading = true;
