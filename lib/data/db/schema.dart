@@ -9,7 +9,8 @@ class DBSchema {
         role TEXT NOT NULL, 
         status TEXT DEFAULT 'ACTIVE',
         created_at INTEGER,
-        updated_at INTEGER
+        updated_at INTEGER,
+        avatar TEXT
     );
   ''';
 

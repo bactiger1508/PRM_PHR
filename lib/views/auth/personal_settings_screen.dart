@@ -8,6 +8,11 @@ import '../../data/implementations/patient_repository_impl.dart';
 import '../../domain/entities/patient_entity.dart';
 import '../../data/dtos/patient_model.dart';
 import 'forgot_password_screen.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:phrprmgroupproject/viewmodels/user_viewmodel.dart';
+import 'package:path/path.dart' as p;
 
 class PersonalSettingsScreen extends StatefulWidget {
   final bool embedded;
@@ -19,7 +24,8 @@ class PersonalSettingsScreen extends StatefulWidget {
 
 class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
   PatientEntity? _patientProfile;
-
+  final ImagePicker _picker = ImagePicker();
+  final UserViewModel _userViewModel = UserViewModel();
 
   @override
   void initState() {
@@ -254,6 +260,7 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
         ? _patientProfile!.phone! 
         : (user?.phone ?? 'Không có');
     final String email = user?.email ?? 'Không có';
+    final String? avatar = user?.avatar;
 
     final Widget mainContent = SingleChildScrollView(
       child: Column(
@@ -268,22 +275,46 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
                 Stack(
                   children: [
                     Container(
-                      height: 112, width: 112,
+                      height: 112,
+                      width: 112,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary.withValues(alpha: 0.1), width: 4),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          width: 4,
+                        ),
                         image: DecorationImage(
-                          image: NetworkImage('https://ui-avatars.com/api/?name=${name.replaceAll(' ', '+')}&background=e0e7ff&color=156bc1&size=200'),
+                          image: avatar != null
+                              ? FileImage(File(avatar))
+                              : NetworkImage(
+                            'https://ui-avatars.com/api/?name=${name.replaceAll(' ', '+')}&background=e0e7ff&color=156bc1&size=200',
+                          ),
                           fit: BoxFit.cover,
                         ),
                       ),
                     ),
                     Positioned(
-                      bottom: 0, right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          int? id = user?.id;
+                          if(id != null) {
+                            _pickImage(id);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -465,5 +496,33 @@ class _PersonalSettingsScreenState extends State<PersonalSettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _pickImage(int userId) async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final fileName = p.basename(pickedFile.path);
+        final permanentPath = '${directory.path}/$fileName';
+
+        final savedImage = await File(pickedFile.path).copy(permanentPath);
+
+        await _userViewModel.changeAvatar(userId, savedImage.path);
+
+        AuthViewModel.instance.updateLocalAvatar(savedImage.path);
+
+        if (mounted) {
+          setState(() {});
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Lỗi khi lưu ảnh: $e')),
+          );
+        }
+      }
+    }
   }
 }

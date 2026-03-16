@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/views/staff/patient_detail_screen.dart';
 import '../theme/app_theme.dart';
 import '../documents/document_list_screen.dart';
 import '../auth/personal_settings_screen.dart';
@@ -18,6 +21,7 @@ class CustomerFamilyHomeScreen extends StatefulWidget {
 class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
   int _selectedIndex = 0;
   final FamilyMemberViewModel _viewModel = FamilyMemberViewModel();
+  String? avatarCurrentUser = AuthViewModel.instance.currentUser?.avatar;
 
   @override
   void initState() {
@@ -170,6 +174,9 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                           id: selfMember['medical_code'],
                           lastUpdate: _formatDate(selfMember['updated_at']),
                           isPrimary: true,
+                          avatar: selfMember['avatar'],
+                          email: selfMember['email'],
+                          phone: selfMember['phone'],
                         ),
                         const SizedBox(height: 32),
                       ],
@@ -193,6 +200,8 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                               id: member['medical_code'],
                               lastUpdate: _formatDate(member['updated_at']),
                               isPrimary: false,
+                              email: member['email'],
+                              phone: member['phone'],
                             );
                           },
                         ),
@@ -260,6 +269,9 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
     String? id,
     required String lastUpdate,
     bool isPrimary = false,
+    String? avatar,
+    String? email,
+    String? phone,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -316,14 +328,19 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
               CircleAvatar(
                 radius: 32,
                 backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                child: Text(
+                backgroundImage: (avatar != null && avatar.isNotEmpty)
+                    ? FileImage(File(avatar)) as ImageProvider
+                    : null,
+                child: (avatar == null || avatar.isEmpty)
+                    ? Text(
                   name.isNotEmpty ? name[0] : '?',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
-                ),
+                )
+                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -391,7 +408,10 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const DocumentListScreen(),
+                              builder: (context) => PatientDetailScreen(
+                                email: email,
+                                phone: phone,
+                              ),
                             ),
                           );
                         },

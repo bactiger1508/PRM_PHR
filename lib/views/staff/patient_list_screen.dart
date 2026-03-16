@@ -1,4 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
 import 'patient_detail_screen.dart';
 
@@ -12,9 +16,43 @@ class PatientListScreen extends StatefulWidget {
 
 class _PatientListScreenState extends State<PatientListScreen> {
   int _selectedIndex = 0; // "Bệnh nhân" initially selected on bottom nav bar
+  final StaffManagementViewModel _staffViewModel = StaffManagementViewModel();
+
+  @override
+  void initState() {
+    super.initState();
+    _staffViewModel.addListener(_onViewModelChanged);
+    _staffViewModel.loadStats();
+    _staffViewModel.loadPatients();
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void dispose() {
+    _staffViewModel.removeListener(_onViewModelChanged);
+    _staffViewModel.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final stats = _staffViewModel.stats;
+
+    final formatter = NumberFormat('#,###', 'en_US');
+
+    final String totalDocuments = stats != null ? formatter.format(stats.totalDocuments) : '0';
+    final String docsThisMonth = stats != null ? '+${formatter.format(stats.documentsThisMonth)} tháng này' : '+0 tháng này';
+
+    final String totalPatients = stats != null ? formatter.format(stats.totalPatients) : '0';
+    final String patientsThisMonth = stats != null ? '+${formatter.format(stats.patientsThisMonth)} tháng này' : '+0 tháng này';
+    final customersList = _staffViewModel.customers;
+    print(customersList);
+
     // Extract the main body content into a variable
     final Widget mainContent = SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 24),
@@ -28,8 +66,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 Expanded(
                   child: _buildStatCard(
                     title: 'Tổng số hồ sơ',
-                    value: '1,245',
-                    trendText: '+12 tháng này',
+                    value: totalDocuments,
+                    trendText: docsThisMonth,
                     trendIcon: Icons.trending_up,
                     trendColor: Colors.green[600]!,
                   ),
@@ -38,8 +76,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                 Expanded(
                   child: _buildStatCard(
                     title: 'Tổng số bệnh nhân',
-                    value: '156',
-                    trendText: '+5 tháng này',
+                    value: totalPatients,
+                    trendText: patientsThisMonth,
                     trendIcon: Icons.trending_up,
                     trendColor: Colors.green[600]!,
                   ),
@@ -95,47 +133,39 @@ class _PatientListScreenState extends State<PatientListScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16.0),
-            children: [
-              _buildPatientCard(
-                name: 'Nguyễn Văn An',
-                code: 'BN123456',
-                avatarUrl:
-                    'https://ui-avatars.com/api/?name=Nguyen+Van+An&background=e2e8f0&color=475569',
-                isOnline: true,
-              ),
-              const SizedBox(height: 12),
-              _buildPatientCard(
-                name: 'Nguyễn Thị Lan',
-                code: '#BN-2023-001',
-                avatarUrl:
-                    'https://ui-avatars.com/api/?name=Nguyen+Thi+Lan&background=fce7f3&color=db2777',
-                isOnline: true,
-              ),
-              const SizedBox(height: 12),
-              _buildPatientCard(
-                name: 'Trần Văn Hùng',
-                code: '#BN-2023-142',
-                avatarUrl:
-                    'https://ui-avatars.com/api/?name=Tran+Van+Hung&background=e0e7ff&color=156bc1',
-                isOnline: true,
-              ),
-              const SizedBox(height: 12),
-              _buildPatientCard(
-                name: 'Lê Minh Tuấn',
-                code: '#BN-2023-088',
-                initial: 'L',
-                isOnline: true,
-              ),
-              const SizedBox(height: 12),
-              _buildPatientCard(
-                name: 'Phạm Anh Đức',
-                code: '#BN-2023-205',
-                avatarUrl:
-                    'https://ui-avatars.com/api/?name=Pham+Anh+Duc&background=ffedd5&color=c2410c',
-                isOnline: true,
-                opacity: 0.8,
-              ),
-            ],
+            children: customersList.isEmpty
+                ? [
+              const Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text(
+                    'Chưa có khách hàng nào',
+                    style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                  ),
+                ),
+              )
+            ]
+                : customersList.map((customer) {
+              final String name = customer.fullName ?? 'Chưa cập nhật tên';
+              final String code = customer.phone ?? 'ID: ${customer.id}';
+              final String avatarPath = customer.avatar ?? '';
+
+              final String avatarUrl = avatarPath.isNotEmpty
+                  ? avatarPath
+                  : 'https://ui-avatars.com/api/?name=${name.replaceAll(' ', '+')}&background=e2e8f0&color=475569';
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: _buildPatientCard(
+                  name: name,
+                  code: code,
+                  avatarUrl: avatarUrl,
+                  isOnline: true,
+                  email: customer.email,
+                  phone: customer.phone
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),
@@ -319,6 +349,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
     String? initial,
     bool isOnline = false,
     double opacity = 1.0,
+    String? email,
+    String? phone,
   }) {
     return Opacity(
       opacity: opacity,
@@ -326,7 +358,12 @@ class _PatientListScreenState extends State<PatientListScreen> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const PatientDetailScreen()),
+            MaterialPageRoute(
+              builder: (context) => PatientDetailScreen(
+                email: email,
+                phone: phone,
+              ),
+            ),
           );
         },
         child: Container(
@@ -347,11 +384,14 @@ class _PatientListScreenState extends State<PatientListScreen> {
             children: [
               Stack(
                 children: [
-                  if (avatarUrl != null)
+                  if (avatarUrl != null && avatarUrl.isNotEmpty)
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: AppColors.backgroundLight,
-                      backgroundImage: NetworkImage(avatarUrl),
+                      // KIỂM TRA ĐỊNH DẠNG ẢNH Ở ĐÂY:
+                      backgroundImage: avatarUrl.startsWith('http')
+                          ? NetworkImage(avatarUrl) as ImageProvider
+                          : FileImage(File(avatarUrl)),
                     )
                   else if (initial != null)
                     CircleAvatar(
@@ -372,7 +412,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
                       backgroundColor: AppColors.backgroundLight,
                       child: Icon(Icons.person, color: AppColors.textLight),
                     ),
-      
+
+                  // Chấm xanh online giữ nguyên
                   if (isOnline)
                     Positioned(
                       bottom: 0,

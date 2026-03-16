@@ -11,6 +11,7 @@ class UserModel extends UserEntity {
     super.status,
     super.createdAt,
     super.updatedAt,
+    super.avatar,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +29,7 @@ class UserModel extends UserEntity {
       updatedAt: json['updated_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updated_at'])
           : null,
+      avatar: json['avatar'],
     );
   }
 
@@ -42,6 +44,7 @@ class UserModel extends UserEntity {
       'status': status,
       'created_at': createdAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt?.millisecondsSinceEpoch,
+      'avatar': avatar,
     };
   }
 }
