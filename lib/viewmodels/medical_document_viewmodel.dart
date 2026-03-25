@@ -5,7 +5,7 @@ import '../utils/permission_utils.dart';
 import '../data/implementations/medical_document_repository_impl.dart';
 import '../data/implementations/category_repository_impl.dart';
 import '../domain/entities/medical_document_entity.dart';
-import '../domain/entities/category_entity.dart';
+
 import 'auth_viewmodel.dart';
 
 class MedicalDocumentViewModel extends ChangeNotifier {
@@ -29,10 +29,24 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   int _selectedCategoryIndex = 0;
   int get selectedCategoryIndex => _selectedCategoryIndex;
 
-  List<CategoryEntity> _categories = [];
-  List<CategoryEntity> get categories => _categories;
+  List<Map<String, dynamic>> _categories = [];
+  List<Map<String, dynamic>> get categories => _categories;
 
-  List<String> get categoryNames => _categories.map((c) => c.name).toList();
+  List<String> get categoryNames => _categories.map((c) => c['name'] as String).toList();
+
+  String? get selectedCategoryName =>
+      categoryNames.isNotEmpty &&
+              _selectedCategoryIndex >= 0 &&
+              _selectedCategoryIndex < categoryNames.length
+          ? categoryNames[_selectedCategoryIndex]
+          : null;
+
+  void selectCategoryByName(String name) {
+    final idx = categoryNames.indexOf(name);
+    if (idx >= 0) {
+      setCategory(idx);
+    }
+  }
 
   List<File> _selectedFiles = [];
   List<File> get selectedFiles => _selectedFiles;
@@ -54,32 +68,39 @@ class MedicalDocumentViewModel extends ChangeNotifier {
   List<MedicalDocumentEntity> _documents = [];
   List<MedicalDocumentEntity> get documents => _documents;
 
-  /// Set selected category
+  /// Set selected category by index
   void setCategory(int index) {
     _selectedCategoryIndex = index;
     notifyListeners();
   }
 
-  /// Load categories from repository
+  int? _pendingCategoryId;
+
+  /// Set selected category by DB ID (used mainly for updates)
+  void setCategoryById(int categoryId) {
+    if (_categories.isEmpty) {
+      _pendingCategoryId = categoryId;
+      return;
+    }
+    final index = _categories.indexWhere((c) => c['id'] == categoryId);
+    if (index != -1) {
+      _selectedCategoryIndex = index;
+      notifyListeners();
+    }
+  }
+
+  /// Load tất cả categories từ DB
   Future<void> loadCategories() async {
     try {
-      final categoryMaps = await _docRepo.getDocumentCategories();
-      if (categoryMaps.isNotEmpty) {
-        _categories = categoryMaps.map((c) => CategoryEntity(
-          id: c['id'],
-          name: c['name'],
-        )).toList();
-      } else {
-         // Fallback default if empty
-         _categories = [
-           CategoryEntity(id: 1, name: 'Xét nghiệm'),
-           CategoryEntity(id: 2, name: 'Đơn thuốc'),
-           CategoryEntity(id: 3, name: 'Chẩn đoán'),
-         ];
+      _categories = await _docRepo.getDocumentCategories();
+      if (_pendingCategoryId != null) {
+        setCategoryById(_pendingCategoryId!);
+        _pendingCategoryId = null;
       }
       notifyListeners();
-    } catch (e) {
+    } catch (_) {
       _errorMsg = 'Không thể tải danh mục tài liệu.';
+      notifyListeners();
     }
   }
 
@@ -98,7 +119,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     );
     if (photo != null) {
       _selectedFiles.add(File(photo.path));
-      _simulateUpload(photo.name);
+      _uploadProgress[photo.name.split('/').last] = 1.0;
       notifyListeners();
     }
   }
@@ -118,7 +139,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     if (images.isNotEmpty) {
       for (var img in images) {
         _selectedFiles.add(File(img.path));
-        _simulateUpload(img.name);
+        _uploadProgress[img.name.split('/').last] = 1.0;
       }
       notifyListeners();
     }
@@ -157,16 +178,6 @@ class MedicalDocumentViewModel extends ChangeNotifier {
       _uploadProgress[fileName] = 1.0;
     }
     notifyListeners();
-  }
-
-  /// Simulate upload progress
-  void _simulateUpload(String fileName) async {
-    _uploadProgress[fileName] = 0.0;
-    for (int i = 1; i <= 10; i++) {
-      await Future.delayed(const Duration(milliseconds: 100));
-      _uploadProgress[fileName] = i / 10;
-      notifyListeners();
-    }
   }
 
   /// Load danh sách bệnh nhân
@@ -218,6 +229,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     String? notes,
     required int createdByStaffId,
     String status = 'SAVED',
+    String? customCategoryName,
   }) async {
     if (title.isEmpty) {
       _errorMsg = 'Vui lòng nhập tiêu đề tài liệu.';
@@ -232,8 +244,11 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     try {
       // Get categoryId from loaded categories
       int categoryId = 1; // Default
-      if (_categories.isNotEmpty && _selectedCategoryIndex < _categories.length) {
-        categoryId = _categories[_selectedCategoryIndex].id!;
+      
+      if (customCategoryName != null && customCategoryName.trim().isNotEmpty) {
+        categoryId = await _docRepo.createDocumentCategory(customCategoryName.trim());
+      } else if (_categories.isNotEmpty && _selectedCategoryIndex < _categories.length) {
+        categoryId = _categories[_selectedCategoryIndex]['id'] as int;
       }
 
       final doc = MedicalDocumentEntity(
@@ -299,6 +314,7 @@ class MedicalDocumentViewModel extends ChangeNotifier {
     String? notes,
     int? recordDate,
     required int performedByUserId,
+    String? customCategoryName,
   }) async {
     if (title.isEmpty) {
       _errorMsg = 'Vui lòng nhập tiêu đề tài liệu.';
@@ -312,8 +328,11 @@ class MedicalDocumentViewModel extends ChangeNotifier {
 
     try {
       int categoryId = 1;
-      if (_categories.isNotEmpty && _selectedCategoryIndex < _categories.length) {
-        categoryId = _categories[_selectedCategoryIndex].id!;
+      
+      if (customCategoryName != null && customCategoryName.trim().isNotEmpty) {
+        categoryId = await _docRepo.createDocumentCategory(customCategoryName.trim());
+      } else if (_categories.isNotEmpty && _selectedCategoryIndex < _categories.length) {
+        categoryId = _categories[_selectedCategoryIndex]['id'] as int;
       }
 
       final doc = MedicalDocumentEntity(

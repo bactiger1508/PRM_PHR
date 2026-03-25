@@ -15,6 +15,9 @@ abstract class AuthRepository {
   /// Gets all staff and admin accounts.
   Future<List<UserEntity>> getAllStaffs();
 
+  /// Tất cả tài khoản: Admin, Nhân viên, Khách hàng (bệnh nhân có tài khoản).
+  Future<List<UserEntity>> getAllUsers();
+
   /// Updates a staff account's information.
   Future<bool> updateStaff(int userId, {String? fullName, String? email, String? phone, String? status});
 
@@ -26,6 +29,13 @@ abstract class AuthRepository {
 
   /// Find user by email
   Future<UserEntity?> findByEmail(String email);
+
+  /// Find user by ID (for session restore)
+  Future<UserEntity?> findById(int userId);
+
+  /// Số giây còn lại trước khi được gửi OTP lại (null = được phép gửi).
+  Future<int?> otpCooldownRemainingSeconds(String email, String purpose,
+      {int cooldownSeconds = 60});
 
   /// Save OTP code to database
   Future<void> saveOtp(String email, String otpCode, String purpose);

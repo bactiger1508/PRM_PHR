@@ -20,6 +20,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   late bool _isDeleted;
   late bool _isDraft;
 
+  bool _isCustomerRole() =>
+      AuthViewModel.instance.currentUser?.role == 'CUSTOMER';
+
+  bool _isStaffOrAdminRole() {
+    final r = AuthViewModel.instance.currentUser?.role;
+    return r == 'STAFF' || r == 'ADMIN';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -228,32 +236,41 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         style: TextStyle(color: Colors.red[700], fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                     ),
-                    TextButton(
-                      onPressed: () async {
-                        final docViewModel = MedicalDocumentViewModel();
-                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        final navigator = Navigator.of(context);
-                        final success = await docViewModel.restoreDocument(widget.document.id!);
-                        
-                        if (!mounted) return;
-                        if (success) {
-                          setState(() => _isDeleted = false);
-                          scaffoldMessenger.showSnackBar(
-                            const SnackBar(content: Text('Đã khôi phục tài liệu'), backgroundColor: Colors.green),
-                          );
-                          navigator.pop(true);
-                        } else if (docViewModel.errorMsg != null) {
-                           scaffoldMessenger.showSnackBar(
-                            SnackBar(content: Text(docViewModel.errorMsg!), backgroundColor: Colors.red),
-                          );
-                        }
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red[700],
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                    if (_isStaffOrAdminRole())
+                      TextButton(
+                        onPressed: () async {
+                          final docViewModel = MedicalDocumentViewModel();
+                          final scaffoldMessenger =
+                              ScaffoldMessenger.of(context);
+                          final navigator = Navigator.of(context);
+                          final success = await docViewModel
+                              .restoreDocument(widget.document.id!);
+
+                          if (!mounted) return;
+                          if (success) {
+                            setState(() => _isDeleted = false);
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(
+                                  content: Text('Đã khôi phục tài liệu'),
+                                  backgroundColor: Colors.green),
+                            );
+                            navigator.pop(true);
+                          } else if (docViewModel.errorMsg != null) {
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                  content: Text(docViewModel.errorMsg!),
+                                  backgroundColor: Colors.red),
+                            );
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red[700],
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: const Text('Khôi phục',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 12)),
                       ),
-                      child: const Text('Khôi phục', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                    ),
                   ],
                 ),
               ),
@@ -273,35 +290,45 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         style: TextStyle(color: Colors.orange[800], fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () async {
-                        final scaffoldMessenger = ScaffoldMessenger.of(context);
-                        final docViewModel = MedicalDocumentViewModel();
-                        final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
-                        final success = await docViewModel.updateDocumentStatus(widget.document.id!, 'SAVED', performedByUserId: staffId);
-                        
-                        if (!mounted) return;
-                        if (success) {
-                          setState(() => _isDraft = false);
-                          scaffoldMessenger.showSnackBar(
-                            const SnackBar(
-                              content: Text('Đã lưu chính thức!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.save, size: 16),
-                      label: const Text('Lưu', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange[700],
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        minimumSize: Size.zero,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
+                    if (_isStaffOrAdminRole())
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final scaffoldMessenger =
+                              ScaffoldMessenger.of(context);
+                          final docViewModel = MedicalDocumentViewModel();
+                          final staffId =
+                              AuthViewModel.instance.currentUser?.id ?? 0;
+                          final success = await docViewModel
+                              .updateDocumentStatus(
+                                  widget.document.id!, 'SAVED',
+                                  performedByUserId: staffId);
+
+                          if (!mounted) return;
+                          if (success) {
+                            setState(() => _isDraft = false);
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Đã lưu chính thức!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.save, size: 16),
+                        label: const Text('Lưu',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -323,23 +350,14 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     ),
                   ),
-                  // Authorization check: only show options menu if user is creator AND not CUSTOMER
-                  Builder(
-                    builder: (context) {
-                      final currentUser = AuthViewModel.instance.currentUser;
-                      final isCustomer = currentUser?.role == 'CUSTOMER';
-                      final isCreator = currentUser?.id == widget.document.createdBy;
-                      
-                      if (isCreator && !isCustomer) {
-                        return IconButton(
-                          icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
-                          onPressed: () => _showOptionsMenu(context),
-                        );
-                      }
-                      // Empty placeholder to keep the text centered
-                      return const SizedBox(width: 48); 
-                    },
-                  ),
+                  if (_isStaffOrAdminRole())
+                    IconButton(
+                      icon: const Icon(Icons.more_vert,
+                          color: AppColors.textPrimary),
+                      onPressed: () => _showOptionsMenu(context),
+                    )
+                  else
+                    const SizedBox(width: 48),
                 ],
               ),
             ),
@@ -416,32 +434,33 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                             ),
 
                             // Preview Info
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: const [
-                                      Icon(
-                                        Icons.visibility,
-                                        color: AppColors.textSecondary,
-                                        size: 16,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Chế độ chỉ đọc',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
+                            if (_isCustomerRole())
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: const [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.visibility,
                                           color: AppColors.textSecondary,
+                                          size: 16,
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Chế độ chỉ đọc',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.textSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
@@ -552,7 +571,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                       child: Center(
                         child: Text(
-                          'ID Tài liệu: PHR-2024-DOC-\${widget.document.id}',
+                          'ID Tài liệu: PHR-DOC-${widget.document.id}',
                           style: const TextStyle(fontSize: 10, color: AppColors.textLight),
                         ),
                       ),

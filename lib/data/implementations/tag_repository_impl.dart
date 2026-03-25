@@ -30,13 +30,33 @@ class TagRepositoryImpl implements TagRepository {
   @override
   Future<TagEntity> createTag(String tagName) async {
     final db = await _dbHelper.database;
+    final normalized = tagName.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      throw ArgumentError('Tên tag không hợp lệ');
+    }
+    final dup = await db.rawQuery(
+      'SELECT id FROM tags WHERE LOWER(tag_name) = ?',
+      [normalized],
+    );
+    if (dup.isNotEmpty) {
+      final existingId = dup.first['id'] as int;
+      final row = await db.query('tags', where: 'id = ?', whereArgs: [existingId]);
+      final r = row.first;
+      return TagEntity(
+        id: existingId,
+        tagName: r['tag_name'] as String,
+        createdAt: r['created_at'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(r['created_at'] as int)
+            : null,
+      );
+    }
     final id = await db.insert('tags', {
-      'tag_name': tagName.trim(),
+      'tag_name': normalized,
       'created_at': DateTime.now().millisecondsSinceEpoch,
     });
     return TagEntity(
       id: id,
-      tagName: tagName.trim(),
+      tagName: normalized,
       createdAt: DateTime.now(),
     );
   }
@@ -44,9 +64,11 @@ class TagRepositoryImpl implements TagRepository {
   @override
   Future<bool> updateTag(int id, String newName) async {
     final db = await _dbHelper.database;
+    final normalized = newName.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
     final count = await db.update(
       'tags',
-      {'tag_name': newName.trim()},
+      {'tag_name': normalized},
       where: 'id = ?',
       whereArgs: [id],
     );

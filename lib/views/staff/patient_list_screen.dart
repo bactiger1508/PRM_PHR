@@ -18,10 +18,12 @@ class PatientListScreen extends StatefulWidget {
 class _PatientListScreenState extends State<PatientListScreen> {
   late StaffManagementViewModel _staffViewModel;
   bool _isLocalViewModel = false;
+  late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     if (widget.viewModel != null) {
       _staffViewModel = widget.viewModel!;
     } else {
@@ -41,6 +43,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _staffViewModel.removeListener(_onViewModelChanged);
     if (_isLocalViewModel) {
       _staffViewModel.dispose();
@@ -62,9 +65,10 @@ class _PatientListScreenState extends State<PatientListScreen> {
 
     final Widget mainContent = Column(
       children: [
+        _buildSearchBar(),
         // Stats Row
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Row(
               children: [
                 Expanded(
@@ -90,37 +94,8 @@ class _PatientListScreenState extends State<PatientListScreen> {
             ),
           ),
 
-          // Search Bar
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF00897B), width: 1.5),
-            ),
-            child: TextField(
-              onChanged: _staffViewModel.setSearchQuery,
-              decoration: const InputDecoration(
-                hintText: 'Tìm kiếm tên hoặc mã y tế...',
-                hintStyle: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textLight,
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: AppColors.textLight,
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 20,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
+
+        const SizedBox(height: 8),
 
         if (_staffViewModel.isLoading && patients.isEmpty)
           const Expanded(child: Center(child: CircularProgressIndicator()))
@@ -161,6 +136,48 @@ class _PatientListScreenState extends State<PatientListScreen> {
         foregroundColor: AppColors.textPrimary,
       ),
       body: mainContent,
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: AppTheme.softShadow,
+        ),
+        child: TextField(
+          controller: _searchController,
+          onChanged: (value) {
+            _staffViewModel.setSearchQuery(value);
+          },
+          decoration: InputDecoration(
+            hintText: 'Tìm kiếm bệnh nhân...',
+            hintStyle: const TextStyle(
+              fontSize: 14,
+              color: AppColors.textLight,
+            ),
+            prefixIcon: const Icon(
+              Icons.search,
+              color: AppColors.textSecondary,
+              size: 20,
+            ),
+            suffixIcon: _searchController.text.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () {
+                      _searchController.clear();
+                      _staffViewModel.setSearchQuery('');
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+        ),
+      ),
     );
   }
 
@@ -257,6 +274,7 @@ class _PatientListScreenState extends State<PatientListScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => PatientDetailScreen(
+                patientProfileId: patient.id,
                 email: patient.email,
                 phone: patient.phone,
               ),

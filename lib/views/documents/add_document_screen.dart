@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/document_category_horizontal_bar.dart';
 import '../theme/app_theme.dart';
 
 class AddDocumentScreen extends StatefulWidget {
@@ -12,7 +13,13 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   int _selectedIndex = 1; // "Tài liệu" on bottom nav bar
   int _docTypeIndex = 0; // 0: Xét nghiệm, 1: Đơn thuốc, 2: Chẩn đoán
 
-  final List<String> _docTypes = ['Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán'];
+  final List<String> _docTypes = [
+    'Xét nghiệm',
+    'Đơn thuốc',
+    'Chẩn đoán hình ảnh',
+    'Đơn Khám Bệnh',
+    'Khác',
+  ];
 
   // Tag management
   final List<String> _selectedTags = [];
@@ -113,51 +120,13 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: _docTypes.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final text = entry.value;
-                  final isSelected = _docTypeIndex == index;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _docTypeIndex = index),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
+            DocumentCategoryHorizontalBar(
+              categoryNames: _docTypes,
+              selectedName: _docTypes[_docTypeIndex],
+              onCategorySelected: (name) {
+                final i = _docTypes.indexOf(name);
+                if (i >= 0) setState(() => _docTypeIndex = i);
+              },
             ),
             const SizedBox(height: 24),
 

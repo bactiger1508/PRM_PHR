@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/exceptions/patient_profile_locked_exception.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../domain/entities/user_entity.dart';
@@ -55,6 +56,10 @@ class AuthViewModel extends ChangeNotifier {
         }
       }
       return user;
+    } on PatientProfileLockedException {
+      _errorMsg =
+          'Hồ sơ bệnh nhân của bạn đã bị khóa. Vui lòng liên hệ cơ sở y tế.';
+      return null;
     } catch (e) {
       _errorMsg = 'Đã có lỗi xảy ra: $e';
       return null;

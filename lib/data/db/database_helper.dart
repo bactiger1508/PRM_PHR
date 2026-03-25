@@ -25,7 +25,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
@@ -73,6 +73,11 @@ class DatabaseHelper {
         SET family_id = (SELECT family_id FROM user_accounts WHERE id = patient_profiles.created_by)
         WHERE created_by IS NOT NULL
       ''');
+    }
+    if (oldVersion < 7) {
+      await db.execute(
+        'ALTER TABLE medical_documents ADD COLUMN status_before_soft_delete TEXT',
+      );
     }
   }
 

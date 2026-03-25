@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../documents/widgets/document_category_horizontal_bar.dart';
 import '../theme/app_theme.dart';
 import '../../viewmodels/medical_document_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -28,6 +29,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   final _examDateController = TextEditingController();
   final _notesController = TextEditingController();
   final _tagInputController = TextEditingController();
+  final _customCategoryController = TextEditingController();
 
   int? _selectedPatientId;
   String? _selectedPatientName;
@@ -44,8 +46,8 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
       _selectedPatientName = widget.preselectedPatientName;
     }
     _viewModel.loadPatients();
-    _viewModel.loadTags();
     _viewModel.loadCategories();
+    _viewModel.loadTags();
   }
 
   @override
@@ -54,6 +56,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
     _examDateController.dispose();
     _notesController.dispose();
     _tagInputController.dispose();
+    _customCategoryController.dispose();
     super.dispose();
   }
 
@@ -98,6 +101,17 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
 
     final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
 
+    String? customCategory;
+    if (_viewModel.categoryNames.isNotEmpty && 
+        _viewModel.selectedCategoryIndex < _viewModel.categoryNames.length && 
+        _viewModel.categoryNames[_viewModel.selectedCategoryIndex] == 'Khác') {
+      customCategory = _customCategoryController.text.trim();
+      if (customCategory.isEmpty) {
+        _showSnackBar('Vui lòng nhập tên loại tài liệu mới.', isError: true);
+        return;
+      }
+    }
+
     final navigator = Navigator.of(context);
     final success = await _viewModel.saveDocument(
       patientProfileId: _selectedPatientId!,
@@ -107,6 +121,7 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
           ? null
           : _notesController.text.trim(),
       createdByStaffId: staffId,
+      customCategoryName: customCategory,
     );
     if (success) {
       _showSnackBar('Lưu tài liệu thành công!', isError: false);
@@ -500,6 +515,17 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
                 ),
                 const SizedBox(height: 12),
                 _buildDocTypeSelector(),
+                if (_viewModel.categoryNames.isNotEmpty && 
+                    _viewModel.selectedCategoryIndex < _viewModel.categoryNames.length && 
+                    _viewModel.categoryNames[_viewModel.selectedCategoryIndex] == 'Khác') ...[
+                  const SizedBox(height: 12),
+                  _buildInputLabel('Nhập tên loại tài liệu mới'),
+                  const SizedBox(height: 6),
+                  _buildTextField(
+                    controller: _customCategoryController,
+                    hintText: 'Ví dụ: Giấy chuyển viện',
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // ========== Upload Options ==========
@@ -677,55 +703,18 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
   }
 
   Widget _buildDocTypeSelector() {
-    final names = _viewModel.categoryNames;
-    if (names.isEmpty) {
-        return const Center(child: Padding(
+    if (_viewModel.categoryNames.isEmpty) {
+      return const Center(
+        child: Padding(
           padding: EdgeInsets.all(8.0),
           child: CircularProgressIndicator(),
-        ));
+        ),
+      );
     }
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: names.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final text = names[index];
-          final isSelected = _viewModel.selectedCategoryIndex == index;
-          return GestureDetector(
-            onTap: () => _viewModel.setCategory(index),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? Colors.white : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-                border: isSelected ? Border.all(color: AppColors.primary.withValues(alpha: 0.5)) : null,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
+    return DocumentCategoryHorizontalBar(
+      categoryNames: _viewModel.categoryNames,
+      selectedName: _viewModel.selectedCategoryName,
+      onCategorySelected: _viewModel.selectCategoryByName,
     );
   }
 
@@ -912,7 +901,8 @@ class _CreateMedicalExamScreenState extends State<CreateMedicalExamScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _viewModel.selectedTags.asMap().entries.map((entry) {
+            children:
+            _viewModel.selectedTags.asMap().entries.map((entry) {
               final tag = entry.value;
               final colorPair = colors[entry.key % colors.length];
               return Chip(

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'widgets/document_category_horizontal_bar.dart';
 import '../theme/app_theme.dart';
 import '../../viewmodels/medical_document_viewmodel.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -23,6 +24,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
   final _examDateController = TextEditingController();
   final _notesController = TextEditingController();
   final _tagInputController = TextEditingController();
+  final _customCategoryController = TextEditingController();
 
   DateTime? _selectedDate;
 
@@ -41,7 +43,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
     
     // Set category index based on categoryId (1-indexed)
     if (widget.document.categoryId > 0) {
-      _viewModel.setCategory(widget.document.categoryId - 1);
+      _viewModel.setCategoryById(widget.document.categoryId);
     }
     
     // Initialize tags
@@ -56,6 +58,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
     }
 
     _viewModel.loadPatients();
+    _viewModel.loadCategories();
     _viewModel.loadTags();
   }
 
@@ -65,6 +68,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
     _examDateController.dispose();
     _notesController.dispose();
     _tagInputController.dispose();
+    _customCategoryController.dispose();
     super.dispose();
   }
 
@@ -103,6 +107,17 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
     }
 
     final staffId = AuthViewModel.instance.currentUser?.id ?? 0;
+    String? customCategory;
+    if (_viewModel.categoryNames.isNotEmpty && 
+        _viewModel.selectedCategoryIndex < _viewModel.categoryNames.length && 
+        _viewModel.categoryNames[_viewModel.selectedCategoryIndex] == 'Khác') {
+      customCategory = _customCategoryController.text.trim();
+      if (customCategory.isEmpty) {
+        _showSnackBar('Vui lòng nhập tên loại tài liệu mới.', isError: true);
+        return;
+      }
+    }
+
     final success = await _viewModel.updateDocument(
       docId: widget.document.id!,
       title: _titleController.text.trim(),
@@ -111,6 +126,7 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
           : _notesController.text.trim(),
       recordDate: _selectedDate?.millisecondsSinceEpoch,
       performedByUserId: staffId,
+      customCategoryName: customCategory,
     );
 
     if (success) {
@@ -266,6 +282,17 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
                 ),
                 const SizedBox(height: 12),
                 _buildDocTypeSelector(),
+                if (_viewModel.categoryNames.isNotEmpty && 
+                    _viewModel.selectedCategoryIndex < _viewModel.categoryNames.length && 
+                    _viewModel.categoryNames[_viewModel.selectedCategoryIndex] == 'Khác') ...[
+                  const SizedBox(height: 12),
+                  _buildInputLabel('Nhập tên loại tài liệu mới'),
+                  const SizedBox(height: 6),
+                  _buildTextField(
+                    controller: _customCategoryController,
+                    hintText: 'Ví dụ: Giấy chuyển viện',
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // ========== Upload Options ==========
@@ -338,52 +365,18 @@ class _UpdateDocumentScreenState extends State<UpdateDocumentScreen> {
   // ============ UI Builder Widgets ============
 
   Widget _buildDocTypeSelector() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children:
-            _viewModel.categoryNames.asMap().entries.map((entry) {
-          final index = entry.key;
-          final text = entry.value;
-          final isSelected = _viewModel.selectedCategoryIndex == index;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => _viewModel.setCategory(index),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
-                          ),
-                        ]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  text,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected
-                        ? AppColors.primary
-                        : AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+    if (_viewModel.categoryNames.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    return DocumentCategoryHorizontalBar(
+      categoryNames: _viewModel.categoryNames,
+      selectedName: _viewModel.selectedCategoryName,
+      onCategorySelected: _viewModel.selectCategoryByName,
     );
   }
 

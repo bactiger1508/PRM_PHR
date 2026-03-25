@@ -105,7 +105,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.people_outline),
             activeIcon: Icon(Icons.people),
-            label: 'Nhân sự',
+            label: 'Người dùng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history_outlined),

@@ -9,6 +9,9 @@ abstract class PatientRepository {
   /// Fetches a patient profile by phone or email
   Future<PatientEntity?> getPatientByPhoneOrEmail({String? phone, String? email});
 
+  /// Hồ sơ BN theo khóa chính (dùng khi không có email/SĐT để tra cứu).
+  Future<PatientEntity?> getPatientById(int patientProfileId);
+
   /// Updates patient profile information (DOB, Phone)
   Future<bool> updatePatientProfile(int patientId, {String? dob, String? phone});
 

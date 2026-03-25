@@ -48,6 +48,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
+      final wait =
+          await _authRepo.otpCooldownRemainingSeconds(email, 'FORGOT_PASSWORD');
+      if (wait != null && wait > 0) {
+        setState(() {
+          _errorMsg =
+              'Vui lòng đợi $wait giây trước khi gửi lại mã OTP.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Check if account exists
       final user = await _authRepo.findByEmail(email);
       if (user == null) {

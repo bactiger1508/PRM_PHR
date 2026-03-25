@@ -175,6 +175,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                           name: selfMember!['full_name'] ?? 'Không tên',
                           relation: selfMember['relationship'] ?? 'N/A',
                           id: selfMember['medical_code'],
+                          patientId: selfMember['id'] as int?,
                           lastUpdate: _formatDate(selfMember['updated_at']),
                           isPrimary: true,
                           avatar: selfMember['avatar'],
@@ -259,10 +260,23 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
   }
 
   String _formatDate(dynamic timestamp) {
-    if (timestamp == null) return 'N/A';
-    return DateFormat('dd/MM/yyyy').format(
-      DateTime.fromMillisecondsSinceEpoch(timestamp is int ? timestamp : 0)
-    );
+    if (timestamp == null) return 'Chưa cập nhật';
+    try {
+      if (timestamp is int) {
+        return DateFormat('dd/MM/yyyy').format(DateTime.fromMillisecondsSinceEpoch(timestamp));
+      }
+      if (timestamp is String) {
+        final parsed = int.tryParse(timestamp);
+        if (parsed != null) {
+          return DateFormat('dd/MM/yyyy').format(DateTime.fromMillisecondsSinceEpoch(parsed));
+        }
+        final date = DateTime.tryParse(timestamp);
+        if (date != null) return DateFormat('dd/MM/yyyy').format(date);
+      }
+      return 'Không rõ';
+    } catch (_) {
+      return 'Không rõ';
+    }
   }
 
 
@@ -327,7 +341,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(20),
                   color: AppColors.primary.withValues(alpha: 0.1),
-                  image: (avatar != null && avatar.isNotEmpty)
+                  image: (avatar != null && avatar.isNotEmpty && File(avatar).existsSync())
                       ? DecorationImage(
                           image: FileImage(File(avatar)),
                           fit: BoxFit.cover,
@@ -385,7 +399,8 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                             icon: const Icon(Icons.more_vert, color: AppColors.textLight),
                             onSelected: (value) async {
                               if (value == 'remove') {
-                                _showRemoveConfirm(context, name, patientId!);
+                                if (patientId == null) return;
+                                _showRemoveConfirm(context, name, patientId);
                               } else if (value == 'transfer') {
                                 _showTransferConfirm(context, name, email);
                               }
@@ -464,6 +479,7 @@ class _CustomerFamilyHomeScreenState extends State<CustomerFamilyHomeScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => PatientDetailScreen(
+                                patientProfileId: patientId,
                                 email: email,
                                 phone: phone,
                               ),

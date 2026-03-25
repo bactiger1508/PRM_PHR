@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:phrprmgroupproject/data/db/database_helper.dart';
+import 'package:phrprmgroupproject/data/implementations/audit_log_repository.dart';
 import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
 import 'package:phrprmgroupproject/data/interfaces/patient_repository.dart';
+import '../domain/entities/audit_log_entity.dart';
 import '../domain/entities/patient_entity.dart';
 import '../core/utils/string_utils.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../domain/entities/user_entity.dart';
+import 'auth_viewmodel.dart';
 
 class StaffManagementViewModel extends ChangeNotifier {
   final AuthRepository _authRepo = AuthRepositoryImpl();
   final PatientRepository _patientRepository = PatientRepositoryImpl();
+  final AuditLogRepository _auditRepo = AuditLogRepository();
+
+  int? get _actorId => AuthViewModel.instance.currentUser?.id;
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -21,8 +27,8 @@ class StaffManagementViewModel extends ChangeNotifier {
   bool _isSuccess = false;
   bool get isSuccess => _isSuccess;
 
-  List<UserEntity> _staffs = [];
-  List<UserEntity> get staffs => _staffs;
+  List<UserEntity> _users = [];
+  List<UserEntity> get users => _users;
 
   DashboardStats? _stats;
   DashboardStats? get stats => _stats;
@@ -54,15 +60,15 @@ class StaffManagementViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadStaffs() async {
+  Future<void> loadUsers() async {
     _isLoading = true;
     _errorMsg = null;
     notifyListeners();
 
     try {
-      _staffs = await _authRepo.getAllStaffs();
+      _users = await _authRepo.getAllUsers();
     } catch (e) {
-      _errorMsg = 'Lỗi khi tải danh sách nhân sự: ${e.toString()}';
+      _errorMsg = 'Lỗi khi tải danh sách người dùng: ${e.toString()}';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -90,17 +96,26 @@ class StaffManagementViewModel extends ChangeNotifier {
       // System sets a default password for staff accounts
       const defaultPassword = '123456';
 
-      await _authRepo.createStaffAccount(newUser, defaultPassword);
+      final newId = await _authRepo.createStaffAccount(newUser, defaultPassword);
       _isSuccess = true;
 
+      await _auditRepo.saveLog(AuditLogEntity(
+        userId: _actorId,
+        action: 'Tạo tài khoản người dùng (nhân viên)',
+        entityType: 'user_accounts',
+        entityId: newId,
+        details: 'Email: $email, họ tên: $fullName',
+        timestamp: DateTime.now(),
+      ));
+
       // Reload list after success
-      await loadStaffs();
+      await loadUsers();
       return true;
     } catch (e) {
       if (e.toString().contains('UNIQUE constraint failed: user_accounts.email')) {
         _errorMsg = 'Email đã được sử dụng.';
       } else {
-        _errorMsg = 'Lỗi khi tạo nhân viên: ${e.toString()}';
+        _errorMsg = 'Lỗi khi tạo tài khoản nhân viên: ${e.toString()}';
       }
       return false;
     } finally {
@@ -122,13 +137,23 @@ class StaffManagementViewModel extends ChangeNotifier {
 
     try {
       final ok = await _authRepo.updateStaff(userId, fullName: fullName, email: email, phone: phone, status: status);
-      if (ok) await loadStaffs();
+      if (ok) {
+        await _auditRepo.saveLog(AuditLogEntity(
+          userId: _actorId,
+          action: 'Cập nhật tài khoản người dùng',
+          entityType: 'user_accounts',
+          entityId: userId,
+          details: 'Cập nhật thông tin người dùng ID $userId',
+          timestamp: DateTime.now(),
+        ));
+        await loadUsers();
+      }
       return ok;
     } catch (e) {
       if (e.toString().contains('UNIQUE')) {
         _errorMsg = 'Email đã được sử dụng.';
       } else {
-        _errorMsg = 'Lỗi khi cập nhật nhân viên: ${e.toString()}';
+        _errorMsg = 'Lỗi khi cập nhật người dùng: ${e.toString()}';
       }
       return false;
     } finally {
@@ -144,10 +169,20 @@ class StaffManagementViewModel extends ChangeNotifier {
 
     try {
       final ok = await _authRepo.deleteStaff(userId);
-      if (ok) await loadStaffs();
+      if (ok) {
+        await _auditRepo.saveLog(AuditLogEntity(
+          userId: _actorId,
+          action: 'Xóa tài khoản người dùng',
+          entityType: 'user_accounts',
+          entityId: userId,
+          details: 'Đã xóa người dùng ID $userId',
+          timestamp: DateTime.now(),
+        ));
+        await loadUsers();
+      }
       return ok;
     } catch (e) {
-      _errorMsg = 'Lỗi khi xoá nhân viên: ${e.toString()}';
+      _errorMsg = 'Lỗi khi xoá người dùng: ${e.toString()}';
       return false;
     } finally {
       _isLoading = false;

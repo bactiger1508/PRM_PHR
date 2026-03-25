@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../core/utils/string_utils.dart';
 import '../theme/app_theme.dart';
 import 'document_detail_screen.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -7,6 +8,7 @@ import '../../viewmodels/medical_document_viewmodel.dart';
 import '../../domain/entities/medical_document_entity.dart';
 import 'widgets/document_filter_bar.dart';
 import 'trash_screen.dart';
+import '../staff/create_medical_exam_screen.dart';
 
 class DocumentListScreen extends StatefulWidget {
   final bool embedded;
@@ -27,16 +29,21 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
 
   final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED'];
   final List<String> _timeFilters = ['Tất cả', '7 ngày qua', '30 ngày qua', '3 tháng qua', '6 tháng qua', '1 năm qua'];
+  final _keywordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _keywordController.addListener(() {
+      if (mounted) setState(() {});
+    });
     _loadInitialData();
     _viewModel.addListener(_onViewModelChanged);
   }
 
   @override
   void dispose() {
+    _keywordController.dispose();
     _viewModel.removeListener(_onViewModelChanged);
     super.dispose();
   }
@@ -60,7 +67,18 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
 
   List<MedicalDocumentEntity> _getFilteredDocuments() {
     final docs = _viewModel.documents;
+    final kw = StringUtils.removeDiacritics(
+        _keywordController.text.trim().toLowerCase());
     return docs.where((doc) {
+      if (kw.isNotEmpty) {
+        final title = StringUtils.removeDiacritics(
+            (doc.title ?? '').toLowerCase());
+        final notes = StringUtils.removeDiacritics(
+            (doc.notes ?? '').toLowerCase());
+        if (!title.contains(kw) && !notes.contains(kw)) {
+          return false;
+        }
+      }
       // Filter by Category
       if (_selectedCategory != 'Tất cả' && doc.categoryName != _selectedCategory) {
         return false;
@@ -71,9 +89,11 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
       } else {
         if (doc.status != _selectedStatus) return false;
       }
-      // Filter by Tag
-      if (_selectedTag != 'Tất cả' && !doc.tags.contains(_selectedTag)) {
-        return false;
+      // Filter by Tag (không phân biệt hoa thường)
+      if (_selectedTag != 'Tất cả') {
+        final sel = _selectedTag.toLowerCase();
+        final hasTag = doc.tags.any((t) => t.toLowerCase() == sel);
+        if (!hasTag) return false;
       }
       // Filter by Time
       if (_selectedTimeFilter != 'Tất cả') {
@@ -155,7 +175,24 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
             onTimeFilterChanged: (val) => setState(() => _selectedTimeFilter = val),
             onTagChanged: (val) => setState(() => _selectedTag = val),
           ),
-          
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              controller: _keywordController,
+              decoration: InputDecoration(
+                hintText: 'Từ khóa (tiêu đề, ghi chú)...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Column(
@@ -226,6 +263,19 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
         ),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateMedicalExamScreen()),
+              ).then((result) {
+                if (result == true) {
+                  _loadDocuments();
+                }
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: AppColors.textPrimary),
             onPressed: () {

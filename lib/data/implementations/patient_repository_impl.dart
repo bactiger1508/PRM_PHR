@@ -488,6 +488,18 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
+  Future<PatientEntity?> getPatientById(int patientProfileId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'patient_profiles',
+      where: 'id = ?',
+      whereArgs: [patientProfileId],
+    );
+    if (maps.isEmpty) return null;
+    return PatientModel.fromJson(maps.first);
+  }
+
+  @override
   Future<bool> updatePatientProfile(int patientId, {String? dob, String? phone}) async {
     final db = await _dbHelper.database;
     final Map<String, dynamic> values = {'updated_at': DateTime.now().millisecondsSinceEpoch};
@@ -523,7 +535,9 @@ class PatientRepositoryImpl implements PatientRepository {
         dc.name as category_name 
       FROM medical_documents md
       LEFT JOIN document_categories dc ON md.category_id = dc.id
+      INNER JOIN patient_profiles pp ON md.patient_profile_id = pp.id
       WHERE md.patient_profile_id = ? AND md.is_deleted = 0
+        AND (pp.status IS NULL OR pp.status != 'LOCKED')
       ORDER BY md.id DESC
     ''';
 

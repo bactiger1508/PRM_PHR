@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:phrprmgroupproject/core/utils/string_utils.dart';
+import 'package:phrprmgroupproject/data/implementations/medical_document_repository_impl.dart';
 import 'package:phrprmgroupproject/data/implementations/patient_repository_impl.dart';
 import 'package:phrprmgroupproject/domain/entities/patient_entity.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import '../documents/document_detail_screen.dart';
 import '../theme/app_theme.dart';
 import 'create_medical_exam_screen.dart';
 
 class PatientDetailScreen extends StatefulWidget {
+  /// Ưu tiên: mở đúng hồ sơ kể cả BN không có email/SĐT.
+  final int? patientProfileId;
   final String? email;
   final String? phone;
 
-  const PatientDetailScreen({super.key, this.email, this.phone});
+  const PatientDetailScreen({
+    super.key,
+    this.patientProfileId,
+    this.email,
+    this.phone,
+  });
 
   @override
   State<PatientDetailScreen> createState() => _PatientDetailScreenState();
@@ -22,16 +32,63 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   PatientEntity? _patientProfile;
   List<Map<String, dynamic>> _documents = [];
   final _patientRepository = PatientRepositoryImpl();
+  final _medicalDocRepository = MedicalDocumentRepositoryImpl();
+  final _docSearchController = TextEditingController();
+  String _docCategoryFilter = 'Tất cả loại';
 
   @override
   void initState() {
     super.initState();
+    _docSearchController.addListener(() {
+      if (mounted) setState(() {});
+    });
     _loadPatientData();
+  }
+
+  @override
+  void dispose() {
+    _docSearchController.dispose();
+    super.dispose();
+  }
+
+  List<String> get _docCategoryOptions {
+    final names = _documents
+        .map((d) => d['category_name'] as String? ?? '')
+        .where((n) => n.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+    return ['Tất cả loại', ...names];
+  }
+
+  List<Map<String, dynamic>> get _filteredDocuments {
+    var list = List<Map<String, dynamic>>.from(_documents);
+    final q = StringUtils.removeDiacritics(_docSearchController.text.trim().toLowerCase());
+    if (q.isNotEmpty) {
+      list = list.where((d) {
+        final title = StringUtils.removeDiacritics(
+            (d['title'] as String? ?? '').toLowerCase());
+        final notes = StringUtils.removeDiacritics(
+            (d['notes'] as String? ?? '').toLowerCase());
+        return title.contains(q) || notes.contains(q);
+      }).toList();
+    }
+    if (_docCategoryFilter != 'Tất cả loại') {
+      list = list
+          .where((d) =>
+              (d['category_name'] as String? ?? '') == _docCategoryFilter)
+          .toList();
+    }
+    return list;
   }
 
   Future<void> _loadPatientData() async {
     try {
-      final data = await _patientRepository.getPatientByPhoneOrEmail(
+      PatientEntity? data;
+      if (widget.patientProfileId != null) {
+        data = await _patientRepository.getPatientById(widget.patientProfileId!);
+      }
+      data ??= await _patientRepository.getPatientByPhoneOrEmail(
         email: widget.email,
         phone: widget.phone,
       );
@@ -60,6 +117,30 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
       }
     } catch (e) {
       // ignore
+    }
+  }
+
+  Future<void> _openDocumentDetail(Map<String, dynamic> docRow) async {
+    final id = docRow['id'] as int?;
+    if (id == null) return;
+
+    final entity = await _medicalDocRepository.getDocumentById(id);
+    if (!mounted) return;
+    if (entity == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Không tải được chi tiết tài liệu.')),
+      );
+      return;
+    }
+
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DocumentDetailScreen(document: entity),
+      ),
+    );
+    if (result == true && mounted && _patientProfile?.id != null) {
+      _loadDocuments(_patientProfile!.id!);
     }
   }
 
@@ -119,10 +200,19 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                     const Icon(Icons.folder_off, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
                     const Text(
-                      'Tài khoản này chưa có Hồ sơ Y tế',
+                      'Không tìm thấy hồ sơ bệnh nhân',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Kiểm tra mã hồ sơ hoặc liên hệ nhân viên nếu bạn vừa được thêm vào gia đình.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -207,13 +297,14 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: ElevatedButton.icon(
                     onPressed: () {
+                      final p = _patientProfile;
+                      if (p?.id == null) return;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const CreateMedicalExamScreen(
-                            preselectedPatientId: 1,
-                            // TODO: Use actual patient ID
-                            preselectedPatientName: 'Nguyễn Văn An',
+                          builder: (context) => CreateMedicalExamScreen(
+                            preselectedPatientId: p!.id,
+                            preselectedPatientName: p.fullName,
                           ),
                         ),
                       );
@@ -286,11 +377,39 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
   Widget _buildInfoTab() {
+    final p = _patientProfile;
+    final noContact = p != null &&
+        (p.phone == null || p.phone!.trim().isEmpty) &&
+        (p.email == null || p.email!.trim().isEmpty);
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (noContact)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: const Text(
+                  'Hồ sơ chưa có số điện thoại hoặc email. Thông tin cá nhân bên dưới có thể trống; tài liệu y tế vẫn xem tại tab Tài liệu.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.35,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
           _buildInfoRow(
             Icons.phone_outlined,
             'Số điện thoại',
@@ -355,6 +474,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _docSearchController,
                   decoration: InputDecoration(
                     hintText: 'Tìm tên tài liệu...',
                     hintStyle: const TextStyle(
@@ -385,8 +505,10 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: 'Tất cả loại',
-                    items: ['Tất cả loại', 'Xét nghiệm', 'X-Quang', 'Đơn thuốc']
+                    value: _docCategoryOptions.contains(_docCategoryFilter)
+                        ? _docCategoryFilter
+                        : 'Tất cả loại',
+                    items: _docCategoryOptions
                         .map(
                           (e) => DropdownMenuItem(
                             value: e,
@@ -397,7 +519,9 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                           ),
                         )
                         .toList(),
-                    onChanged: (_) {},
+                    onChanged: (v) {
+                      if (v != null) setState(() => _docCategoryFilter = v);
+                    },
                   ),
                 ),
               ),
@@ -407,18 +531,11 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Đang hiển thị ${_documents.length} tài liệu',
-              // Tự động đếm số lượng
+              'Đang hiển thị ${_filteredDocuments.length} / ${_documents.length} tài liệu',
               style: const TextStyle(fontSize: 13, color: AppColors.textLight),
             ),
           ),
           const SizedBox(height: 16),
-          // if (_isLoadingDocs)
-          //   const Padding(
-          //     padding: EdgeInsets.all(32.0),
-          //     child: CircularProgressIndicator(),
-          //   )
-          // else
             if (_documents.isEmpty)
             const Padding(
               padding: EdgeInsets.all(32.0),
@@ -430,8 +547,19 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
                 ),
               ),
             )
+          else if (_filteredDocuments.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Text(
+                'Không có tài liệu khớp bộ lọc',
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            )
           else
-            ..._documents.map((doc) {
+            ..._filteredDocuments.map((doc) {
               final String title = doc['title'] ?? 'Tài liệu không tên';
 
               final String date = _formatDocDate(
@@ -444,6 +572,7 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
               final String status = doc['status'] ?? 'SAVED';
 
               return _buildDocCard(
+                doc: doc,
                 title: title,
                 date: date,
                 type: 'Hồ sơ y tế • $categoryName',
@@ -456,82 +585,91 @@ class _PatientDetailScreenState extends State<PatientDetailScreen> {
   }
 
   Widget _buildDocCard({
+    required Map<String, dynamic> doc,
     required String title,
     required String date,
     required String type,
     required List<String> tags,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openDocumentDetail(doc),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.description, color: AppColors.primary, size: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Icon(Icons.description,
+                      color: AppColors.primary, size: 32),
+                  Text(
+                    type,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textLight,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               Text(
-                type,
+                title,
                 style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textLight,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Ngày tải: $date',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                children: tags
+                    .map(
+                      (t) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: t == 'Quan trọng'
+                              ? Colors.orange[50]
+                              : AppColors.backgroundLight,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          t,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: t == 'Quan trọng'
+                                ? Colors.orange[700]
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Ngày tải: $date',
-            style: const TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            children: tags
-                .map(
-                  (t) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: t == 'Quan trọng'
-                          ? Colors.orange[50]
-                          : AppColors.backgroundLight,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      t,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: t == 'Quan trọng'
-                            ? Colors.orange[700]
-                            : AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
+        ),
       ),
     );
   }

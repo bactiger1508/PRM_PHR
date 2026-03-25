@@ -7,7 +7,7 @@ abstract class MedicalDocumentRepository {
   Future<void> addTagToDocument(int documentId, String tagName);
   Future<List<MedicalDocumentEntity>> getDocumentsByPatient(int patientProfileId);
   Future<List<MedicalDocumentEntity>> getDocumentsByCreator(int staffId);
-  Future<MedicalDocumentEntity?> getDocumentById(int docId);
+  Future<MedicalDocumentEntity?> getDocumentById(int docId, {bool includeDeleted = false});
   Future<bool> deleteDocument(int docId, int performedByUserId);
   Future<bool> restoreDocument(int docId, int performedByUserId);
   Future<bool> hardDeleteDocument(int docId, int performedByUserId);
@@ -16,5 +16,6 @@ abstract class MedicalDocumentRepository {
   Future<void> updateTagsForDocument(int docId, List<String> newTags);
   Future<void> updateFilesForDocument(int docId, List<File> newFiles);
   Future<List<Map<String, dynamic>>> getDocumentCategories();
+  Future<int> createDocumentCategory(String name);
   Future<bool> updateDocumentStatus(int docId, String newStatus, int performedByUserId);
 }

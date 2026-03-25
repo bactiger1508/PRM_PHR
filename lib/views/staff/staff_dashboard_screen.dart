@@ -106,7 +106,19 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+            // Force reload documents tab khi chuyển sang
+            if (index == 2) {
+              _documentRefreshKey++;
+            }
+            // Reload stats khi quay về Home
+            if (index == 0) {
+              _loadInitialData();
+            }
+          });
+        },
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textLight,
@@ -223,47 +235,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             ),
           ),
           const Divider(height: 1, color: AppColors.border),
-            // Search Bar
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Container(
-                decoration: BoxDecoration(
-                  boxShadow: AppTheme.softShadow,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Tìm kiếm bệnh nhân (Tên, Mã Y Tế)...',
-                    hintStyle: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textLight,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: AppColors.textLight,
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 20,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+
 
           // Quick Actions
           Padding(

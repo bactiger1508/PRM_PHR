@@ -78,11 +78,12 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
   Future<void> addTagToDocument(int documentId, String tagName) async {
     final db = await _dbHelper.database;
 
-    // Tìm hoặc tạo tag
-    final existingTags = await db.query(
-      'tags',
-      where: 'tag_name = ?',
-      whereArgs: [tagName],
+    final normalized = tagName.trim().toLowerCase();
+    if (normalized.isEmpty) return;
+
+    final existingTags = await db.rawQuery(
+      'SELECT id, tag_name FROM tags WHERE LOWER(tag_name) = ?',
+      [normalized],
     );
 
     int tagId;
@@ -90,7 +91,7 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
       tagId = existingTags.first['id'] as int;
     } else {
       tagId = await db.insert('tags', {
-        'tag_name': tagName,
+        'tag_name': normalized,
         'created_at': DateTime.now().millisecondsSinceEpoch,
       });
     }
@@ -119,6 +120,7 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
       LEFT JOIN user_accounts ua ON md.created_by = ua.id
       LEFT JOIN patient_profiles pp ON md.patient_profile_id = pp.id
       WHERE md.patient_profile_id = ? AND md.is_deleted = 0
+        AND (pp.status IS NULL OR pp.status != 'LOCKED')
       ORDER BY md.created_at DESC
     ''', [patientProfileId]);
 
@@ -152,15 +154,17 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
   }
 
   @override
-  Future<MedicalDocumentEntity?> getDocumentById(int docId) async {
+  Future<MedicalDocumentEntity?> getDocumentById(int docId,
+      {bool includeDeleted = false}) async {
     final db = await _dbHelper.database;
 
+    final deletedClause = includeDeleted ? '' : 'AND md.is_deleted = 0';
     final docs = await db.rawQuery('''
       SELECT md.*, dc.name as category_name, ua.full_name as created_by_name
       FROM medical_documents md
       LEFT JOIN document_categories dc ON md.category_id = dc.id
       LEFT JOIN user_accounts ua ON md.created_by = ua.id
-      WHERE md.id = ?
+      WHERE md.id = ? $deletedClause
     ''', [docId]);
 
     if (docs.isEmpty) return null;
@@ -191,11 +195,24 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
     final userQuery = await db.query('user_accounts', columns: ['full_name'], where: 'id = ?', whereArgs: [performedByUserId]);
     final userName = userQuery.isNotEmpty ? userQuery.first['full_name'] as String : 'Không rõ';
 
+    final existing = await db.query(
+      'medical_documents',
+      columns: ['status'],
+      where: 'id = ?',
+      whereArgs: [docId],
+    );
+    final statusBefore =
+        existing.isNotEmpty ? existing.first['status'] as String? : null;
+
     final count = await db.update(
       'medical_documents',
       {
         'is_deleted': 1,
         'status': 'DELETED',
+        'status_before_soft_delete':
+            (statusBefore != null && statusBefore != 'DELETED')
+                ? statusBefore
+                : null,
         'updated_at': DateTime.now().millisecondsSinceEpoch,
       },
       where: 'id = ?',
@@ -222,11 +239,27 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
     final userQuery = await db.query('user_accounts', columns: ['full_name'], where: 'id = ?', whereArgs: [performedByUserId]);
     final userName = userQuery.isNotEmpty ? userQuery.first['full_name'] as String : 'Không rõ';
 
+    final row = await db.query(
+      'medical_documents',
+      columns: ['status_before_soft_delete'],
+      where: 'id = ?',
+      whereArgs: [docId],
+    );
+    final savedStatus = row.isNotEmpty
+        ? row.first['status_before_soft_delete'] as String?
+        : null;
+    final restoredStatus = (savedStatus != null &&
+            savedStatus.isNotEmpty &&
+            savedStatus != 'DELETED')
+        ? savedStatus
+        : 'SAVED';
+
     final count = await db.update(
       'medical_documents',
       {
         'is_deleted': 0,
-        'status': 'SAVED',
+        'status': restoredStatus,
+        'status_before_soft_delete': null,
         'updated_at': DateTime.now().millisecondsSinceEpoch,
       },
       where: 'id = ?',
@@ -461,6 +494,25 @@ class MedicalDocumentRepositoryImpl implements MedicalDocumentRepository {
   Future<List<Map<String, dynamic>>> getDocumentCategories() async {
     final db = await _dbHelper.database;
     return await db.query('document_categories', orderBy: 'id ASC');
+  }
+
+  @override
+  Future<int> createDocumentCategory(String name) async {
+    final db = await _dbHelper.database;
+    // Check if category already exists
+    final existing = await db.query(
+      'document_categories',
+      where: 'name = ?',
+      whereArgs: [name],
+    );
+    if (existing.isNotEmpty) {
+      return existing.first['id'] as int;
+    }
+    // Insert new category
+    return await db.insert('document_categories', {
+      'name': name,
+      'description': 'Danh mục tùy chỉnh',
+    });
   }
 
   /// Lấy danh sách bệnh nhân
