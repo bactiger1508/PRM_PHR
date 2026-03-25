@@ -105,7 +105,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.people_outline),
             activeIcon: Icon(Icons.people),
-            label: 'Nhân sự',
+            label: 'Người dùng',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history_outlined),
@@ -186,7 +186,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 24),
           ),
         ],
@@ -224,7 +224,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           duration: const Duration(milliseconds: 400),
                           height: (120 * ratio).clamp(4.0, 120.0),
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.8),
+                            color: color.withValues(alpha: 0.8),
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),

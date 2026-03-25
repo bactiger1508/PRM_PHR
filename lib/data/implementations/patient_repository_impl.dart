@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:intl/intl.dart';
-import 'package:phrprmgroupproject/domain/entities/user_entity.dart';
 import '../../core/utils/hash_utils.dart';
 import '../../core/services/email_service.dart';
 import '../../domain/entities/patient_entity.dart';
@@ -60,6 +59,10 @@ class PatientRepositoryImpl implements PatientRepository {
         }
       }
 
+      // Nếu bệnh nhân có tài khoản, family_id = userId (chính họ)
+      // Nếu không có tài khoản, family_id = family_id của người tạo (staff/head)
+      final patientFamilyId = userId ?? await _getUserFamilyId(txn, patient.createdBy);
+
       PatientModel model = PatientModel(
         medicalCode: medicalCode,
         fullName: patient.fullName,
@@ -70,6 +73,7 @@ class PatientRepositoryImpl implements PatientRepository {
         createdBy: patient.createdBy,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        familyId: patientFamilyId,
       );
       final patientId = await txn.insert('patient_profiles', model.toJson());
 
@@ -81,6 +85,16 @@ class PatientRepositoryImpl implements PatientRepository {
           'created_at': DateTime.now().millisecondsSinceEpoch,
         });
       }
+
+      // Ghi nhật ký tạo hồ sơ
+      await txn.insert('audit_logs', {
+        'user_id': patient.createdBy,
+        'action': 'Tạo hồ sơ bệnh nhân',
+        'entity_type': 'patient_profiles',
+        'entity_id': patientId,
+        'details': 'Đã tạo hồ sơ cho bệnh nhân ${patient.fullName}. Mã Y Tế: $medicalCode',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
     });
 
     if (patient.email != null && patient.email!.isNotEmpty) {
@@ -108,6 +122,17 @@ class PatientRepositoryImpl implements PatientRepository {
     return code;
   }
 
+  Future<void> _notifyFamilyLink(Transaction txn, int customerId, String title, String message) async {
+    await txn.insert('system_notifications', {
+      'user_id': customerId,
+      'title': title,
+      'message': message,
+      'type': 'FAMILY',
+      'is_read': 0,
+      'created_at': DateTime.now().millisecondsSinceEpoch,
+    });
+  }
+
   @override
   Future<bool> linkFamilyMember(int customerId, String medicalCode, String accessCode, String relationship) async {
     final db = await _dbHelper.database;
@@ -115,96 +140,363 @@ class PatientRepositoryImpl implements PatientRepository {
     final patients = await db.query('patient_profiles', where: 'medical_code = ? AND access_code = ?', whereArgs: [medicalCode, accessCode]);
     if (patients.isEmpty) throw Exception('Mã y tế hoặc mã truy cập không chính xác.');
     
-    final linkedPatientId = patients.first['id'] as int;
-    final linkedPatientEmail = patients.first['email'] as String?;
+    final targetPatientId = patients.first['id'] as int;
+    final targetEmail = patients.first['email'] as String?;
+    final targetName = patients.first['full_name'] as String;
     
     await db.transaction((txn) async {
-      // 1. Liên kết cơ bản
+      // 0. TỰ CHỮA LÀNH
+      // 0. TỰ CHỮA LÀNH (Ensure the linker has a 'Bản thân' profile)
+      final currentSelf = await txn.query('family_access',
+          where: 'customer_account_id = ? AND relationship = ?',
+          whereArgs: [customerId, 'Bản thân']);
+      
+      int linkerPatientId; String linkerName = 'bạn';
+      if (currentSelf.isEmpty) {
+        final user = await txn.query('user_accounts', where: 'id = ?', whereArgs: [customerId]);
+        final email = user.isNotEmpty ? user.first['email'] as String? : null;
+        final fullName = user.isNotEmpty ? user.first['full_name'] as String? : null;
+        linkerName = fullName ?? (email != null ? email.split('@')[0] : 'Người dùng');
+        
+        final random = Random();
+        final medicalCodeNew = 'PHR-${DateFormat('ddMMyyyy').format(DateTime.now())}-${random.nextInt(10000).toString().padLeft(4, '0')}';
+        
+        linkerPatientId = await txn.insert('patient_profiles', {
+          'medical_code': medicalCodeNew,
+          'full_name': linkerName,
+          'email': email,
+          'created_by': customerId,
+          'family_id': customerId, // Default family_id for self-created profile
+          'created_at': DateTime.now().millisecondsSinceEpoch,
+          'updated_at': DateTime.now().millisecondsSinceEpoch,
+        });
+
+        await txn.insert('family_access', {
+          'customer_account_id': customerId,
+          'patient_profile_id': linkerPatientId,
+          'relationship': 'Bản thân',
+          'created_at': DateTime.now().millisecondsSinceEpoch,
+        });
+      } else {
+        linkerPatientId = currentSelf.first['patient_profile_id'] as int;
+        final profileQuery = await txn.query('patient_profiles', columns: ['full_name'], where: 'id = ?', whereArgs: [linkerPatientId]);
+        if (profileQuery.isNotEmpty) {
+          linkerName = profileQuery.first['full_name'] as String;
+        }
+      }
+
+      // 1. Thiết lập liên kết chính
       await txn.insert('family_access', {
         'customer_account_id': customerId,
-        'patient_profile_id': linkedPatientId,
+        'patient_profile_id': targetPatientId,
         'relationship': relationship,
         'created_at': DateTime.now().millisecondsSinceEpoch,
       }, conflictAlgorithm: ConflictAlgorithm.replace);
 
-      // 2. Nếu là Vợ/Chồng, thực hiện gộp gia đình
-      if (relationship == 'Vợ/Chồng' && linkedPatientEmail != null) {
-        final linkedUsers = await txn.query('user_accounts', where: 'email = ?', whereArgs: [linkedPatientEmail]);
-        if (linkedUsers.isNotEmpty) {
-          final linkedCustomerId = linkedUsers.first['id'] as int;
+      await _notifyFamilyLink(txn, customerId, 'Liên kết mới', 'Tài khoản của bạn vừa được liên kết thành công với hồ sơ của $targetName. Bạn hiện có thể xem hồ sơ nhóm gia đình.');
 
-          // A. Lấy tất cả hồ sơ mà Linker (Bố) đang quản lý (ngoại trừ bản thân và Vợ)
-          final linkerDocs = await txn.query('family_access', where: 'customer_account_id = ?', whereArgs: [customerId]);
-          for (var doc in linkerDocs) {
-            int pid = doc['patient_profile_id'] as int;
-            if (pid != linkedPatientId) {
-              await txn.insert('family_access', {
-                'customer_account_id': linkedCustomerId,
-                'patient_profile_id': pid,
-                'relationship': doc['relationship'],
-                'created_at': DateTime.now().millisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.ignore);
-            }
+      // 2. TÍNH ĐỐI XỨNG & GOM NHÓM GIA ĐÌNH (Family ID Sync)
+      // Khi A liên kết với B (Vợ/Chồng/Con), nếu B chưa có tài khoản hoặc vai trò là quan hệ thân thiết:
+      // Gán chung family_id của A (người mời) cho B.
+
+      final currentCustQuery = await txn.query('user_accounts', columns: ['family_id', 'is_family_head'], where: 'id = ?', whereArgs: [customerId]);
+      if (currentCustQuery.isEmpty) {
+        return false;
+      }
+      
+      // Khắc phục: Sử dụng fallback nếu family_id là null và thực hiện vá lỗi (self-healing)
+      int? dbFamilyId = currentCustQuery.first['family_id'] as int?;
+      if (dbFamilyId == null) {
+        dbFamilyId = customerId;
+        await txn.update('user_accounts', {'family_id': customerId}, where: 'id = ?', whereArgs: [customerId]);
+      }
+      final currentFamilyId = dbFamilyId;
+
+      // Đồng bộ family_id cho chính hồ sơ "Bản thân" của người liên kết
+      await txn.update('patient_profiles', 
+        {'family_id': currentFamilyId}, 
+        where: 'id = ?', whereArgs: [linkerPatientId]);
+
+      final isCurrentHead = (currentCustQuery.first['is_family_head'] ?? 0) == 1;
+
+      // Cập nhật family_id cho hồ sơ mục tiêu
+      await txn.update('patient_profiles', {'family_id': currentFamilyId}, where: 'id = ?', whereArgs: [targetPatientId]);
+
+      if (targetEmail != null) {
+        final targetUser = await txn.query('user_accounts', columns: ['id', 'family_id'], where: 'email = ?', whereArgs: [targetEmail]);
+        if (targetUser.isNotEmpty) {
+          final targetAccountId = targetUser.first['id'] as int;
+          final targetFamilyId = targetUser.first['family_id'] as int?;
+
+          // If the linked person is a family member (Spouse/Child/Parent)
+          // And they don't belong to another family or are currently their own Head
+          if (isCurrentHead && (targetFamilyId == null || targetFamilyId == targetAccountId)) {
+            // Transfer all of B's family to A's family
+            await txn.update('user_accounts', {
+              'family_id': currentFamilyId,
+              'is_family_head': 0, // B becomes a member, A remains the Head
+            }, where: 'id = ?', whereArgs: [targetAccountId]);
+
+            // Update all profiles managed by B to A's family_id
+            await txn.update('patient_profiles', {'family_id': currentFamilyId}, where: 'family_id = ?', whereArgs: [targetAccountId]);
+
+            // Notify
+            await _notifyFamilyLink(txn, targetAccountId, 'Gia nhập gia đình', 'Bạn đã gia nhập nhóm gia đình của $linkerName.');
           }
 
-          // B. Lấy tất cả hồ sơ mà Linked Person (Mẹ) đang quản lý và chia sẻ cho Bố
-          final otherDocs = await txn.query('family_access', where: 'customer_account_id = ?', whereArgs: [linkedCustomerId]);
-          // Tìm ID hồ sơ của chính Bố để tránh tự liên kết mình là con
-          final selfProfile = await txn.query('family_access', 
-            where: 'customer_account_id = ? AND relationship = ?', 
-            whereArgs: [customerId, 'Bản thân']);
-          int? linkerPatientId = selfProfile.isNotEmpty ? selfProfile.first['patient_profile_id'] as int : null;
-
-          for (var doc in otherDocs) {
-            int pid = doc['patient_profile_id'] as int;
-            if (pid != linkerPatientId) {
-              await txn.insert('family_access', {
-                'customer_account_id': customerId,
-                'patient_profile_id': pid,
-                'relationship': doc['relationship'],
-                'created_at': DateTime.now().millisecondsSinceEpoch,
-              }, conflictAlgorithm: ConflictAlgorithm.ignore);
-            }
+          // Establish symmetrical link in family_access table (to maintain relationship labels)
+          String reverseRel = relationship;
+          if (relationship == 'Con') {
+            reverseRel = 'Bố/Mẹ';
+          } else if (relationship == 'Bố/Mẹ') {
+            reverseRel = 'Con';
           }
 
-          // C. Tạo liên kết ngược (Mẹ liên kết lại Bố là Vợ/Chồng)
-          if (linkerPatientId != null) {
+          await txn.insert('family_access', {
+            'customer_account_id': targetAccountId,
+            'patient_profile_id': linkerPatientId,
+            'relationship': reverseRel,
+            'created_at': DateTime.now().millisecondsSinceEpoch,
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+        }
+      }
+
+      // 3. KHÁM PHÁ MẠNG LƯỚI (Cross-linking existing members)
+      final existingLinksToTarget = await txn.query('family_access',
+        where: 'patient_profile_id = ?', whereArgs: [targetPatientId]);
+
+      for (var existingLink in existingLinksToTarget) {
+        final otherAccountId = existingLink['customer_account_id'] as int;
+        final otherRelToTarget = existingLink['relationship'] as String;
+        if (otherAccountId == customerId) {
+          continue;
+        }
+
+        final otherSelf = await txn.query('family_access', 
+          where: 'customer_account_id = ? AND relationship = ?', 
+          whereArgs: [otherAccountId, 'Bản thân']);
+        if (otherSelf.isEmpty) {
+          continue;
+        }
+        final otherPatientId = otherSelf.first['patient_profile_id'] as int;
+
+        final otherProfile = await txn.query('patient_profiles', columns: ['full_name'], where: 'id = ?', whereArgs: [otherPatientId]);
+        final otherPatientName = otherProfile.isNotEmpty ? otherProfile.first['full_name'] as String : 'Người thân';
+
+        bool pGotA = false;
+        bool aGotP = false;
+
+        if (relationship == 'Con' && otherRelToTarget == 'Con') {
+          await _linkSymmetrical(txn, customerId, otherPatientId, otherAccountId, linkerPatientId, 'Vợ/Chồng');
+          pGotA = true; 
+          aGotP = true;
+        } else if (relationship == 'Con' && otherRelToTarget == 'Vợ/Chồng') {
+          await txn.insert('family_access', {
+            'customer_account_id': otherAccountId, 'patient_profile_id': targetPatientId, 'relationship': 'Con', 'created_at': DateTime.now().millisecondsSinceEpoch
+          }, conflictAlgorithm: ConflictAlgorithm.replace);
+          // Only P got Target (wait, target is targetPatientId. Actually this rule modifies P link to B, not A to P)
+        } else if (relationship == 'Anh/Chị/Em' && otherRelToTarget == 'Con') {
+          await txn.insert('family_access', {
+            'customer_account_id': otherAccountId, 'patient_profile_id': linkerPatientId, 'relationship': 'Con', 'created_at': DateTime.now().millisecondsSinceEpoch
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          await txn.insert('family_access', {
+            'customer_account_id': customerId, 'patient_profile_id': otherPatientId, 'relationship': 'Bố/Mẹ', 'created_at': DateTime.now().millisecondsSinceEpoch
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          pGotA = true; 
+          aGotP = true;
+        } else if (relationship == 'Bố/Mẹ' && otherRelToTarget == 'Vợ/Chồng') {
+          await txn.insert('family_access', {
+            'customer_account_id': otherAccountId, 'patient_profile_id': linkerPatientId, 'relationship': 'Con', 'created_at': DateTime.now().millisecondsSinceEpoch
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          await txn.insert('family_access', {
+            'customer_account_id': customerId, 'patient_profile_id': otherPatientId, 'relationship': 'Bố/Mẹ', 'created_at': DateTime.now().millisecondsSinceEpoch
+          }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          pGotA = true; 
+          aGotP = true;
+        }
+ 
+        if (pGotA) {
+          await _notifyFamilyLink(txn, otherAccountId, 'Phát sinh mạng lưới', 'Do $linkerName vừa liên kết với $targetName, bạn đã tự động được cấp quyền truy cập vào hồ sơ của $linkerName trong mạng lưới gia đình.');
+        }
+        if (aGotP) {
+          await _notifyFamilyLink(txn, customerId, 'Phát sinh mạng lưới', 'Do bạn vừa liên kết với $targetName, bạn đã tự động được cấp quyền truy cập vào hồ sơ của $otherPatientName trong mạng lưới gia đình.');
+        }
+      }
+
+      // 4. CHIA SẺ DANH SÁCH CÓ SẴNG (Cross-sharing)
+      // Khi A liên kết với B (ví dụ Vợ/Chồng), A chia sẻ các hồ sơ con cho B, và ngược lại.
+      if (targetEmail != null) {
+        final targetUser = await txn.query('user_accounts', columns: ['id'], where: 'email = ?', whereArgs: [targetEmail]);
+        if (targetUser.isNotEmpty) {
+          final targetAccountId = targetUser.first['id'] as int;
+
+          // A chia sẻ cho B
+          final aExistingLinks = await txn.query('family_access', where: 'customer_account_id = ?', whereArgs: [customerId]);
+          for (var link in aExistingLinks) {
+            final pid = link['patient_profile_id'] as int;
+            final rel = link['relationship'] as String;
+            if (pid == targetPatientId || pid == linkerPatientId) continue;
+            
+            String newRel = rel;
+            if (relationship == 'Vợ/Chồng' && rel == 'Con') {
+              newRel = 'Con';
+            } else if (relationship == 'Vợ/Chồng' && rel == 'Bố/Mẹ') {
+              newRel = 'Bố/Mẹ';
+            }
+            
             await txn.insert('family_access', {
-              'customer_account_id': linkedCustomerId,
-              'patient_profile_id': linkerPatientId,
-              'relationship': 'Vợ/Chồng',
-              'created_at': DateTime.now().millisecondsSinceEpoch,
-            }, conflictAlgorithm: ConflictAlgorithm.replace);
+              'customer_account_id': targetAccountId, 'patient_profile_id': pid, 'relationship': newRel, 'created_at': DateTime.now().millisecondsSinceEpoch
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
+          }
+
+          // B chia sẻ cho A
+          final bExistingLinks = await txn.query('family_access', where: 'customer_account_id = ?', whereArgs: [targetAccountId]);
+          for (var link in bExistingLinks) {
+            final pid = link['patient_profile_id'] as int;
+            final rel = link['relationship'] as String;
+            if (pid == targetPatientId || pid == linkerPatientId) continue;
+
+            String newRel = rel;
+            if (relationship == 'Vợ/Chồng' && rel == 'Con') { newRel = 'Con'; }
+            else if (relationship == 'Vợ/Chồng' && rel == 'Bố/Mẹ') { newRel = 'Bố/Mẹ'; }
+
+            await txn.insert('family_access', {
+              'customer_account_id': customerId, 'patient_profile_id': pid, 'relationship': newRel, 'created_at': DateTime.now().millisecondsSinceEpoch
+            }, conflictAlgorithm: ConflictAlgorithm.ignore);
           }
         }
       }
     });
-    
+
     return true;
   }
 
   @override
   Future<List<Map<String, dynamic>>> getFamilyMembers(int customerId) async {
     final db = await _dbHelper.database;
+    
+    // Tìm family_id của người dùng
+    final userQuery = await db.query('user_accounts', columns: ['family_id'], where: 'id = ?', whereArgs: [customerId]);
+    if (userQuery.isEmpty) return [];
+    
+    int? familyId = userQuery.first['family_id'] as int?;
+    
+    // Khắc phục: Tự chữa lành triệt để cho cả Account và Patient Profile "Bản thân"
+    if (familyId == null) {
+      familyId = customerId;
+      await db.update('user_accounts', {'family_id': customerId}, where: 'id = ?', whereArgs: [customerId]);
+    }
+
+    // Tìm hồ sơ "Bản thân" qua bảng family_access (Độ tin cậy cao nhất)
+    final selfLink = await db.query('family_access', 
+        columns: ['patient_profile_id'], 
+        where: 'customer_account_id = ? AND relationship = ?', 
+        whereArgs: [customerId, 'Bản thân']);
+    
+    if (selfLink.isNotEmpty) {
+      final selfPatientId = selfLink.first['patient_profile_id'] as int;
+      // Đảm bảo hồ sơ Bản thân luôn khớp Family ID
+      await db.update('patient_profiles', {'family_id': familyId}, where: 'id = ?', whereArgs: [selfPatientId]);
+    }
+
+    // Self-healing: Sửa family_id cho TẤT CẢ profiles mà user đã liên kết qua family_access
+    // nhưng chưa có đúng family_id (đặc biệt quan trọng cho profile của người liên kết gốc)
+    await db.rawUpdate('''
+      UPDATE patient_profiles 
+      SET family_id = ?
+      WHERE id IN (SELECT patient_profile_id FROM family_access WHERE customer_account_id = ?)
+        AND (family_id IS NULL OR family_id != ?)
+    ''', [familyId, customerId, familyId]);
+
+    // Lấy tất cả hồ sơ trong cùng gia đình
+    // Kết hợp cả family_id VÀ family_access để đảm bảo không thiếu thành viên
     const query = '''
-      SELECT p.*, f.relationship, f.created_at as linked_at
+      SELECT p.*, 
+             COALESCE(f.relationship, 'Thành viên') as relationship, 
+             COALESCE(f.created_at, p.created_at) as linked_at
       FROM patient_profiles p
-      JOIN family_access f ON p.id = f.patient_profile_id
-      WHERE f.customer_account_id = ?
-      ORDER BY CASE WHEN f.relationship = 'Bản thân' THEN 0 ELSE 1 END, f.created_at DESC
+      LEFT JOIN family_access f ON p.id = f.patient_profile_id AND f.customer_account_id = ?
+      WHERE p.family_id = ?
+         OR p.id IN (SELECT patient_profile_id FROM family_access WHERE customer_account_id = ?)
+      GROUP BY p.id
+      ORDER BY CASE WHEN COALESCE(f.relationship, 'Thành viên') = 'Bản thân' THEN 0 ELSE 1 END, p.id ASC
     ''';
-    return await db.rawQuery(query, [customerId]);
+    return await db.rawQuery(query, [customerId, familyId, customerId]);
+  }
+
+  @override
+  Future<bool> transferFamilyHead(int fromUserId, int toUserId) async {
+    final db = await _dbHelper.database;
+    return await db.transaction((txn) async {
+      final fromUser = await txn.query('user_accounts', where: 'id = ?', whereArgs: [fromUserId]);
+      if (fromUser.isEmpty || (fromUser.first['is_family_head'] ?? 0) == 0) return false;
+
+      await txn.update('user_accounts', {'is_family_head': 0}, where: 'id = ?', whereArgs: [fromUserId]);
+      await txn.update('user_accounts', {'is_family_head': 1}, where: 'id = ?', whereArgs: [toUserId]);
+      return true;
+    });
+  }
+
+  @override
+  Future<bool> removeFamilyMember(int customerId, int patientId) async {
+    final db = await _dbHelper.database;
+    return await db.transaction((txn) async {
+      // Kiểm tra quyền (chỉ Head mới được xóa)
+      final user = await txn.query('user_accounts', columns: ['is_family_head', 'family_id'], where: 'id = ?', whereArgs: [customerId]);
+      if (user.isEmpty || (user.first['is_family_head'] ?? 0) == 0) return false;
+      final familyId = user.first['family_id'] as int;
+
+      // Tìm thông tin hồ sơ
+      final patient = await txn.query('patient_profiles', where: 'id = ? AND family_id = ?', whereArgs: [patientId, familyId]);
+      if (patient.isEmpty) return false;
+      
+      final targetEmail = patient.first['email'] as String?;
+      if (targetEmail != null) {
+        final targetUser = await txn.query('user_accounts', where: 'email = ?', whereArgs: [targetEmail]);
+        if (targetUser.isNotEmpty) {
+          final targetId = targetUser.first['id'] as int;
+          // Tách user ra thành gia đình mới của chính họ
+          await txn.update('user_accounts', {'family_id': targetId, 'is_family_head': 1}, where: 'id = ?', whereArgs: [targetId]);
+          // Cập nhật tất cả hồ sơ mà user đó sở hữu (created_by) về family_id mới của họ
+          await txn.update('patient_profiles', {'family_id': targetId}, where: 'created_by = ?', whereArgs: [targetId]);
+        }
+      } else {
+        // Hồ sơ không có tài khoản (ví dụ con nhỏ), tách hẳn khỏi gia đình hiện tại
+        await txn.update('patient_profiles', {'family_id': null}, where: 'id = ?', whereArgs: [patientId]);
+      }
+
+      await txn.delete('family_access', where: 'patient_profile_id = ?', whereArgs: [patientId]);
+      return true;
+    });
   }
 
   @override
   Future<PatientEntity?> getPatientByPhoneOrEmail({String? phone, String? email}) async {
     final db = await _dbHelper.database;
-    if ((phone == null || phone.isEmpty) && (email == null || email.isEmpty)) return null;
+    if ((phone == null || phone.isEmpty) && (email == null || email.isEmpty)) {
+      return null;
+    }
     List<String> conds = []; List<dynamic> args = [];
-    if (email != null && email.isNotEmpty) { conds.add('email = ?'); args.add(email); }
-    if (phone != null && phone.isNotEmpty) { conds.add('phone = ?'); args.add(phone); }
+    if (email != null && email.isNotEmpty) {
+      conds.add('email = ?'); args.add(email);
+    }
+    if (phone != null && phone.isNotEmpty) {
+      conds.add('phone = ?'); args.add(phone);
+    }
     final maps = await db.query('patient_profiles', where: conds.join(' OR '), whereArgs: args);
     return maps.isNotEmpty ? PatientModel.fromJson(maps.first) : null;
+  }
+
+  @override
+  Future<PatientEntity?> getPatientById(int patientProfileId) async {
+    final db = await _dbHelper.database;
+    final maps = await db.query(
+      'patient_profiles',
+      where: 'id = ?',
+      whereArgs: [patientProfileId],
+    );
+    if (maps.isEmpty) return null;
+    return PatientModel.fromJson(maps.first);
   }
 
   @override
@@ -223,25 +515,15 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<List<UserEntity>> getAllCustomers() async {
-    final db = await DatabaseHelper.instance.database;
+  Future<List<PatientEntity>> getAllPatients() async {
+    final db = await _dbHelper.database;
 
     final List<Map<String, dynamic>> maps = await db.query(
-      'user_accounts',
-      where: 'role = ?',
-      whereArgs: ['CUSTOMER'],
+      'patient_profiles',
       orderBy: 'id DESC',
     );
 
-    return maps.map((map) => UserEntity(
-      id: map['id'],
-      fullName: map['full_name'],
-      email: map['email'],
-      phone: map['phone'],
-      role: map['role'],
-      status: map['status'],
-      avatar: map['avatar'],
-    )).toList();
+    return maps.map((map) => PatientModel.fromJson(map)).toList();
   }
 
   @override
@@ -253,7 +535,9 @@ class PatientRepositoryImpl implements PatientRepository {
         dc.name as category_name 
       FROM medical_documents md
       LEFT JOIN document_categories dc ON md.category_id = dc.id
+      INNER JOIN patient_profiles pp ON md.patient_profile_id = pp.id
       WHERE md.patient_profile_id = ? AND md.is_deleted = 0
+        AND (pp.status IS NULL OR pp.status != 'LOCKED')
       ORDER BY md.id DESC
     ''';
 
@@ -271,5 +555,28 @@ class PatientRepositoryImpl implements PatientRepository {
     );
 
     return result;
+  }
+
+  Future<void> _linkSymmetrical(Transaction txn, int currentCustId, int targetPid, int otherCustId, int linkerPid, String relationship) async {
+    await txn.insert('family_access', {
+      'customer_account_id': currentCustId, 'patient_profile_id': targetPid, 'relationship': relationship, 'created_at': DateTime.now().millisecondsSinceEpoch
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+    String reverseRel = relationship;
+    if (relationship == 'Con') {
+      reverseRel = 'Bố/Mẹ';
+    } else if (relationship == 'Bố/Mẹ') {
+      reverseRel = 'Con';
+    }
+
+    await txn.insert('family_access', {
+      'customer_account_id': otherCustId, 'patient_profile_id': linkerPid, 'relationship': reverseRel, 'created_at': DateTime.now().millisecondsSinceEpoch
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+ 
+  Future<int> _getUserFamilyId(DatabaseExecutor txn, int? userId) async {
+    if (userId == null) return 0;
+    final res = await txn.query('user_accounts', columns: ['family_id'], where: 'id = ?', whereArgs: [userId]);
+    return res.isNotEmpty ? (res.first['family_id'] as int? ?? userId) : userId;
   }
 }

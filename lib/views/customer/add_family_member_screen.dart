@@ -122,6 +122,9 @@ class _AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
                         final user = AuthViewModel.instance.currentUser;
                         if (user == null || user.id == null) return;
 
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final navigator = Navigator.of(context);
+
                         final success = await _viewModel.linkMember(
                           customerId: user.id!,
                           medicalCode: _medicalCodeController.text.trim(),
@@ -129,19 +132,16 @@ class _AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
                           relationship: _selectedRelationship,
                         );
 
+                        if (!mounted) return;
                         if (success) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Liên kết thành công!')),
-                            );
-                            Navigator.pop(context, true);
-                          }
+                          scaffoldMessenger.showSnackBar(
+                            const SnackBar(content: Text('Liên kết thành công!')),
+                          );
+                          navigator.pop(true);
                         } else {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(_viewModel.error ?? 'Lỗi liên kết')),
-                            );
-                          }
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(content: Text(_viewModel.error ?? 'Lỗi liên kết')),
+                          );
                         }
                       },
                 style: ElevatedButton.styleFrom(

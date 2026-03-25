@@ -10,7 +10,9 @@ class DBSchema {
         status TEXT DEFAULT 'ACTIVE',
         created_at INTEGER,
         updated_at INTEGER,
-        avatar TEXT
+        avatar TEXT,
+        family_id INTEGER,
+        is_family_head INTEGER DEFAULT 1
     );
   ''';
 
@@ -27,6 +29,7 @@ class DBSchema {
         created_by INTEGER,                
         created_at INTEGER,
         updated_at INTEGER,
+        family_id INTEGER,
         FOREIGN KEY (created_by) REFERENCES user_accounts (id)
     );
   ''';
@@ -48,7 +51,8 @@ class DBSchema {
         title TEXT,
         notes TEXT,
         status TEXT DEFAULT 'SAVED',       
-        is_deleted INTEGER DEFAULT 0,      
+        is_deleted INTEGER DEFAULT 0,
+        status_before_soft_delete TEXT,
         created_by INTEGER,                
         created_at INTEGER,
         updated_at INTEGER,
@@ -136,5 +140,17 @@ class DBSchema {
     );
   ''';
 
+  static const String createSystemNotificationsTable = '''
+    CREATE TABLE IF NOT EXISTS system_notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        type TEXT NOT NULL,
+        is_read INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES user_accounts (id) ON DELETE CASCADE
+    );
+  ''';
 
 }

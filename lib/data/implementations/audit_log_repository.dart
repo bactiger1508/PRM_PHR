@@ -51,4 +51,17 @@ class AuditLogRepository {
           : null,
     )).toList();
   }
+
+  Future<int> saveLog(AuditLogEntity log) async {
+    final db = await _dbHelper.database;
+    return await db.insert('audit_logs', {
+      'user_id': log.userId,
+      'action': log.action,
+      'entity_type': log.entityType,
+      'entity_id': log.entityId,
+      'details': log.details,
+      'timestamp': log.timestamp?.millisecondsSinceEpoch ??
+          DateTime.now().millisecondsSinceEpoch,
+    });
+  }
 }

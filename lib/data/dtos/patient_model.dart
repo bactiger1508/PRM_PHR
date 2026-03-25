@@ -13,6 +13,7 @@ class PatientModel extends PatientEntity {
     super.createdBy,
     super.createdAt,
     super.updatedAt,
+    super.familyId,
   });
 
   factory PatientModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +33,7 @@ class PatientModel extends PatientEntity {
       updatedAt: json['updated_at'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['updated_at'])
           : null,
+      familyId: json['family_id'],
     );
   }
 
@@ -48,6 +50,7 @@ class PatientModel extends PatientEntity {
       'created_by': createdBy,
       'created_at': createdAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt?.millisecondsSinceEpoch,
+      'family_id': familyId,
     };
   }
 }

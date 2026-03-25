@@ -4,6 +4,8 @@ class MedicalDocumentEntity {
   final int patientProfileId;
   final int categoryId; // 1: Xét nghiệm, 2: Đơn thuốc, 3: Chẩn đoán
   final String? categoryName; // Để hiển thị
+  final String? patientName; // Để hiển thị/tìm kiếm
+  final String? medicalCode; // Để hiển thị/tìm kiếm
   final int? recordDate; // timestamp
   final String? title;
   final String? notes;
@@ -23,6 +25,8 @@ class MedicalDocumentEntity {
     required this.patientProfileId,
     required this.categoryId,
     this.categoryName,
+    this.patientName,
+    this.medicalCode,
     this.recordDate,
     this.title,
     this.notes,

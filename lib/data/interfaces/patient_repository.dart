@@ -1,6 +1,5 @@
 import 'package:phrprmgroupproject/data/db/database_helper.dart';
 import '../../domain/entities/patient_entity.dart';
-import '../../domain/entities/user_entity.dart';
 
 abstract class PatientRepository {
   /// Creates a Patient Profile and automatically creates a Customer User Account
@@ -9,6 +8,9 @@ abstract class PatientRepository {
 
   /// Fetches a patient profile by phone or email
   Future<PatientEntity?> getPatientByPhoneOrEmail({String? phone, String? email});
+
+  /// Hồ sơ BN theo khóa chính (dùng khi không có email/SĐT để tra cứu).
+  Future<PatientEntity?> getPatientById(int patientProfileId);
 
   /// Updates patient profile information (DOB, Phone)
   Future<bool> updatePatientProfile(int patientId, {String? dob, String? phone});
@@ -24,8 +26,10 @@ abstract class PatientRepository {
 
   Future<DashboardStats> getStats();
 
-  Future<List<UserEntity>> getAllCustomers();
+  Future<List<PatientEntity>> getAllPatients();
 
   Future<List<Map<String, dynamic>>> getDocumentsByPatientId(int patientId);
   Future<List<Map<String, dynamic>>> getRecentPatients({int limit = 3});
+  Future<bool> transferFamilyHead(int fromUserId, int toUserId);
+  Future<bool> removeFamilyMember(int customerId, int patientId);
 }

@@ -1,3 +1,7 @@
+import 'dart:math';
+import 'package:intl/intl.dart';
+import 'package:sqflite/sqflite.dart';
+import '../../core/exceptions/patient_profile_locked_exception.dart';
 import '../../core/utils/hash_utils.dart';
 import '../../domain/entities/user_entity.dart';
 import '../interfaces/auth_repository.dart';
@@ -28,7 +32,18 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     if (maps.isNotEmpty) {
-      return UserModel.fromJson(maps.first);
+      final user = UserModel.fromJson(maps.first);
+      if (isCustomer && user.id != null) {
+        final lockRows = await db.rawQuery('''
+          SELECT pp.status FROM patient_profiles pp
+          INNER JOIN family_access fa ON fa.patient_profile_id = pp.id
+          WHERE fa.customer_account_id = ? AND fa.relationship = ?
+        ''', [user.id!, 'Bản thân']);
+        if (lockRows.isNotEmpty && lockRows.first['status'] == 'LOCKED') {
+          throw PatientProfileLockedException();
+        }
+      }
+      return user;
     }
     return null;
   }
@@ -47,6 +62,17 @@ class AuthRepositoryImpl implements AuthRepository {
       where: 'id = ?',
       whereArgs: [userId],
     );
+
+    if (count > 0) {
+      await db.insert('system_notifications', {
+        'user_id': userId,
+        'title': 'Thay đổi mật khẩu',
+        'message': 'Mật khẩu của bạn vừa được đổi mới thành công. Nếu không phải bạn, hãy báo ngay cho bộ phận CSKH.',
+        'type': 'SECURITY',
+        'is_read': 0,
+        'created_at': DateTime.now().millisecondsSinceEpoch,
+      });
+    }
 
     return count > 0;
   }
@@ -82,6 +108,23 @@ class AuthRepositoryImpl implements AuthRepository {
       where: "role IN ('STAFF', 'ADMIN')",
       orderBy: 'created_at DESC',
     );
+    return maps.map((map) => UserModel.fromJson(map)).toList();
+  }
+
+  @override
+  Future<List<UserEntity>> getAllUsers() async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.rawQuery('''
+      SELECT * FROM user_accounts
+      ORDER BY
+        CASE role
+          WHEN 'ADMIN' THEN 1
+          WHEN 'STAFF' THEN 2
+          WHEN 'CUSTOMER' THEN 3
+          ELSE 4
+        END,
+        created_at DESC
+    ''');
     return maps.map((map) => UserModel.fromJson(map)).toList();
   }
 
@@ -124,28 +167,75 @@ class AuthRepositoryImpl implements AuthRepository {
   ) async {
     final db = await _dbHelper.database;
 
-    // Check if account already exists
-    final existing = await db.query(
-      'user_accounts',
-      where: 'email = ? AND role = ?',
-      whereArgs: [email, 'CUSTOMER'],
-    );
+    return await db.transaction((txn) async {
+      // 1. Kiểm tra tài khoản đã tồn tại chưa
+      final existing = await txn.query(
+        'user_accounts',
+        where: 'email = ? AND role = ?',
+        whereArgs: [email, 'CUSTOMER'],
+      );
 
-    if (existing.isNotEmpty) {
-      return existing.first['id'] as int;
-    }
+      int accountId;
+      if (existing.isNotEmpty) {
+        accountId = existing.first['id'] as int;
+      } else {
+        final model = UserModel(
+          email: email,
+          fullName: fullName,
+          passwordHash: HashUtils.hashPassword(defaultPassword),
+          role: 'CUSTOMER',
+          status: 'ACTIVE',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
+        accountId = await txn.insert('user_accounts', model.toJson());
+        // Tự động gán family_id bằng chính id tài khoản nếu là tài khoản mới
+        await txn.update('user_accounts', {'family_id': accountId}, where: 'id = ?', whereArgs: [accountId]);
+      }
 
-    final model = UserModel(
-      email: email,
-      fullName: fullName,
-      passwordHash: HashUtils.hashPassword(defaultPassword),
-      role: 'CUSTOMER',
-      status: 'ACTIVE',
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+      // 2. Kiểm tra xem đã có liên kết "Bản thân" chưa
+      final selfLink = await txn.query('family_access',
+          where: 'customer_account_id = ? AND relationship = ?',
+          whereArgs: [accountId, 'Bản thân']);
 
-    return await db.insert('user_accounts', model.toJson());
+      if (selfLink.isEmpty) {
+        int patientId = -1;
+        final random = Random();
+        for (var attempt = 0; attempt < 64; attempt++) {
+          final medicalCode =
+              'PHR-${DateFormat('ddMMyyyy').format(DateTime.now())}-${random.nextInt(10000).toString().padLeft(4, '0')}';
+          try {
+            patientId = await txn.insert('patient_profiles', {
+              'medical_code': medicalCode,
+              'full_name': fullName ?? email.split('@')[0],
+              'email': email,
+              'created_by': accountId,
+              'family_id': accountId,
+              'created_at': DateTime.now().millisecondsSinceEpoch,
+              'updated_at': DateTime.now().millisecondsSinceEpoch,
+            });
+            break;
+          } catch (e) {
+            if (e is DatabaseException && e.isUniqueConstraintError()) {
+              continue;
+            }
+            rethrow;
+          }
+        }
+        if (patientId < 0) {
+          throw Exception('Không tạo được mã y tế duy nhất. Vui lòng thử lại.');
+        }
+
+        await txn.insert('family_access', {
+          'customer_account_id': accountId,
+          'patient_profile_id': patientId,
+          'relationship': 'Bản thân',
+          'created_at': DateTime.now().millisecondsSinceEpoch,
+        });
+      }
+
+      return accountId;
+    });
   }
 
   @override
@@ -161,6 +251,42 @@ class AuthRepositoryImpl implements AuthRepository {
       return UserModel.fromJson(maps.first);
     }
     return null;
+  }
+
+  @override
+  Future<UserEntity?> findById(int userId) async {
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'user_accounts',
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+
+    if (maps.isNotEmpty) {
+      return UserModel.fromJson(maps.first);
+    }
+    return null;
+  }
+
+  @override
+  Future<int?> otpCooldownRemainingSeconds(String email, String purpose,
+      {int cooldownSeconds = 60}) async {
+    final db = await _dbHelper.database;
+    final rows = await db.query(
+      'otp_codes',
+      columns: ['created_at'],
+      where: 'email = ? AND purpose = ?',
+      whereArgs: [email, purpose],
+      orderBy: 'created_at DESC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    final createdMs = rows.first['created_at'] as int?;
+    if (createdMs == null) return null;
+    final elapsed = DateTime.now().millisecondsSinceEpoch - createdMs;
+    final cooldownMs = cooldownSeconds * 1000;
+    if (elapsed >= cooldownMs) return null;
+    return ((cooldownMs - elapsed + 999) ~/ 1000);
   }
 
   @override

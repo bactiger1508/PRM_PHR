@@ -3,15 +3,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:phrprmgroupproject/views/admin/admin_dashboard_screen.dart';
 import 'package:phrprmgroupproject/views/customer/family_home_screen.dart';
-import 'package:phrprmgroupproject/views/staff/create_medical_exam_screen.dart';
-import 'package:phrprmgroupproject/views/staff/family_home_screen.dart';
-import 'package:phrprmgroupproject/views/staff/medical_exam_list_screen.dart';
 import 'package:phrprmgroupproject/views/staff/staff_dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'views/theme/app_theme.dart';
 import 'views/login/login_screen.dart';
 import 'views/admin/admin_setup_screen.dart';
 import 'data/db/database_helper.dart';
+import 'data/implementations/auth_repository_impl.dart';
+import 'viewmodels/auth_viewmodel.dart';
 import 'package:flutter/foundation.dart'; // Import for kDebugMode
 
 void main() async {
@@ -30,9 +29,35 @@ void main() async {
   final bool hasAdmin = await dbHelper.hasAdminAccount();
 
   final prefs = await SharedPreferences.getInstance();
-  final bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   final bool isCustomer = prefs.getBool('isCustomer') ?? true;
   final String userRole = prefs.getString('userRole') ?? '';
+
+  // [BUG FIX] Restore user session from DB to avoid null currentUser crash
+  if (isLoggedIn) {
+    final userId = prefs.getInt('userId');
+    if (userId != null) {
+      try {
+        final user = await AuthRepositoryImpl().findById(userId);
+        if (user != null) {
+          AuthViewModel.instance.refreshCurrentUser(user);
+        } else {
+          // User was deleted from DB → clear stale session
+          await prefs.remove('isLoggedIn');
+          await prefs.remove('userId');
+          await prefs.remove('userRole');
+          await prefs.remove('isCustomer');
+          isLoggedIn = false;
+        }
+      } catch (_) {
+        // DB error → force re-login
+        isLoggedIn = false;
+      }
+    } else {
+      // No userId saved → force re-login
+      isLoggedIn = false;
+    }
+  }
 
   runApp(MyApp(
     hasAdmin: hasAdmin,

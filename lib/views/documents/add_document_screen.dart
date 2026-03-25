@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'widgets/document_category_horizontal_bar.dart';
 import '../theme/app_theme.dart';
 
 class AddDocumentScreen extends StatefulWidget {
@@ -12,20 +13,21 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
   int _selectedIndex = 1; // "Tài liệu" on bottom nav bar
   int _docTypeIndex = 0; // 0: Xét nghiệm, 1: Đơn thuốc, 2: Chẩn đoán
 
-  final List<String> _docTypes = ['Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán'];
+  final List<String> _docTypes = [
+    'Xét nghiệm',
+    'Đơn thuốc',
+    'Chẩn đoán hình ảnh',
+    'Đơn Khám Bệnh',
+    'Khác',
+  ];
 
   // Tag management
   final List<String> _selectedTags = [];
-  final List<String> _availableTags = [
-    'Tim mạch', 'Hô hấp', 'Tiêu hóa', 'Thần kinh', 'Xương khớp',
-    'Nội tiết', 'Da liễu', 'Mắt', 'Tai mũi họng', 'Quan trọng',
-    'Sức khỏe định kỳ', 'Bệnh viện Bạch Mai',
-  ];
+  final List<String> _availableTags = [];
   final TextEditingController _tagController = TextEditingController();
   bool _showTagSuggestions = false;
 
   // Status tracking
-  String _documentStatus = 'DRAFT';
 
   @override
   void dispose() {
@@ -45,7 +47,6 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
           icon: const Icon(Icons.close, color: AppColors.textPrimary),
           onPressed: () {
             // Auto-save as draft when pressing X
-            setState(() => _documentStatus = 'DRAFT');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Tài liệu đã được lưu dưới dạng bản nháp'),
@@ -69,7 +70,6 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             child: Center(
               child: ElevatedButton(
                 onPressed: () {
-                  setState(() => _documentStatus = 'SAVED');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Tài liệu đã được lưu thành công'),
@@ -120,51 +120,13 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: _docTypes.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final text = entry.value;
-                  final isSelected = _docTypeIndex == index;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _docTypeIndex = index),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isSelected ? Colors.white : Colors.transparent,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          text,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
+            DocumentCategoryHorizontalBar(
+              categoryNames: _docTypes,
+              selectedName: _docTypes[_docTypeIndex],
+              onCategorySelected: (name) {
+                final i = _docTypes.indexOf(name);
+                if (i >= 0) setState(() => _docTypeIndex = i);
+              },
             ),
             const SizedBox(height: 24),
 
@@ -192,11 +154,11 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
 
             // Upload Progress
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.backgroundLight,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.border),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: AppTheme.softShadow,
               ),
               child: Column(
                 children: [
@@ -261,30 +223,12 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
             const SizedBox(height: 6),
             TextField(
               textInputAction: TextInputAction.next,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'dd/mm/yyyy',
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textLight,
-                ),
-                suffixIcon: const Icon(
+                suffixIcon: Icon(
                   Icons.calendar_today,
                   color: AppColors.textLight,
                   size: 20,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
                 ),
               ),
               keyboardType: TextInputType.datetime,
@@ -300,8 +244,14 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.02),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      )
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -403,29 +353,11 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
 
             _buildInputLabel('Ghi chú'),
             const SizedBox(height: 6),
-            TextField(
+            const TextField(
               maxLines: 3,
               textInputAction: TextInputAction.done,
               decoration: InputDecoration(
                 hintText: 'Nhập ghi chú thêm về tài liệu này...',
-                hintStyle: const TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textLight,
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.border),
-                ),
               ),
             ),
 
@@ -479,15 +411,15 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
         color: isPrimary
             ? AppColors.primary.withValues(alpha: 0.05)
             : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isPrimary
               ? AppColors.primary.withValues(alpha: 0.3)
-              : AppColors.border,
-          style: BorderStyle
-              .solid, // Should be dashed ideally but solid is fine for MVP
+              : AppColors.border.withValues(alpha: 0.5),
+          style: BorderStyle.solid,
           width: 2,
         ),
+        boxShadow: !isPrimary ? AppTheme.softShadow : [],
       ),
       child: Column(
         children: [
@@ -546,21 +478,6 @@ class _AddDocumentScreenState extends State<AddDocumentScreen> {
       textInputAction: textInputAction,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(fontSize: 14, color: AppColors.textLight),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
       ),
     );
   }

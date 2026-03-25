@@ -1,7 +1,47 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/user_entity.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/staff_management_viewmodel.dart';
 import '../theme/app_theme.dart';
+
+String _roleDisplayLabel(String role) {
+  switch (role) {
+    case 'ADMIN':
+      return 'Quản trị viên';
+    case 'STAFF':
+      return 'Nhân viên y tế';
+    case 'CUSTOMER':
+      return 'Khách hàng (BN có tài khoản)';
+    default:
+      return role;
+  }
+}
+
+String _roleAvatarLetter(String role) {
+  switch (role) {
+    case 'ADMIN':
+      return 'A';
+    case 'STAFF':
+      return 'S';
+    case 'CUSTOMER':
+      return 'K';
+    default:
+      return '?';
+  }
+}
+
+(Color bg, Color fg) _roleBadgeColors(String role) {
+  switch (role) {
+    case 'ADMIN':
+      return (Colors.purple.withValues(alpha: 0.1), Colors.purple);
+    case 'STAFF':
+      return (Colors.blue.withValues(alpha: 0.1), Colors.blue);
+    case 'CUSTOMER':
+      return (Colors.teal.withValues(alpha: 0.1), Colors.teal);
+    default:
+      return (Colors.grey.withValues(alpha: 0.1), Colors.grey);
+  }
+}
 
 class StaffManagementScreen extends StatefulWidget {
   final bool embedded;
@@ -17,7 +57,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
   @override
   void initState() {
     super.initState();
-    _viewModel.loadStaffs();
+    _viewModel.loadUsers();
   }
 
   @override
@@ -39,7 +79,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Chi tiết nhân viên'),
+        title: const Text('Chi tiết người dùng'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -47,7 +87,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
             _detailRow('Họ tên', staff.fullName ?? 'Chưa cập nhật'),
             _detailRow('Email', staff.email ?? 'Chưa cập nhật'),
             _detailRow('Điện thoại', staff.phone ?? 'Chưa cập nhật'),
-            _detailRow('Vai trò', staff.role == 'ADMIN' ? 'Quản trị viên' : 'Nhân viên'),
+            _detailRow('Vai trò', _roleDisplayLabel(staff.role)),
             _detailRow('Trạng thái', staff.status == 'ACTIVE' ? 'Đang hoạt động' : 'Tạm khóa'),
             if (staff.createdAt != null)
               _detailRow('Ngày tạo', '${staff.createdAt!.day}/${staff.createdAt!.month}/${staff.createdAt!.year}'),
@@ -89,8 +129,8 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xoá nhân viên'),
-        content: Text('Bạn có chắc muốn xoá nhân viên "${staff.fullName ?? staff.email}"?\nHành động này không thể hoàn tác.'),
+        title: const Text('Xoá người dùng'),
+        content: Text('Bạn có chắc muốn xoá tài khoản "${staff.fullName ?? staff.email}"?\nHành động này không thể hoàn tác.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Huỷ')),
           ElevatedButton(
@@ -105,7 +145,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       final ok = await _viewModel.deleteStaff(staff.id!);
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_viewModel.errorMsg ?? 'Lỗi khi xoá nhân viên')),
+          SnackBar(content: Text(_viewModel.errorMsg ?? 'Lỗi khi xoá người dùng')),
         );
       }
     }
@@ -116,11 +156,11 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
     final Widget mainContent = ListenableBuilder(
       listenable: _viewModel,
       builder: (context, _) {
-        if (_viewModel.isLoading && _viewModel.staffs.isEmpty) {
+        if (_viewModel.isLoading && _viewModel.users.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (_viewModel.errorMsg != null && _viewModel.staffs.isEmpty) {
+        if (_viewModel.errorMsg != null && _viewModel.users.isEmpty) {
           return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -132,7 +172,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: _viewModel.loadStaffs,
+                  onPressed: _viewModel.loadUsers,
                   child: const Text('Thử lại'),
                 ),
               ],
@@ -140,44 +180,44 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
           );
         }
 
-        if (_viewModel.staffs.isEmpty) {
-          return const Center(child: Text('Chưa có nhân viên nào.'));
+        if (_viewModel.users.isEmpty) {
+          return const Center(child: Text('Chưa có người dùng nào.'));
         }
 
         return ListView.separated(
           padding: const EdgeInsets.all(16),
-          itemCount: _viewModel.staffs.length,
+          itemCount: _viewModel.users.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final staff = _viewModel.staffs[index];
+            final staff = _viewModel.users[index];
             return GestureDetector(
               onTap: () => _showStaffDetails(staff),
               child: Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border, width: 0.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border, width: 0.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
                 child: Row(
                   children: [
                     Container(
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Text(
-                          staff.role == 'ADMIN' ? 'A' : 'S',
+                          _roleAvatarLetter(staff.role),
                           style: const TextStyle(
                             color: AppColors.primary,
                             fontWeight: FontWeight.bold,
@@ -205,28 +245,29 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: staff.role == 'ADMIN'
-                                      ? Colors.purple.withOpacity(0.1)
-                                      : Colors.blue.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  staff.role,
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                    color: staff.role == 'ADMIN'
-                                        ? Colors.purple
-                                        : Colors.blue,
+                              Builder(builder: (context) {
+                                final (bg, fg) = _roleBadgeColors(staff.role);
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
                                   ),
-                                ),
-                              ),
+                                  decoration: BoxDecoration(
+                                    color: bg,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    staff.role == 'CUSTOMER'
+                                        ? 'KHÁCH'
+                                        : staff.role,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: fg,
+                                    ),
+                                  ),
+                                );
+                              }),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -265,11 +306,38 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
                             break;
                         }
                       },
-                      itemBuilder: (ctx) => [
-                        const PopupMenuItem(value: 'view', child: ListTile(leading: Icon(Icons.visibility_outlined), title: Text('Xem chi tiết'), dense: true, contentPadding: EdgeInsets.zero)),
-                        const PopupMenuItem(value: 'edit', child: ListTile(leading: Icon(Icons.edit_outlined), title: Text('Chỉnh sửa'), dense: true, contentPadding: EdgeInsets.zero)),
-                        const PopupMenuItem(value: 'delete', child: ListTile(leading: Icon(Icons.delete_outline, color: Colors.red), title: Text('Xoá', style: TextStyle(color: Colors.red)), dense: true, contentPadding: EdgeInsets.zero)),
-                      ],
+                      itemBuilder: (ctx) {
+                        final curId = AuthViewModel.instance.currentUser?.id;
+                        final canDelete = staff.role != 'ADMIN' &&
+                            staff.id != curId &&
+                            staff.role != 'CUSTOMER';
+                        return [
+                          const PopupMenuItem(
+                              value: 'view',
+                              child: ListTile(
+                                  leading: Icon(Icons.visibility_outlined),
+                                  title: Text('Xem chi tiết'),
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero)),
+                          const PopupMenuItem(
+                              value: 'edit',
+                              child: ListTile(
+                                  leading: Icon(Icons.edit_outlined),
+                                  title: Text('Chỉnh sửa'),
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero)),
+                          if (canDelete)
+                            const PopupMenuItem(
+                                value: 'delete',
+                                child: ListTile(
+                                    leading: Icon(Icons.delete_outline,
+                                        color: Colors.red),
+                                    title: Text('Xoá',
+                                        style: TextStyle(color: Colors.red)),
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero)),
+                        ];
+                      },
                     ),
                   ],
                 ),
@@ -285,7 +353,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
         backgroundColor: AppColors.backgroundLight,
         appBar: AppBar(
           title: const Text(
-            'Quản lý nhân sự',
+            'Danh sách người dùng',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -317,7 +385,7 @@ class _StaffManagementScreenState extends State<StaffManagementScreen> {
       backgroundColor: AppColors.backgroundLight,
       appBar: AppBar(
         title: const Text(
-          'Quản lý nhân sự',
+          'Danh sách người dùng',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -372,14 +440,20 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
   Future<void> _submit() async {
     if (_fullNameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập họ và tên.')),
+        const SnackBar(
+          content: Text('Vui lòng nhập họ và tên.'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
 
     if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vui lòng nhập email hợp lệ.')),
+        const SnackBar(
+          content: Text('Vui lòng nhập email hợp lệ.'),
+          backgroundColor: Colors.redAccent,
+        ),
       );
       return;
     }
@@ -453,7 +527,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(12),
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha: 0.1),
                     child: Text(
                       widget.viewModel.errorMsg!,
                       style: const TextStyle(color: Colors.red),
@@ -516,7 +590,7 @@ class _AddStaffBottomSheetState extends State<AddStaffBottomSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Row(
@@ -630,7 +704,7 @@ class _EditStaffBottomSheetState extends State<EditStaffBottomSheet> {
     if (success && mounted) {
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cập nhật nhân viên thành công.')),
+        const SnackBar(content: Text('Cập nhật người dùng thành công.')),
       );
     } else if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -656,9 +730,11 @@ class _EditStaffBottomSheetState extends State<EditStaffBottomSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Chỉnh sửa nhân viên',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                Text(
+                  widget.staff.role == 'CUSTOMER'
+                      ? 'Chỉnh sửa khách hàng'
+                      : 'Chỉnh sửa nhân viên',
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close)),
               ],
@@ -698,7 +774,7 @@ class _EditStaffBottomSheetState extends State<EditStaffBottomSheet> {
             ),
             const SizedBox(height: 16),
             DropdownButtonFormField<String>(
-              value: _selectedStatus,
+              initialValue: _selectedStatus,
               decoration: InputDecoration(
                 labelText: 'Trạng thái',
                 filled: true,

@@ -12,6 +12,8 @@ class UserModel extends UserEntity {
     super.createdAt,
     super.updatedAt,
     super.avatar,
+    super.familyId,
+    super.isFamilyHead,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -30,6 +32,8 @@ class UserModel extends UserEntity {
           ? DateTime.fromMillisecondsSinceEpoch(json['updated_at'])
           : null,
       avatar: json['avatar'],
+      familyId: json['family_id'],
+      isFamilyHead: (json['is_family_head'] ?? 1) == 1,
     );
   }
 
@@ -45,6 +49,8 @@ class UserModel extends UserEntity {
       'created_at': createdAt?.millisecondsSinceEpoch,
       'updated_at': updatedAt?.millisecondsSinceEpoch,
       'avatar': avatar,
+      'family_id': familyId,
+      'is_family_head': isFamilyHead ? 1 : 0,
     };
   }
 }

@@ -99,13 +99,15 @@ class _ForceChangePasswordScreenState extends State<ForceChangePasswordScreen> {
 
                 ElevatedButton(
                   onPressed: () async {
+                    final navigator = Navigator.of(context);
                     final success = await _viewModel.changePassword(
                       widget.userId,
                       _newPasswordController.text,
                       _confirmPasswordController.text,
                     );
 
-                    if (success && mounted) {
+                    if (!mounted) return;
+                    if (success) {
                       Widget destination;
                       if (widget.userRole == 'CUSTOMER') {
                         destination = const CustomerFamilyHomeScreen();
@@ -115,8 +117,7 @@ class _ForceChangePasswordScreenState extends State<ForceChangePasswordScreen> {
                         destination = const StaffDashboardScreen();
                       }
 
-                      Navigator.pushReplacement(
-                        context,
+                      navigator.pushReplacement(
                         MaterialPageRoute(builder: (context) => destination),
                       );
                     }

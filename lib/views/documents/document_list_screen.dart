@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../core/utils/string_utils.dart';
 import '../theme/app_theme.dart';
 import 'document_detail_screen.dart';
+import '../../viewmodels/auth_viewmodel.dart';
+import '../../viewmodels/medical_document_viewmodel.dart';
+import '../../domain/entities/medical_document_entity.dart';
+import 'widgets/document_filter_bar.dart';
+import 'trash_screen.dart';
+import '../staff/create_medical_exam_screen.dart';
 
 class DocumentListScreen extends StatefulWidget {
   final bool embedded;
@@ -12,111 +20,183 @@ class DocumentListScreen extends StatefulWidget {
 }
 
 class _DocumentListScreenState extends State<DocumentListScreen> {
+  final MedicalDocumentViewModel _viewModel = MedicalDocumentViewModel();
+
   String _selectedCategory = 'Tất cả';
   String _selectedStatus = 'Tất cả';
   String _selectedTimeFilter = 'Tất cả';
+  String _selectedTag = 'Tất cả';
 
-  final List<String> _categories = ['Tất cả', 'Xét nghiệm', 'Đơn thuốc', 'Chẩn đoán hình ảnh', 'Đơn Khám Bệnh', 'Khác'];
   final List<String> _statuses = ['Tất cả', 'DRAFT', 'SAVED'];
   final List<String> _timeFilters = ['Tất cả', '7 ngày qua', '30 ngày qua', '3 tháng qua', '6 tháng qua', '1 năm qua'];
+  final _keywordController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _keywordController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _loadInitialData();
+    _viewModel.addListener(_onViewModelChanged);
+  }
+
+  @override
+  void dispose() {
+    _keywordController.dispose();
+    _viewModel.removeListener(_onViewModelChanged);
+    super.dispose();
+  }
+
+  void _onViewModelChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _loadInitialData() async {
+    await _viewModel.loadCategories();
+    await _viewModel.loadTags();
+    await _loadDocuments();
+  }
+
+  Future<void> _loadDocuments() async {
+    final staffId = AuthViewModel.instance.currentUser?.id;
+    if (staffId != null) {
+      await _viewModel.loadDocumentsByCreator(staffId);
+    }
+  }
+
+  List<MedicalDocumentEntity> _getFilteredDocuments() {
+    final docs = _viewModel.documents;
+    final kw = StringUtils.removeDiacritics(
+        _keywordController.text.trim().toLowerCase());
+    return docs.where((doc) {
+      if (kw.isNotEmpty) {
+        final title = StringUtils.removeDiacritics(
+            (doc.title ?? '').toLowerCase());
+        final notes = StringUtils.removeDiacritics(
+            (doc.notes ?? '').toLowerCase());
+        if (!title.contains(kw) && !notes.contains(kw)) {
+          return false;
+        }
+      }
+      // Filter by Category
+      if (_selectedCategory != 'Tất cả' && doc.categoryName != _selectedCategory) {
+        return false;
+      }
+      // Filter by Status
+      if (_selectedStatus == 'Tất cả') {
+        if (doc.status == 'DELETED') return false;
+      } else {
+        if (doc.status != _selectedStatus) return false;
+      }
+      // Filter by Tag (không phân biệt hoa thường)
+      if (_selectedTag != 'Tất cả') {
+        final sel = _selectedTag.toLowerCase();
+        final hasTag = doc.tags.any((t) => t.toLowerCase() == sel);
+        if (!hasTag) return false;
+      }
+      // Filter by Time
+      if (_selectedTimeFilter != 'Tất cả') {
+        if (doc.recordDate == null) return false;
+        final docDate = DateTime.fromMillisecondsSinceEpoch(doc.recordDate!);
+        final now = DateTime.now();
+        final difference = now.difference(docDate).inDays;
+
+        switch (_selectedTimeFilter) {
+          case '7 ngày qua':
+            if (difference > 7) return false;
+            break;
+          case '30 ngày qua':
+            if (difference > 30) return false;
+            break;
+          case '3 tháng qua':
+            if (difference > 90) return false;
+            break;
+          case '6 tháng qua':
+            if (difference > 180) return false;
+            break;
+          case '1 năm qua':
+            if (difference > 365) return false;
+            break;
+        }
+      }
+      return true;
+    }).toList();
+  }
+
+  Map<String, List<MedicalDocumentEntity>> _groupDocumentsByMonth(List<MedicalDocumentEntity> docs) {
+    final Map<String, List<MedicalDocumentEntity>> grouped = {};
+    for (var doc in docs) {
+      final date = doc.recordDate != null 
+          ? DateTime.fromMillisecondsSinceEpoch(doc.recordDate!)
+          : DateTime.now();
+      final monthStr = DateFormat('\'Tháng\' MM, yyyy').format(date);
+      if (!grouped.containsKey(monthStr)) {
+        grouped[monthStr] = [];
+      }
+      grouped[monthStr]!.add(doc);
+    }
+    return grouped;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final body = SingleChildScrollView(
+    final filteredDocs = _getFilteredDocuments();
+    final groupedDocs = _groupDocumentsByMonth(filteredDocs);
+    final displayedCategories = ['Tất cả', ..._viewModel.categoryNames];
+    final displayedTags = ['Tất cả', ..._viewModel.availableTags];
+
+    // Ensure selected items are still valid if lists changed
+    if (!displayedCategories.contains(_selectedCategory)) {
+      _selectedCategory = 'Tất cả';
+    }
+    if (!displayedTags.contains(_selectedTag)) {
+      _selectedTag = 'Tất cả';
+    }
+
+    final body = _viewModel.isLoading
+      ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+      : SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Filter bar
+          DocumentFilterBar(
+            selectedCategory: _selectedCategory,
+            selectedStatus: _selectedStatus,
+            selectedTimeFilter: _selectedTimeFilter,
+            selectedTag: _selectedTag,
+            categories: displayedCategories,
+            statuses: _statuses,
+            timeFilters: _timeFilters,
+            availableTags: displayedTags,
+            onCategoryChanged: (val) => setState(() => _selectedCategory = val),
+            onStatusChanged: (val) => setState(() => _selectedStatus = val),
+            onTimeFilterChanged: (val) => setState(() => _selectedTimeFilter = val),
+            onTagChanged: (val) => setState(() => _selectedTag = val),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              controller: _keywordController,
+              decoration: InputDecoration(
+                hintText: 'Từ khóa (tiêu đề, ghi chú)...',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.border),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: Column(
               children: [
-                // Category and Status filters row
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedCategory,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                            items: _categories.map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(e, overflow: TextOverflow.ellipsis),
-                            )).toList(),
-                            onChanged: (val) => setState(() => _selectedCategory = val!),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedStatus,
-                            isExpanded: true,
-                            icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                            items: _statuses.map((e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(
-                                e == 'DRAFT' ? 'Bản nháp' : e == 'SAVED' ? 'Đã lưu' : e,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )).toList(),
-                            onChanged: (val) => setState(() => _selectedStatus = val!),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Time filter row
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedTimeFilter,
-                      isExpanded: true,
-                      icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-                      style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-                      items: _timeFilters.map((e) => DropdownMenuItem(
-                        value: e,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.access_time, size: 16, color: AppColors.textLight),
-                            const SizedBox(width: 8),
-                            Text(e),
-                          ],
-                        ),
-                      )).toList(),
-                      onChanged: (val) => setState(() => _selectedTimeFilter = val!),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
                 // "Created by me" indicator
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -139,101 +219,30 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
             ),
           ),
 
-          // Month Section: 10/2023
-          _buildMonthHeader('Tháng 10, 2023'),
-          Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                _buildDocItem(
-                  context,
-                  icon: Icons.medication,
-                  iconBgColor: Colors.blue[50]!,
-                  iconColor: Colors.blue[600]!,
-                  title: 'Đơn thuốc viêm họng cấp',
-                  subtitle: '15 thg 10, 2023 • BS. Nguyễn Văn A',
-                  status: 'SAVED',
-                  tags: [
-                    {
-                      'name': 'Nội khoa',
-                      'color': Colors.blue[50],
-                      'textColor': Colors.blue[600],
+          if (filteredDocs.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(32.0),
+              child: Center(
+                child: Text('Không tìm thấy tài liệu nào', style: TextStyle(color: AppColors.textSecondary)),
+              ),
+            )
+          else
+            ...groupedDocs.entries.map((entry) {
+              return Column(
+                children: [
+                  _buildMonthHeader(entry.key),
+                  ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: entry.value.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      return _buildRealDocItem(context, entry.value[index]);
                     },
-                    {
-                      'name': 'Đã lưu',
-                      'color': Colors.green[50],
-                      'textColor': Colors.green[600],
-                    },
-                  ],
-                ),
-                const Divider(height: 1, color: AppColors.border),
-                _buildDocItem(
-                  context,
-                  icon: Icons.science,
-                  iconBgColor: Colors.purple[50]!,
-                  iconColor: Colors.purple[600]!,
-                  title: 'Xét nghiệm máu tổng quát',
-                  subtitle: '10 thg 10, 2023 • BV Đa khoa Tâm Anh',
-                  status: 'SAVED',
-                  tags: [
-                    {
-                      'name': 'Xét nghiệm',
-                      'color': Colors.purple[50],
-                      'textColor': Colors.purple[600],
-                    },
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // Month Section: 09/2023
-          _buildMonthHeader('Tháng 09, 2023'),
-          Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                _buildDocItem(
-                  context,
-                  icon: Icons.masks,
-                  iconBgColor: Colors.orange[50]!,
-                  iconColor: Colors.orange[600]!,
-                  title: 'Kết quả Chụp X-Quang phổi',
-                  subtitle: '22 thg 09, 2023 • Trung tâm CDHA',
-                  status: 'DRAFT',
-                  tags: [
-                    {
-                      'name': 'Chẩn đoán hình ảnh',
-                      'color': Colors.orange[50],
-                      'textColor': Colors.orange[600],
-                    },
-                    {
-                      'name': 'Bản nháp',
-                      'color': Colors.amber[50],
-                      'textColor': Colors.amber[800],
-                    },
-                  ],
-                ),
-                const Divider(height: 1, color: AppColors.border),
-                _buildDocItem(
-                  context,
-                  icon: Icons.description,
-                  iconBgColor: Colors.red[50]!,
-                  iconColor: Colors.red[600]!,
-                  title: 'Giấy ra viện',
-                  subtitle: '05 thg 09, 2023 • Khoa Nội tiết',
-                  status: 'SAVED',
-                  tags: [
-                    {
-                      'name': 'Hành chính',
-                      'color': Colors.red[50],
-                      'textColor': Colors.red[600],
-                    },
-                  ],
-                ),
-              ],
-            ),
-          ),
+                  ),
+                ],
+              );
+            }),
         ],
       ),
     );
@@ -253,6 +262,30 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CreateMedicalExamScreen()),
+              ).then((result) {
+                if (result == true) {
+                  _loadDocuments();
+                }
+              });
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: AppColors.textPrimary),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const TrashScreen()),
+              ).then((_) => _loadDocuments());
+            },
+          ),
+        ],
       ),
       body: body,
       bottomNavigationBar: null,
@@ -274,8 +307,66 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     );
   }
 
+  Widget _buildRealDocItem(BuildContext context, MedicalDocumentEntity doc) {
+    // Simplify: use only one icon and one primary color style
+    const icon = Icons.description;
+    final iconBgColor = AppColors.primary.withValues(alpha: 0.1);
+    const iconColor = AppColors.primary;
+
+    final dateStr = doc.recordDate != null
+        ? DateFormat('dd MMM, yyyy').format(DateTime.fromMillisecondsSinceEpoch(doc.recordDate!))
+        : 'N/A';
+    
+    final createdByName = doc.createdByName ?? 'Ẩn danh';
+    final subtitle = '$dateStr • BS. $createdByName';
+
+    final List<Map<String, dynamic>> tagsData = [];
+    if (doc.categoryName != null) {
+      tagsData.add({
+        'name': doc.categoryName!,
+        'color': AppColors.backgroundLight,
+        'textColor': AppColors.textSecondary,
+      });
+    }
+    if (doc.status == 'SAVED') {
+      tagsData.add({
+        'name': 'Đã lưu',
+        'color': Colors.green[50],
+        'textColor': Colors.green[600],
+      });
+    } else if (doc.status == 'DRAFT') {
+      tagsData.add({
+        'name': 'Bản nháp',
+        'color': Colors.amber[50],
+        'textColor': Colors.amber[800],
+      });
+    }
+
+    // Add extra custom tags from doc.tags
+    for (var tag in doc.tags) {
+       tagsData.add({
+         'name': tag,
+         'color': Colors.grey[200],
+         'textColor': Colors.grey[800],
+       });
+    }
+
+    return _buildDocItem(
+      context,
+      doc: doc,
+      icon: icon,
+      iconBgColor: iconBgColor,
+      iconColor: iconColor,
+      title: doc.title ?? 'Không có tiêu đề',
+      subtitle: subtitle,
+      status: doc.status,
+      tags: tagsData,
+    );
+  }
+
   Widget _buildDocItem(
     BuildContext context, {
+    required MedicalDocumentEntity doc,
     required IconData icon,
     required Color iconBgColor,
     required Color iconColor,
@@ -284,78 +375,89 @@ class _DocumentListScreenState extends State<DocumentListScreen> {
     required List<Map<String, dynamic>> tags,
     String status = 'SAVED',
   }) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const DocumentDetailScreen()),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(12),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: AppTheme.softShadow,
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => DocumentDetailScreen(document: doc)),
+          ).then((_) {
+            _loadDocuments();
+          });
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
               ),
-              child: Icon(icon, color: iconColor),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children: tags.map((t) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: t['color'],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          t['name'],
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: t['textColor'],
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: tags.map((t) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
+                          decoration: BoxDecoration(
+                            color: t['color'],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            t['name'],
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: t['textColor'],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.chevron_right, color: AppColors.textLight),
-          ],
+              const Icon(Icons.chevron_right, color: AppColors.textLight),
+            ],
+          ),
         ),
       ),
     );

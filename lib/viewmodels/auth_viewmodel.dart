@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/exceptions/patient_profile_locked_exception.dart';
 import '../data/implementations/auth_repository_impl.dart';
 import '../data/interfaces/auth_repository.dart';
 import '../domain/entities/user_entity.dart';
@@ -51,10 +52,14 @@ class AuthViewModel extends ChangeNotifier {
           await prefs.setBool('isLoggedIn', true);
           await prefs.setBool('isCustomer', isCustomer);
           await prefs.setInt('userId', user.id!);
-          await prefs.setString('userRole', user.role ?? '');
+          await prefs.setString('userRole', user.role);
         }
       }
       return user;
+    } on PatientProfileLockedException {
+      _errorMsg =
+          'Hồ sơ bệnh nhân của bạn đã bị khóa. Vui lòng liên hệ cơ sở y tế.';
+      return null;
     } catch (e) {
       _errorMsg = 'Đã có lỗi xảy ra: $e';
       return null;
@@ -118,8 +123,15 @@ class AuthViewModel extends ChangeNotifier {
         email: _currentUser!.email,
         role: _currentUser!.role,
         avatar: newAvatarPath,
+        familyId: _currentUser!.familyId,
+        isFamilyHead: _currentUser!.isFamilyHead,
       );
       notifyListeners();
     }
+  }
+
+  void refreshCurrentUser(UserEntity user) {
+    _currentUser = user;
+    notifyListeners();
   }
 }

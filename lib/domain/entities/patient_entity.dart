@@ -10,6 +10,7 @@ class PatientEntity {
   final int? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int? familyId;
 
   PatientEntity({
     this.id,
@@ -23,5 +24,6 @@ class PatientEntity {
     this.createdBy,
     this.createdAt,
     this.updatedAt,
+    this.familyId,
   });
 }

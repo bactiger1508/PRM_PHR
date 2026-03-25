@@ -56,4 +56,44 @@ class FamilyMemberViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> removeMember(int customerId, int patientId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await _patientRepo.removeFamilyMember(customerId, patientId);
+      if (success) {
+        await fetchFamilyMembers(customerId);
+      }
+      return success;
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> transferHead(int fromUserId, int toUserId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await _patientRepo.transferFamilyHead(fromUserId, toUserId);
+      if (success) {
+        await fetchFamilyMembers(fromUserId);
+      }
+      return success;
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }
