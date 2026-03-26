@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Báo cáo Phân tích Kiến trúc PHR</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    :root {
+      --bg: #ffffff;
+      --text: #1a1a2e;
+      --heading: #0f3460;
+      --accent: #00897B;
+      --border: #e0e0e0;
+      --code-bg: #f5f7fa;
+      --table-header: #e8f5e9;
+      --critical: #c62828;
+      --warning: #f57f17;
+      --success: #2e7d32;
+      --info-bg: #e3f2fd;
+      --warn-bg: #fff3e0;
+      --caution-bg: #fce4ec;
+      --note-bg: #f3e5f5;
+      --important-bg: #e8f5e9;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.7;
+      font-size: 14px;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 32px;
+    }
+
+    h1 {
+      font-size: 26px;
+      color: var(--heading);
+      margin: 36px 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 3px solid var(--accent);
+      page-break-after: avoid;
+    }
+
+    h2 {
+      font-size: 20px;
+      color: var(--heading);
+      margin: 28px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      page-break-after: avoid;
+    }
+
+    h3 {
+      font-size: 16px;
+      color: var(--accent);
+      margin: 20px 0 8px;
+      page-break-after: avoid;
+    }
+
+    h4 {
+      font-size: 14px;
+      margin: 14px 0 6px;
+      color: #333;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    hr {
+      border: none;
+      border-top: 2px solid var(--border);
+      margin: 32px 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+      font-size: 13px;
+    }
+
+    th {
+      background: var(--table-header);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+    }
+
+    td {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) {
+      background: #fafafa;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #d63384;
+    }
+
+    pre {
+      background: #1e1e2e;
+      color: #cdd6f4;
+      padding: 16px 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      margin: 12px 0;
+    }
+
+    pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+    }
+
+    .alert {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 14px 0;
+      border-left: 4px solid;
+      font-size: 13px;
+    }
+
+    .alert-important {
+      background: var(--important-bg);
+      border-color: var(--success);
+    }
+
+    .alert-warning {
+      background: var(--warn-bg);
+      border-color: var(--warning);
+    }
+
+    .alert-caution {
+      background: var(--caution-bg);
+      border-color: var(--critical);
+    }
+
+    .alert-note {
+      background: var(--note-bg);
+      border-color: #7b1fa2;
+    }
+
+    .alert-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    ul,
+    ol {
+      padding-left: 24px;
+      margin: 8px 0;
+    }
+
+    li {
+      margin: 4px 0;
+    }
+
+    .mermaid {
+      margin: 16px 0;
+      text-align: center;
+      page-break-inside: avoid;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    @media print {
+      body {
+        padding: 20px;
+        font-size: 11px;
+        max-width: 100%;
+      }
+
+      h1 {
+        font-size: 20px;
+        margin-top: 24px;
+      }
+
+      h2 {
+        font-size: 16px;
+      }
+
+      h3 {
+        font-size: 13px;
+      }
+
+      pre {
+        font-size: 10px;
+        padding: 10px;
+      }
+
+      table {
+        font-size: 10px;
+      }
+
+      th,
+      td {
+        padding: 5px 8px;
+      }
+
+      .mermaid svg {
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>📋 BÁO CÁO PHÂN TÍCH KIẾN TRÚC HỆ THỐNG PHR</h1>
+  <h2 style="border: none; color: #666; font-weight: 400;">(Personal Health Record - Hồ sơ Y tế Cá nhân)</h2>
+
+  <hr>
+
+  <h1>PHÂN TÍCH KIẾN TRÚC &amp; CODEBASE</h1>
+
+  <h2>1.1. Tổng quan Hệ thống</h2>
+
+  <table>
+    <tr>
+      <th>Thông tin</th>
+      <th>Chi tiết</th>
+    </tr>
+    <tr>
+      <td><strong>Nền tảng</strong></td>
+      <td>Flutter (Dart SDK ^3.10.4)</td>
+    </tr>
+    <tr>
+      <td><strong>Database</strong></td>
+      <td>SQLite local (sqflite ^2.4.2)</td>
+    </tr>
+    <tr>
+      <td><strong>State Management</strong></td>
+      <td>ChangeNotifier (MVVM thủ công)</td>
+    </tr>
+    <tr>
+      <td><strong>Email Service</strong></td>
+      <td>SMTP trực tiếp qua package <code>mailer</code></td>
+    </tr>
+    <tr>
+      <td><strong>Hashing</strong></td>
+      <td>SHA-256 (package <code>crypto</code>)</td>
+    </tr>
+    <tr>
+      <td><strong>DB Version</strong></td>
+      <td>7 (với migration incremental)</td>
+    </tr>
+  </table>
+
+  <h2>1.2. Cấu trúc Thư mục &amp; Kiến trúc</h2>
+
+  <pre><code>lib/
+├── main.dart                          # Entry point, session restore, routing
+├── di.dart                            # (Placeholder - chưa triển khai DI)
+├── core/                              # Tầng hạ tầng (cross-cutting)
+│   ├── services/email_service.dart    # SMTP email (OTP, Welcome)
+│   ├── exceptions/                    # Custom exceptions
+│   └── utils/                         # Hash, String utilities
+├── domain/                            # Tầng Domain (Business Entities)
+│   └── entities/                      # 8 Entity classes (pure Dart)
+├── data/                              # Tầng Data (Persistence)
+│   ├── db/                            # DatabaseHelper (Singleton), Schema
+│   ├── dtos/                          # 5 Model/DTO classes (Entity → DB mapping)
+│   ├── interfaces/                    # 8 Abstract Repository contracts
+│   └── implementations/              # 9 Concrete Repository implementations
+├── viewmodels/                        # 11 ViewModels (ChangeNotifier)
+├── views/                             # 39 Screen files
+│   ├── admin/    (8 screens: Dashboard, Setup, Staff/User/Category/Tag Mgmt, Audit, Config)
+│   ├── auth/     (6 screens: ChangePass, ForgotPass, OTP, Settings, Notifications, Guide)
+│   ├── customer/ (2 screens: FamilyHome, AddFamilyMember)
+│   ├── documents/(10 screens + 2 widgets: CRUD, Trash, Filter, etc.)
+│   ├── login/    (1 screen: Login)
+│   ├── staff/    (10 screens: Dashboard, Patient CRUD, Exam CRUD, FamilyHome)
+│   └── theme/    (1 file: AppTheme)
+└── utils/permission_utils.dart        # Permission helpers</code></pre>
+
+  <p><strong>Kiến trúc áp dụng: MVVM + Repository Pattern (Clean Architecture biến thể)</strong></p>
+
+  <div class="mermaid">
+    graph TD
+    subgraph "Presentation Layer"
+    V["Views"]
+    VM["ViewModels"]
+    end
+    subgraph "Domain Layer"
+    E["Entities"]
+    RI["Repository Interfaces"]
+    end
+    subgraph "Data Layer"
+    IMPL["Repository Implementations"]
+    DTO["DTOs / Models"]
+    DB["DatabaseHelper"]
+    SCH["Schema"]
+    end
+    subgraph "Infrastructure"
+    EMAIL["EmailService"]
+    HASH["HashUtils"]
+    end
+
+    V --> VM
+    VM --> RI
+    RI -.-> IMPL
+    IMPL --> DTO
+    IMPL --> DB
+    DB --> SCH
+    IMPL --> EMAIL
+    IMPL --> HASH
+    DTO --> E
+  </div>
+
+  <h2>1.3. Design Patterns đang áp dụng</h2>
+
+  <table>
+    <tr>
+      <th>Pattern</th>
+      <th>Vị trí triển khai</th>
+      <th>Đánh giá</th>
+    </tr>
+    <tr>
+      <td><strong>Repository Pattern</strong></td>
+      <td><code>data/interfaces/</code> → <code>data/implementations/</code></td>
+      <td>✅ Tách abstract khỏi implementation, dễ test</td>
+    </tr>
+    <tr>
+      <td><strong>Singleton</strong></td>
+      <td><code>DatabaseHelper.instance</code>, <code>EmailService._instance</code>, <code>AuthViewModel.instance</code>
+      </td>
+      <td>✅ Đảm bảo duy nhất 1 instance cho DB và services</td>
+    </tr>
+    <tr>
+      <td><strong>MVVM</strong></td>
+      <td>Views → ViewModels → Repositories</td>
+      <td>✅ Separation of concerns rõ ràng</td>
+    </tr>
+    <tr>
+      <td><strong>DTO / Data Mapper</strong></td>
+      <td><code>dtos/</code> (Model extends Entity, <code>fromJson</code>/<code>toJson</code>)</td>
+      <td>✅ Mapping DB ↔ Domain sạch</td>
+    </tr>
+    <tr>
+      <td><strong>Observer</strong></td>
+      <td><code>ChangeNotifier</code> + <code>notifyListeners()</code></td>
+      <td>✅ Reactive UI binding chuẩn Flutter</td>
+    </tr>
+    <tr>
+      <td><strong>Factory Method</strong></td>
+      <td><code>AuthViewModel()</code> factory constructor</td>
+      <td>✅ Đảm bảo single instance</td>
+    </tr>
+    <tr>
+      <td><strong>Template Method</strong></td>
+      <td><code>DatabaseHelper._onUpgrade()</code> migration chain</td>
+      <td>✅ Migration theo version rõ ràng</td>
+    </tr>
+    <tr>
+      <td><strong>Soft Delete</strong></td>
+      <td><code>MedicalDocumentRepositoryImpl</code> (<code>is_deleted</code>, <code>status_before_soft_delete</code>)
+      </td>
+      <td>✅ Thiết kế an toàn dữ liệu tốt</td>
+    </tr>
+    <tr>
+      <td><strong>Audit Trail</strong></td>
+      <td>Ghi <code>audit_logs</code> trong mọi thao tác CRUD quan trọng</td>
+      <td>✅ Truy vết hành vi người dùng</td>
+    </tr>
+    <tr>
+      <td><strong>Self-Healing</strong></td>
+      <td><code>PatientRepositoryImpl.getFamilyMembers()</code> tự sửa <code>family_id</code> null</td>
+      <td>✅ Tự động khắc phục data inconsistency</td>
+    </tr>
+  </table>
+
+  <hr>
+  <div class="page-break"></div>
+
+  <h1>PHÂN TÍCH LUỒNG (FLOW ANALYSIS)</h1>
+
+  <h2>2.1. Luồng Chính: Tạo Hồ sơ Bệnh nhân (Create Patient Profile)</h2>
+
+  <h3>📝 Step-by-Step (Luồng thành công)</h3>
+
+  <table>
+    <tr>
+      <th>Step</th>
+      <th>Tầng</th>
+      <th>Hành động</th>
+      <th>File</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><strong>View</strong></td>
+      <td>Staff nhập form: Họ tên, Ngày sinh, SĐT, Email → nhấn "Tạo hồ sơ"</td>
+      <td><code>create_patient_screen.dart</code></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>ViewModel</strong></td>
+      <td><code>createPatient()</code> validate input (fullName, dob bắt buộc; email format)</td>
+      <td><code>create_patient_viewmodel.dart</code></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>ViewModel</strong></td>
+      <td>Gọi <code>_patientRepo.createPatientAndAccount(PatientEntity(...))</code></td>
+      <td>Dòng 51</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Repository</strong></td>
+      <td>Tạo <strong>Medical Code</strong>: <code>PHR-{DOB_clean}-{today}-{seq}</code> → VD:
+        <code>PHR-15081990-25032026-01</code>
+      </td>
+      <td><code>patient_repository_impl.dart</code></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Repository</strong></td>
+      <td>Mở <code>db.transaction()</code></td>
+      <td>Dòng 32</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>Nếu có email/SĐT → INSERT <code>user_accounts</code> (role=CUSTOMER, password=SHA256('123456'))</td>
+      <td>Dòng 34-59</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>Xác định <code>family_id</code> (= userId nếu có account, hoặc family_id của staff)</td>
+      <td>Dòng 64</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>INSERT <code>patient_profiles</code> (medical_code, full_name, dob, phone, email, family_id)</td>
+      <td>Dòng 66-78</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>Nếu có userId → INSERT <code>family_access</code> (relationship='Bản thân')</td>
+      <td>Dòng 80-87</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>INSERT <code>audit_logs</code> (action='Tạo hồ sơ bệnh nhân')</td>
+      <td>Dòng 90-97</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><strong>Repository</strong></td>
+      <td>Commit transaction → Nếu có email → gửi Welcome Email (fire-and-forget)</td>
+      <td>Dòng 100-101</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td><strong>ViewModel</strong></td>
+      <td>Set <code>_isSuccess = true</code>, <code>_successMedicalCode = newCode</code> →
+        <code>notifyListeners()</code>
+      </td>
+      <td>Dòng 62-63</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td><strong>View</strong></td>
+      <td>Hiển thị dialog thành công với Medical Code, nút "Tạo mã truy cập"</td>
+      <td>UI Screen</td>
+    </tr>
+  </table>
+
+  <h3>🔀 Luồng thay thế đã triển khai</h3>
+
+  <p><strong>ALT-1: Email/SĐT đã tồn tại (Unique Constraint Violation)</strong></p>
+  <ul>
+    <li>Step 6 → <code>DatabaseException.isUniqueConstraintError()</code> → kiểm tra email conflict</li>
+    <li>Nếu email đã có patient → throw <code>'Email này đã được đăng ký hồ sơ. Mã Y Tế: {code}'</code></li>
+    <li>Nếu email đã có account khác → throw <code>'Email này đã được sử dụng cho một tài khoản khác.'</code></li>
+    <li>ViewModel catch → set <code>_errorMsg</code> → View hiển thị lỗi</li>
+  </ul>
+
+  <p><strong>ALT-2: Bệnh nhân không có Email/SĐT (vd: trẻ em)</strong></p>
+  <ul>
+    <li>Skip tạo <code>user_accounts</code> (userId = null)</li>
+    <li><code>family_id</code> lấy từ <code>_getUserFamilyId(txn, createdByStaffId)</code> (family của staff tạo)</li>
+    <li>Không gửi welcome email</li>
+  </ul>
+
+  <p><strong>ALT-3: Validation lỗi ở ViewModel</strong></p>
+  <ul>
+    <li>fullName hoặc dob rỗng → return false với <code>_errorMsg</code></li>
+    <li>Email không chứa '@' → return false</li>
+  </ul>
+
+  <h2>2.2. Luồng: Liên kết Thành viên Gia đình (Family Linking)</h2>
+
+  <h3>📝 Step-by-Step (Luồng thành công)</h3>
+  <table>
+    <tr>
+      <th>Step</th>
+      <th>Tầng</th>
+      <th>Hành động</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><strong>View</strong></td>
+      <td>Customer nhập: Medical Code + Access Code + Quan hệ (Vợ/Chồng, Con, Bố/Mẹ, Anh/Chị/Em)</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>ViewModel</strong></td>
+      <td><code>linkMember()</code> gọi <code>_patientRepo.linkFamilyMember(...)</code></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Repository</strong></td>
+      <td>Validate medical_code + access_code trong <code>patient_profiles</code></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>DB (txn)</strong></td>
+      <td><strong>Tự chữa lành</strong>: Nếu linker chưa có 'Bản thân' → tạo patient_profile + family_access cho linker
+      </td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>INSERT <code>family_access</code> (customerId → targetPatientId, relationship)</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>DB (txn)</strong></td>
+      <td>INSERT <code>system_notifications</code> (thông báo liên kết thành công)</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td><strong>DB (txn)</strong></td>
+      <td><strong>Family ID Sync</strong>: Cập nhật <code>family_id</code> cho target profile + target account nếu head
+      </td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td><strong>DB (txn)</strong></td>
+      <td><strong>Liên kết đối xứng</strong>: Nếu target có account → tạo reverse link (VD: Con↔Bố/Mẹ)</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td><strong>DB (txn)</strong></td>
+      <td><strong>Khám phá mạng lưới</strong>: Scan existing family_access → auto-link nếu logic khớp</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td><strong>DB (txn)</strong></td>
+      <td><strong>Cross-sharing</strong>: Chia sẻ danh sách hồ sơ con giữa A và B</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td><strong>ViewModel</strong></td>
+      <td>Refresh <code>familyMembers</code> list → <code>notifyListeners()</code></td>
+    </tr>
+  </table>
+
+  <h3>🔀 Luồng ngoại lệ đã triển khai</h3>
+  <ul>
+    <li><strong>Mã y tế/mã truy cập sai</strong> → throw <code>'Mã y tế hoặc mã truy cập không chính xác.'</code></li>
+    <li><strong>Linker chưa có hồ sơ 'Bản thân'</strong> → tự tạo patient profile + liên kết (self-healing)</li>
+    <li><strong>family_id null</strong> → tự patch <code>family_id = customerId</code></li>
+  </ul>
+
+  <h2>2.3. Luồng: Đăng nhập (Login)</h2>
+
+  <table>
+    <tr>
+      <th>Step</th>
+      <th>Tầng</th>
+      <th>Hành động</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><strong>View</strong></td>
+      <td>User nhập email/SĐT + password, chọn loại (Customer/Staff)</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>ViewModel</strong></td>
+      <td><code>login()</code> validate input → gọi <code>_authRepo.login(email, password, isCustomer)</code></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Repository</strong></td>
+      <td>Hash password SHA-256 → query <code>user_accounts</code> với role filter + status='ACTIVE'</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Repository</strong></td>
+      <td>Nếu CUSTOMER → kiểm tra patient_profile có bị LOCKED không</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>ViewModel</strong></td>
+      <td>Nếu rememberMe → lưu session vào SharedPreferences</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>View</strong></td>
+      <td>Navigate → CustomerFamilyHome / AdminDashboard / StaffDashboard</td>
+    </tr>
+  </table>
+
+  <h3>🔀 Luồng ngoại lệ</h3>
+  <ul>
+    <li><strong>Sai credentials</strong> → <code>'Thông tin đăng nhập không chính xác hoặc sai loại tài khoản.'</code>
+    </li>
+    <li><strong>Profile bị LOCKED</strong> → throw <code>PatientProfileLockedException</code> →
+      <code>'Hồ sơ đã bị khóa'</code>
+    </li>
+    <li><strong>Session restore (main.dart)</strong> → Nếu userId đã lưu nhưng user bị xóa → clear session → force
+      re-login</li>
+  </ul>
+
+  <h2>2.4. Luồng: Tạo/Quản lý Tài liệu Y tế (Medical Document CRUD)</h2>
+
+  <h3>📝 Step-by-Step (Tạo tài liệu)</h3>
+  <table>
+    <tr>
+      <th>Step</th>
+      <th>Tầng</th>
+      <th>Hành động</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><strong>View</strong></td>
+      <td>Staff chọn bệnh nhân → nhập: category, title, notes, record_date, files, tags</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>ViewModel</strong></td>
+      <td>Gọi <code>_docRepo.createDocument(doc)</code></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Repository</strong></td>
+      <td>INSERT <code>medical_documents</code> → Ghi <code>audit_logs</code></td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Repository</strong></td>
+      <td>Nếu status='SAVED' → gửi notification cho customer liên quan</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td><strong>Repository</strong></td>
+      <td>Loop <code>addFileToDocument()</code> → Copy file vật lý vào app directory + INSERT
+        <code>document_files</code>
+      </td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td><strong>Repository</strong></td>
+      <td>Loop <code>addTagToDocument()</code> → Upsert tag (case-insensitive) + INSERT <code>document_tags</code></td>
+    </tr>
+  </table>
+
+  <h3>Soft Delete → Restore → Hard Delete</h3>
+  <ul>
+    <li><strong>Soft Delete</strong>: <code>is_deleted=1</code>, <code>status='DELETED'</code>, lưu
+      <code>status_before_soft_delete</code>
+    </li>
+    <li><strong>Restore</strong>: <code>is_deleted=0</code>, khôi phục status gốc</li>
+    <li><strong>Hard Delete</strong>: Xóa file vật lý → xóa <code>document_files</code> → xóa <code>document_tags</code>
+      → xóa <code>medical_documents</code></li>
+    <li><strong>Clear Trash</strong>: Batch hard delete tất cả docs đã soft-delete của 1 staff</li>
+  </ul>
+
+  <h2>2.5. Luồng: Tạo Đơn Khám Bệnh (Medical Exam)</h2>
+
+  <table>
+    <tr>
+      <th>Step</th>
+      <th>Tầng</th>
+      <th>Hành động</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td><strong>View</strong></td>
+      <td>Staff chọn bệnh nhân → nhập: ngày khám, chẩn đoán, triệu chứng, dấu hiệu sinh tồn, đơn thuốc, ghi chú, ngày
+        tái khám</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td><strong>ViewModel</strong></td>
+      <td>Gọi <code>_examRepo.createMedicalExam(exam)</code></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td><strong>Repository</strong></td>
+      <td>Lấy <code>category_id</code> của "Đơn Khám Bệnh" (tạo nếu chưa có)</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td><strong>Repository</strong></td>
+      <td>Map entity → <code>MedicalExamModel.toDocumentJson(categoryId)</code> → INSERT <code>medical_documents</code>
+        (tái sử dụng bảng documents)</td>
+    </tr>
+  </table>
+
+  <div class="alert alert-note">
+    <span class="alert-title">📝 Ghi chú thiết kế</span>
+    Medical Exam <strong>tái sử dụng bảng <code>medical_documents</code></strong> thay vì bảng riêng. Thông tin exam
+    (symptoms, diagnosis, prescription, vital_signs) được serialize vào field <code>notes</code> và <code>title</code>.
+  </div>
+
+  <hr>
+  <div class="page-break"></div>
+
+  <h1>TRỰC QUAN HÓA BẰNG DIAGRAMS</h1>
+
+  <h2>3.1. C4 Container Diagram — Bức tranh toàn cảnh</h2>
+
+  <div class="mermaid">
+    graph TB
+    subgraph "Actors"
+    S["👨‍⚕️ Nhân viên Y tế<br />(Staff)"]
+    C["👤 Khách hàng<br />(Customer)"]
+    A["🔧 Quản trị viên<br />(Admin)"]
+    end
+
+    subgraph PHR_App ["PHR Flutter App (Mobile)"]
+    subgraph Presentation ["Presentation Layer"]
+    UI["📱 Flutter Screens (Views)"]
+    end
+    subgraph ViewModel_Layer ["ViewModel Layer"]
+    VM["🔄 ChangeNotifier ViewModels"]
+    end
+    subgraph Repository_Layer ["Repository Layer"]
+    REPO["📦 Repositories"]
+    end
+    subgraph Data_Layer ["Data Layer"]
+    DB["🗄️ SQLite Database (sqflite)"]
+    end
+    end
+
+    subgraph External ["External Services"]
+    SMTP["📧 Gmail SMTP"]
+    PREFS["💾 SharedPreferences"]
+    end
+
+    S --> UI
+    C --> UI
+    A --> UI
+    UI --> VM
+    VM --> REPO
+    REPO --> DB
+    REPO --> SMTP
+    VM --> PREFS
+
+    style PHR_App fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style Presentation fill:#e3f2fd,stroke:#1565c0
+    style ViewModel_Layer fill:#fff3e0,stroke:#ef6c00
+    style Repository_Layer fill:#fce4ec,stroke:#c62828
+    style Data_Layer fill:#f3e5f5,stroke:#7b1fa2
+    style External fill:#f5f5f5,stroke:#757575
+  </div>
+
+  <h2>3.2. Sequence Diagram — Luồng Tạo Hồ sơ Bệnh nhân</h2>
+
+  <div class="mermaid">
+    sequenceDiagram
+    actor Staff as 👨‍⚕️ Staff
+    participant V as CreatePatientScreen
+    participant VM as CreatePatientViewModel
+    participant PR as PatientRepositoryImpl
+    participant DB as SQLite DB
+    participant ES as EmailService
+    participant SMTP as Gmail SMTP
+
+    Staff->>V: Nhập form (Họ tên, DOB, SĐT, Email)
+    Staff->>V: Nhấn "Tạo hồ sơ"
+    V->>VM: createPatient(fullName, dob, phone, email, staffId)
+
+    Note over VM: Validate: fullName & dob required
+
+    VM->>PR: createPatientAndAccount(PatientEntity)
+
+    Note over PR: Sinh Medical Code:<br />PHR-{DOB}-{TODAY}-{SEQ}
+
+    PR->>DB: query patient_profiles WHERE medical_code LIKE prefix%
+    DB-->>PR: existing codes (count)
+    Note over PR: sequence = count + 1
+
+    PR->>DB: BEGIN TRANSACTION
+
+    alt Bệnh nhân có Email/SĐT
+    PR->>DB: INSERT user_accounts (CUSTOMER, SHA256 pass)
+    alt Email/SĐT đã tồn tại
+    DB-->>PR: UniqueConstraintError
+    PR-->>VM: throw Exception
+    VM-->>V: _errorMsg = '...'
+    V-->>Staff: ❌ Hiển thị lỗi
+    end
+    DB-->>PR: userId
+    end
+
+    PR->>DB: INSERT patient_profiles
+    DB-->>PR: patientId
+
+    opt Có userId
+    PR->>DB: INSERT family_access (Bản thân)
+    end
+
+    PR->>DB: INSERT audit_logs
+    PR->>DB: COMMIT TRANSACTION
+
+    opt Bệnh nhân có Email
+    PR--)ES: sendWelcomeEmail (fire-and-forget)
+    ES--)SMTP: Send HTML email
+    end
+
+    PR-->>VM: return medicalCode
+    VM-->>V: isSuccess=true
+    V-->>Staff: ✅ Dialog thành công + Medical Code
+
+    opt Staff nhấn "Tạo mã truy cập"
+    Staff->>V: Nhấn nút
+    V->>VM: generateAccessCode()
+    VM->>PR: generateAccessCode(medicalCode)
+    PR->>DB: Gen random 6-char, check unique
+    PR->>DB: UPDATE patient_profiles SET access_code
+    PR-->>VM: return accessCode
+    VM-->>V: Hiển thị Access Code
+    V-->>Staff: Hiển thị Access Code
+    end
+  </div>
+
+  <h2>3.3. Sequence Diagram — Luồng Liên kết Gia đình</h2>
+
+  <div class="mermaid">
+    sequenceDiagram
+    actor Cust as 👤 Customer A
+    participant V as AddFamilyMemberScreen
+    participant VM as FamilyMemberViewModel
+    participant PR as PatientRepositoryImpl
+    participant DB as SQLite DB
+
+    Cust->>V: Nhập Medical Code + Access Code + Quan hệ
+    V->>VM: linkMember(customerId, medicalCode, accessCode, relationship)
+    VM->>PR: linkFamilyMember(...)
+
+    PR->>DB: query patient_profiles WHERE medical_code & access_code
+    alt Mã không hợp lệ
+    PR-->>VM: throw Exception
+    VM-->>V: _error = '...'
+    V-->>Cust: ❌ Hiển thị lỗi
+    end
+
+    PR->>DB: BEGIN TRANSACTION
+
+    Note over PR: 0. TỰ CHỮA LÀNH
+    PR->>DB: query family_access (Bản thân)
+    alt A chưa có hồ sơ Bản thân
+    PR->>DB: INSERT patient_profiles (cho A)
+    PR->>DB: INSERT family_access (Bản thân)
+    end
+
+    Note over PR: 1. LIÊN KẾT CHÍNH
+    PR->>DB: INSERT family_access (A→B)
+    PR->>DB: INSERT system_notifications
+
+    Note over PR: 2. ĐỒNG BỘ FAMILY ID
+    PR->>DB: UPDATE patient_profiles SET family_id
+    opt B có tài khoản & A là Head
+    PR->>DB: UPDATE user_accounts (B: family_id, head=0)
+    PR->>DB: INSERT family_access (B→A, reverse)
+    end
+
+    Note over PR: 3. KHÁM PHÁ MẠNG LƯỚI
+    PR->>DB: query family_access WHERE patient=B
+    loop Với mỗi member P liên kết với B
+    opt Logic quan hệ khớp
+    PR->>DB: INSERT family_access (A↔P)
+    PR->>DB: INSERT notifications
+    end
+    end
+
+    Note over PR: 4. CROSS-SHARING
+    PR->>DB: Chia sẻ existing links A↔B
+
+    PR->>DB: COMMIT TRANSACTION
+    PR-->>VM: return true
+    VM->>PR: getFamilyMembers(customerId)
+    PR-->>VM: updated family list
+    VM-->>V: notifyListeners()
+    V-->>Cust: ✅ Danh sách gia đình cập nhật
+  </div>
+
+  <h2>3.4. Entity Relationship Diagram</h2>
+
+  <div class="mermaid">
+    erDiagram
+    user_accounts {
+    int id PK
+    text email UK
+    text phone UK
+    text password_hash
+    text full_name
+    text role
+    text status
+    int created_at
+    int updated_at
+    text avatar
+    int family_id
+    int is_family_head
+    }
+
+    patient_profiles {
+    int id PK
+    text medical_code UK
+    text access_code
+    text full_name
+    text dob
+    text phone
+    text email
+    text status
+    int created_by FK
+    int created_at
+    int updated_at
+    int family_id
+    }
+
+    medical_documents {
+    int id PK
+    int patient_profile_id FK
+    int category_id FK
+    int record_date
+    text title
+    text notes
+    text status
+    int is_deleted
+    text status_before_soft_delete
+    int created_by FK
+    int created_at
+    int updated_at
+    }
+
+    document_files {
+    int id PK
+    int document_id FK
+    text file_path
+    text file_type
+    int file_size
+    int created_at
+    }
+
+    document_categories {
+    int id PK
+    text name UK
+    text description
+    }
+
+    tags {
+    int id PK
+    text tag_name UK
+    int created_at
+    }
+
+    document_tags {
+    int document_id PK_FK
+    int tag_id PK_FK
+    }
+
+    family_access {
+    int id PK
+    int customer_account_id FK
+    int patient_profile_id FK
+    text relationship
+    text status
+    int created_at
+    }
+
+    audit_logs {
+    int id PK
+    int user_id FK
+    text action
+    text entity_type
+    int entity_id
+    text details
+    int timestamp
+    }
+
+    otp_codes {
+    int id PK
+    text email
+    text otp_code
+    text purpose
+    int expires_at
+    int is_used
+    int created_at
+    }
+
+    system_notifications {
+    int id PK
+    int user_id FK
+    text title
+    text message
+    text type
+    int is_read
+    int created_at
+    }
+
+    config_rules {
+    int id PK
+    text key_name UK
+    text value
+    text description
+    int updated_at
+    }
+
+    user_accounts ||--o{ patient_profiles : "creates"
+    user_accounts ||--o{ family_access : "has"
+    patient_profiles ||--o{ family_access : "linked to"
+    patient_profiles ||--o{ medical_documents : "has"
+    document_categories ||--o{ medical_documents : "categorizes"
+    user_accounts ||--o{ medical_documents : "creates"
+    medical_documents ||--o{ document_files : "contains"
+    medical_documents ||--o{ document_tags : "tagged with"
+    tags ||--o{ document_tags : "used in"
+    user_accounts ||--o{ audit_logs : "performs"
+    user_accounts ||--o{ system_notifications : "receives"
+  </div>
+
+  <hr>
+  <p style="text-align: center; color: #999; font-size: 12px; margin-top: 40px;">
+    Báo cáo được tạo tự động bởi Senior Software Architect AI — 25/03/2026
+  </p>
+
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: 'default',
+      securityLevel: 'loose',
+      flowchart: { useMaxWidth: true, htmlLabels: true },
+      sequence: { useMaxWidth: true, mirrorActors: false, showSequenceNumbers: true }
+    });
+  </script>
+</body>
+
+</html>

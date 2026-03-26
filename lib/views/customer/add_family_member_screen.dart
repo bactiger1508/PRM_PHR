@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/family_member_viewmodel.dart';
@@ -15,8 +16,24 @@ class _AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
   final _accessCodeController = TextEditingController();
   final FamilyMemberViewModel _viewModel = FamilyMemberViewModel();
   String _selectedRelationship = 'Con';
+  String _prefix = 'PHR';
 
   final List<String> _relationships = ['Con', 'Vợ/Chồng', 'Bố/Mẹ', 'Anh/Chị/Em', 'Khác'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConfig();
+  }
+
+  Future<void> _loadConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mounted) {
+      setState(() {
+        _prefix = prefs.getString('medical_code_prefix') ?? 'PHR';
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -65,9 +82,9 @@ class _AddFamilyMemberScreenState extends State<AddFamilyMemberScreen> {
             const SizedBox(height: 8),
             TextField(
               controller: _medicalCodeController,
-              decoration: const InputDecoration(
-                hintText: 'VD: PHR-16022004-24052024-01',
-                prefixIcon: Icon(Icons.qr_code),
+              decoration: InputDecoration(
+                hintText: 'VD: $_prefix-16022004-24052024-01',
+                prefixIcon: const Icon(Icons.qr_code),
               ),
             ),
             const SizedBox(height: 20),
