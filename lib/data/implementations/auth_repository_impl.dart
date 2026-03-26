@@ -28,11 +28,17 @@ class AuthRepositoryImpl implements AuthRepository {
     final List<Map<String, dynamic>> maps = await db.query(
       'user_accounts',
       where:
-          '(email = ? OR phone = ?) AND password_hash = ? AND $roleCondition AND status = ?',
-      whereArgs: [email, email, passwordHash, 'ACTIVE'],
+          '(email = ? OR phone = ?) AND password_hash = ? AND $roleCondition',
+      whereArgs: [email, email, passwordHash],
     );
 
     if (maps.isNotEmpty) {
+      if (maps.first['status'] == 'LOCKED' || maps.first['status'] == 'INACTIVE') {
+        throw Exception('ACCOUNT_LOCKED');
+      }
+      if (maps.first['status'] != 'ACTIVE') {
+        return null;
+      }
       final user = UserModel.fromJson(maps.first);
       if (isCustomer && user.id != null) {
         final lockRows = await db.rawQuery('''

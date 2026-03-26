@@ -61,7 +61,11 @@ class AuthViewModel extends ChangeNotifier {
           'Hồ sơ bệnh nhân của bạn đã bị khóa. Vui lòng liên hệ cơ sở y tế.';
       return null;
     } catch (e) {
-      _errorMsg = 'Đã có lỗi xảy ra: $e';
+      if (e.toString().contains('ACCOUNT_LOCKED')) {
+        _errorMsg = 'Tài khoản của bạn đã bị khóa do vi phạm. Vui lòng liên hệ quản trị viên.';
+      } else {
+        _errorMsg = 'Đã có lỗi xảy ra: $e';
+      }
       return null;
     } finally {
       _isLoading = false;
