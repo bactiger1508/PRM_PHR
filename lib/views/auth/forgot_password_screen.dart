@@ -69,6 +69,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         return;
       }
 
+      if (user.status == 'LOCKED' || user.status == 'INACTIVE') {
+        setState(() {
+          _errorMsg = 'Tài khoản của bạn đã bị khóa. Không thể thực hiện khôi phục mật khẩu trực tuyến.';
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Generate and save OTP
       final otp = _emailService.generateOtp();
       await _authRepo.saveOtp(email, otp, 'FORGOT_PASSWORD');
