@@ -7,6 +7,7 @@ import '../../domain/entities/user_entity.dart';
 import '../interfaces/auth_repository.dart';
 import '../db/database_helper.dart';
 import '../dtos/user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -200,10 +201,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
       if (selfLink.isEmpty) {
         int patientId = -1;
+        final prefs = await SharedPreferences.getInstance();
+        final customPrefix = prefs.getString('medical_code_prefix') ?? 'PHR';
         final random = Random();
         for (var attempt = 0; attempt < 64; attempt++) {
           final medicalCode =
-              'PHR-${DateFormat('ddMMyyyy').format(DateTime.now())}-${random.nextInt(10000).toString().padLeft(4, '0')}';
+              '$customPrefix-${DateFormat('ddMMyyyy').format(DateTime.now())}-${random.nextInt(10000).toString().padLeft(4, '0')}';
           try {
             patientId = await txn.insert('patient_profiles', {
               'medical_code': medicalCode,

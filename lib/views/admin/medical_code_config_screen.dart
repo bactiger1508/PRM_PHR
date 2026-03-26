@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_theme.dart';
 
 class MedicalCodeConfigScreen extends StatefulWidget {
@@ -10,6 +11,53 @@ class MedicalCodeConfigScreen extends StatefulWidget {
 }
 
 class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
+  String _prefix = 'PHR';
+  bool _isLoading = true;
+  late final TextEditingController _prefixController;
+  late final TextEditingController _validDaysController;
+
+  @override
+  void initState() {
+    super.initState();
+    _prefixController = TextEditingController(text: _prefix);
+    _validDaysController = TextEditingController(text: '365');
+    _loadConfig();
+  }
+
+  @override
+  void dispose() {
+    _prefixController.dispose();
+    _validDaysController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedPrefix = prefs.getString('medical_code_prefix') ?? 'PHR';
+    final savedDays = prefs.getString('medical_code_valid_days') ?? '365';
+    
+    if (mounted) {
+      setState(() {
+        _prefix = savedPrefix;
+        _prefixController.text = savedPrefix;
+        _validDaysController.text = savedDays;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _saveConfig() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('medical_code_prefix', _prefixController.text.trim().toUpperCase());
+    await prefs.setString('medical_code_valid_days', _validDaysController.text.trim());
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đã lưu cấu hình mã y tế mới')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -35,7 +83,9 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
           child: Container(color: AppColors.border, height: 1),
         ),
       ),
-      body: SingleChildScrollView(
+      body: _isLoading 
+        ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+        : SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -88,10 +138,11 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'PHR-16022004-24052024',
-                          style: TextStyle(
-                            fontSize: 20,
+                        Text(
+                          '${_prefix.isEmpty ? "PHR" : _prefix}-[NGÀY SINH]-[NGÀY TẠO]',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
                             fontFamily: 'monospace',
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1,
@@ -160,8 +211,13 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                         ),
                         const SizedBox(height: 8),
                         _buildTextField(
-                          initialValue: 'PHR',
+                          controller: _prefixController,
                           hintText: 'VD: PHR',
+                          onChanged: (value) {
+                            setState(() {
+                              _prefix = value.toUpperCase();
+                            });
+                          },
                         ),
                         const SizedBox(height: 16),
                         const Text(
@@ -238,7 +294,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        _buildTextField(initialValue: '365', isNumber: true),
+                        _buildTextField(controller: _validDaysController, isNumber: true),
                         const SizedBox(height: 16),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center
@@ -254,11 +310,7 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Đã lưu cấu hình mã y tế mới')),
-                  );
-                },
+                onPressed: _saveConfig,
                 icon: const Icon(Icons.save),
                 label: const Text('Lưu cấu hình'),
                 style: ElevatedButton.styleFrom(
@@ -284,12 +336,14 @@ class _MedicalCodeConfigScreenState extends State<MedicalCodeConfigScreen> {
   }
 
   Widget _buildTextField({
-    required String initialValue,
+    required TextEditingController controller,
     bool isNumber = false,
     String? hintText,
+    void Function(String)? onChanged,
   }) {
     return TextFormField(
-      initialValue: initialValue,
+      controller: controller,
+      onChanged: onChanged,
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         hintText: hintText,

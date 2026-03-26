@@ -7,6 +7,7 @@ import '../interfaces/patient_repository.dart';
 import '../db/database_helper.dart';
 import '../dtos/patient_model.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PatientRepositoryImpl implements PatientRepository {
   final DatabaseHelper _dbHelper = DatabaseHelper.instance;
@@ -15,11 +16,13 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<String> createPatientAndAccount(PatientEntity patient) async {
     final db = await _dbHelper.database;
+    final prefs = await SharedPreferences.getInstance();
+    final customPrefix = prefs.getString('medical_code_prefix') ?? 'PHR';
 
     String cleanDob = (patient.dob ?? '').replaceAll('/', '');
     if (cleanDob.isEmpty) cleanDob = '00000000';
     String today = DateFormat('ddMMyyyy').format(DateTime.now());
-    String prefix = 'PHR-$cleanDob-$today';
+    String prefix = '$customPrefix-$cleanDob-$today';
     final existing = await db.query('patient_profiles', columns: ['medical_code'], where: 'medical_code LIKE ?', whereArgs: ['$prefix%']);
     int sequence = existing.length + 1;
     String medicalCode = '$prefix-${sequence.toString().padLeft(2, '0')}';
@@ -158,8 +161,10 @@ class PatientRepositoryImpl implements PatientRepository {
         final fullName = user.isNotEmpty ? user.first['full_name'] as String? : null;
         linkerName = fullName ?? (email != null ? email.split('@')[0] : 'Người dùng');
         
+        final prefs = await SharedPreferences.getInstance();
+        final customPrefix = prefs.getString('medical_code_prefix') ?? 'PHR';
         final random = Random();
-        final medicalCodeNew = 'PHR-${DateFormat('ddMMyyyy').format(DateTime.now())}-${random.nextInt(10000).toString().padLeft(4, '0')}';
+        final medicalCodeNew = '$customPrefix-${DateFormat('ddMMyyyy').format(DateTime.now())}-${random.nextInt(10000).toString().padLeft(4, '0')}';
         
         linkerPatientId = await txn.insert('patient_profiles', {
           'medical_code': medicalCodeNew,
